@@ -18,7 +18,8 @@ içerik, dil politikası + token optimizasyonu kuralları, plan dosyası protoko
 ## Kalan İşler
 
 ### Faz 1 — Canlıya alınma
-- [ ] Private GitHub repo oluştur (MR akışı için) + ilk push + `git-crypt export-key` yedeği
+- [x] ~~Private GitHub repo oluştur (MR akışı için) + ilk push + `git-crypt export-key` yedeği~~
+  (geçersiz: repo public bilinçli karar — ADR-7; anahtar yedeği README protokolüne taşındı)
 - [ ] VPS hazırlığı: SSH anahtar, firewall, güncellemeler
 - [ ] Hermes kurulumu (VPS) + çoklu direkt provider (`.env`) + Telegram bot + DM pairing
 - [ ] Workspace = repo klonu; cron job'lar (kullanıcı tanımlar): gece konsolidasyon,
@@ -30,6 +31,10 @@ içerik, dil politikası + token optimizasyonu kuralları, plan dosyası protoko
 ### Faz 2 — Knowledge MCP v1 (vektörsüz)
 - [ ] `mcp/knowledge`: frontmatter kataloğu, rg search, `[[link]]` graph (≤2 hop / ≤5 komşu),
       token-bütçeli context builder (4K default, özet-first, dedup, stabil→uçucu sıra)
+- [ ] **Güvenlik:** MCP default bind localhost/Unix socket (uzak erişim gerekirse
+      token + TLS kararı); runtime araç allowlist — HIZLI şerit injection riskinin
+      mekanik telafisi (branch protection ertesi kararı, red-team bulgu 3);
+      signed-commits zorunluluğu burada değerlendirilir
 - [ ] `ingest` skill'i + inbox akışı canlı (Telegram dosya → inbox) + Master Note DB
       alan normalizasyonu (SCHEMA §3 eşleme)
 
@@ -37,10 +42,17 @@ içerik, dil politikası + token optimizasyonu kuralları, plan dosyası protoko
 - [ ] `tend` operasyonu (stub/orphan/imported/duplicate)
 - [ ] `build_index` — üretilen `wiki/index.md`
 - [ ] hot.md disiplini + lint kuralları tam set (satır bütçeleri dahil)
+- [ ] **Güvenlik lint'i:** hassas glob'larda her dosya GITCRYPT başlıklı +
+      kapsam dışı yeni kök dizin uyarısı (git-crypt metadata/glob sınırları,
+      red-team bulgu 6); yıllık anahtar-yedeği unlock testi hatırlatması
 
 ### Faz 4 — Anlamsal katman + çoklu düğüm
 - [ ] On-demand semantic: yerel embedding (VPS CPU) + sqlite-vec, `data/` cache
-- [ ] Ev düğümü: Ollama provider, aynı repo klonu
+      (`data/` plaintext → disk şifreleme kapsamında, red-team bulgu 9)
+- [ ] Ev düğümü: Ollama provider, aynı repo klonu (`0.0.0.0` bind yasağı — deploy
+      doc'a not, red-team bulgu 12)
+- [ ] **Yedeklilik:** ikinci bare-mirror (şifreli disk) + anahtar escrow
+      (tek remote/tek arıza noktası, red-team bulgu 10)
 - [ ] Model fallback değerlendirmesi: Hermes konfig → LiteLLM proxy → özel kod
 - [ ] Claims tablosu değerlendirmesi (paralel düğüm yoğunluğu oluşursa)
 
