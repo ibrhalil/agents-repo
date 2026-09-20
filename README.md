@@ -40,4 +40,43 @@ repo public olduğundan güvenlik modeli anahtara dayanır; yedek GitHub ekosist
    "Excluded files" ile yönet (öneri: `raw/`, `atoms/`, `docs/`, `deploy/`,
    `skills/`, `mcp/`, `sdata/`, `plans/` dışla). `.obsidian/` gitignore'dır
 
+
 Ayrıntılı mimari ve karar gerekçeleri: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
+## Standartlar ve Katkı
+
+### Şablon zorunluluğu (AGENTS.md §Sert kurallar 9)
+
+Yeni bir wiki notu veya atom oluştururken sıfırdan format üretilmez; şablon kopyalanır:
+
+| Tür | Şablon |
+|---|---|
+| Wiki notu | [`docs/templates/wiki_note.md`](docs/templates/wiki_note.md) |
+| Atom | [`docs/templates/atom.md`](docs/templates/atom.md) |
+
+### Dosya adı kuralı (AGENTS.md §Sert kurallar 10)
+
+`_v2`, `_v3`, `_yeni` gibi sürüm ekleri **yasaktır**. Bilgi değişiyorsa mevcut dosya güncellenir; tamamen farklı bir konsept ise yeni, özgün isim verilir.
+
+### Branch ve PR akışı
+
+- Branch: `agent/<operasyon>-<slug>-<YYYY-MM-DD>`
+- Commit prefix: `ingest:` · `query:` · `tend:` · `lint:` · `sync:`
+- Her PR = 1 mantıksal değişiklik; gövdede özet + atom atıfları
+- `wiki/log.md` değişiklikle aynı commit'te güncellenir
+- **main'e doğrudan commit/push yasak** — tüm değişiklikler PR ile
+
+### Lokal lint çalıştırma
+
+```bash
+# pre-commit kurulu değilse:
+pip install pre-commit
+pre-commit install
+
+# Tüm dosyaları kontrol et:
+bash scripts/run_lint.sh
+
+# veya doğrudan:
+pre-commit run --all-files
+```
+
