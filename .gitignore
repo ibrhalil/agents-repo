@@ -1,0 +1,29 @@
+# Sırlar — asla commit edilmez
+.env
+.env.*
+!.env.example
+*.key
+
+# Üretilen veri — yeniden oluşturulabilir; markdown truth'tır
+data/
+
+# Obsidian çalışma dosyaları (içerik repo'da kalır)
+.obsidian/
+.trash/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Sistem / editör
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# opencode oturum durumu
+.opencode/

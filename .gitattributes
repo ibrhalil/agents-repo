@@ -1,0 +1,12 @@
+# git-crypt: kişisel veri yolları git geçmişinde ve remote'ta şifreli kalır
+raw/**     filter=git-crypt diff=git-crypt -text
+atoms/**   filter=git-crypt diff=git-crypt -text
+wiki/**    filter=git-crypt diff=git-crypt -text
+memory/**  filter=git-crypt diff=git-crypt -text
+plans/**   filter=git-crypt diff=git-crypt -text
+
+# Yer tutucular plaintext kalsın (unlock öncesi dizin yapısı görünebilsin)
+*.gitkeep !filter !diff
+
+# Genel metin normalizasyonu
+* text=auto eol=lf
