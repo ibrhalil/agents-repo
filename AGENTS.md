@@ -98,6 +98,8 @@ sözleşmeler, `memory/`, eşleşmiş kullanıcının DM'i.
 6. Kayıtsız mutasyon olmaz — her değişiklik `wiki/log.md`'de kayıtlı.
 7. İnsan içeriğini silmek yalnız MR ile, gerekçeli.
 8. Emin olunmayan bilgi `status: unverified` + kaynak atfıyla yazılır.
+9. **ŞABLON ZORUNLULUĞU:** Yeni bir wiki notu veya atom oluştururken asla sıfırdan format üretilmez! Her zaman `docs/templates/wiki_note.md` veya `docs/templates/atom.md` kopyalanır ve değerleri doldurulur.
+10. **SÜRÜM EKLERİ YASAKTIR:** Dosya adlarına asla `_v2`, `_v3`, `_yeni` gibi ekler koyulmaz. Bilgi değişiyorsa mevcut dosya güncellenir. Tamamen ayrı bir konsept ise yeni, özgün bir isim verilir.
 
 ## Düğümler
 

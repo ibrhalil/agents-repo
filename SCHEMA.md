@@ -44,10 +44,13 @@ locked: false                      # opsiyonel; true → agent dokunmaz
 ---
 ```
 
-**Adlandırma:** wiki dosya adı = insan-okur Türkçe başlık (Unicode serbest); `id` =
-dosya adı; ASCII yalnız tag/atom-id/branch'te (ADR-4). **type ↔ dizin:** `people/
-projects/ areas/ concepts/ resources/ decisions/ tasks/ issues/` — ADR sırası `adr:`
-alanındadır; `scope:` yaşam alanıdır (frontmatter filtresi, dizin değil).
+**Adlandırma ve Kimlik:**
+- **`id`:** `<unix_timestamp>-<kisa-slug>` formatındadır (örn: `1726855209-bilgi-hatti`).
+- **`title`:** Notun tam, uzun ve açıklayıcı başlığıdır (Unicode serbest).
+- **Dosya Adı:** Kısa, insan-okur Türkçe başlıktır. Eğer `title` çok uzunsa, dosya adı kısa tutulur ve aradaki fark/bağlam notun `## Summary` kısmında belirtilir.
+- **ASLA `_v2`, `_v3` GİBİ İSİMLENDİRME YAPILMAZ:** Bilgi güncellendiyse mevcut not (in-place) değiştirilir; tamamen yeni bir şeyse yepyeni, özgün bir isim verilir.
+
+**type ↔ dizin:** `people/ projects/ areas/ concepts/ resources/ decisions/ tasks/ issues/` — ADR sırası `adr:` alanındadır; `scope:` yaşam alanıdır (frontmatter filtresi, dizin değil).
 
 **status (epistemik) × stage (iş akışı) — ortogonal boyutlar (ADR-5):** `status`:
 `unverified` → `established` yalnız ikinci bağımsız kaynak/insan onayıyla; `stub` =
@@ -56,14 +59,14 @@ task/issue `inbox`'tan başlar. **Dondurulmuş kararlar:** `decision` + `establi
 yeniden tartışılmaz; çelişkide yeni ADR yazılır, eskiyi supersede eder.
 
 **Yapısal ilk-okuma kuralı:** navigasyon bloğu gövdeden önce — `frontmatter →
-# Başlık → özet → ## İlişkili → gövde`; her kısmi okuma (grep penceresi, cold-open,
-subagent özet) isim+tags+scope+özet+ilişkileri kendi kendine görür; lint denetler (ADR-4).
+# Başlık → ## Links → ## Summary → ## Body`; her kısmi okuma (grep penceresi, cold-open,
+subagent özet) isim+tags+scope+links+özeti kendi kendine görür; lint denetler (ADR-4).
 
 **updated kuralı:** her wiki/memory düzenlemesi `updated:`'i bump eder; bump'sız
 değişen not = lint bulgusu. Geri alma: `git log <dosya>` + MR diff.
 
 **Link:** `[[Başlık]]` — hedefin dosya adı; dizin yolu içermez (Obsidian uyumu).
-Kırık link lint bulgusudur. `## İlişkili` girdisi: `- [[Başlık]] — mikro açıklama`.
+Kırık link lint bulgusudur. `## Links` girdisi: `- [[Başlık]] — mikro açıklama`.
 
 **Yalın düğüm ilkesi (ADR-6):** bir not tek fikre odaklanır; gövde kısadır — detay
 büyürse child nota bölünür ya da atoms'ta bırakılır. İlişkiler **tek yönlü** yazılır
