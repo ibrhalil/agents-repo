@@ -35,6 +35,7 @@ scope: systems                     # work|personal|learning|systems|creator|medi
 priority: high                     # opsiyonel: high | medium | low | none
 date: 2026-09-20                   # opsiyonel; task/issue: teslim; diğer: inceleme
 url: https://ornek.com             # opsiyonel; resource: orijinal kaynak
+superseded_by:                     # opsiyonel; decision tiplerinde geçersiz kılan ADR id'si
 parent: Üst Not Başlığı            # opsiyonel tek üst-link; children index'ten türetilir
 created: 2026-09-20                # değiştirilmez
 updated: 2026-09-20                # her düzenlemede bump (lint)
@@ -78,7 +79,7 @@ Parent/Children→`parent:` (tek yön) · ID/Identity→`id = dosya adı` (ADR-4
 
 ```yaml
 ---
-id: a-0007                         # opak sıralı ASCII id; tarih yalnız date: alanında
+id: a-H-0007                       # Düğüm prefixli opak sıralı ASCII id (H=Hermes, L=Local)
 claim: Örnek tek cümlelik iddia.   # tek cümlelik iddia (Türkçe)
 source: raw/conversations/2026-09-20-1707.md   # tercihen raw/ yolu
 date: 2026-09-20
@@ -103,7 +104,7 @@ Atom asla düzenlenmez; düzeltme = yeni atom + `superseded_by` işareti (lint).
 | `hot.md` | Çalışma özeti | ≤50 satır; her oturumda yüklenir; aşım = lint bulgusu |
 | `log.md` | Operasyon günlüğü | append-only; tek satır kayıtlar; geçmiş asla düzenlenmez |
 
-`log.md` formatı: `## [YYYY-MM-DD HH:mm] <ingest|query|tend|lint|sync> | tek satır özet`
+`log.md` formatı: `## [YYYY-MM-DD HH:mm] <ingest|query|tend|lint|sync|consolidate>@<node_id> | tek satır özet`
 
 ## 7. memory/profile.md
 

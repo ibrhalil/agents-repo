@@ -46,6 +46,10 @@ Defansif bakım: kırık `[[link]]`, orphan sayfa, atoms↔wiki tutarlılığı,
 yaşlanan `unverified`, yakın-duplicate tag, satır bütçesi, bump'sız `updated:`, geçersiz
 enum, tag↔scope tekrarı. Mekanik düzeltme serbest; yorum gerektirenler `log.md`'de bayrak.
 
+### consolidate() — gece cron
+Gece çalışan cron görevidir. `ingest(inbox)` ve `tend()` işlemlerini kapsar.
+`hot.md` bütçesini (≤50 satır) denetler, taşanları wiki'ye aktarır ve ham konuşma kayıtlarını özetleyerek arşive kaldırır.
+
 ## Uzun İşler (plan dosyası)
 
 State dosyalarda yaşar, sohbette değil — kullanıcı asla context'i yeniden anlatmaz.
@@ -63,6 +67,8 @@ PR; merge insan (cron dahil — sabah bülteninde onay); güvence: branch protec
 Branch: `agent/<operasyon>-<slug>-<YYYY-MM-DD>`; commit prefix = log prefix
 (`ingest:` `query:` `tend:` `lint:` `sync:`); bir PR = bir mantıksal değişiklik
 (başlıkta prefix, gövdede özet + atıflar); log/index içerikle aynı commit'te.
+
+*İstisna:* `sdata/` altındaki makine-okunabilir veriler (habits.json vb.) bu kuraldan muaftır; agent bu verilere doğrudan yazabilir.
 
 ## Girdi güveni (prompt injection; ADR-9)
 
