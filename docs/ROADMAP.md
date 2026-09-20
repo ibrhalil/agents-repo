@@ -32,8 +32,9 @@ içerik, dil politikası + token optimizasyonu kuralları, plan dosyası protoko
 - [ ] `mcp/knowledge`: frontmatter kataloğu, rg search, `[[link]]` graph (≤2 hop / ≤5 komşu),
       token-bütçeli context builder (4K default, özet-first, dedup, stabil→uçucu sıra)
 - [ ] **Güvenlik:** MCP default bind localhost/Unix socket (uzak erişim gerekirse
-      token + TLS kararı); runtime araç allowlist — HIZLI şerit injection riskinin
-      mekanik telafisi (branch protection ertesi kararı, red-team bulgu 3);
+      token + TLS kararı); runtime araç allowlist + oturum profilleri
+      (interactive/cron/ingest — ADR-9); ingest regex ön-taraması (injection flag);
+      push wrapper yalnız opsiyonel derinlik (main direkt push ADR-10 ile kapandı);
       signed-commits zorunluluğu burada değerlendirilir
 - [ ] `ingest` skill'i + inbox akışı canlı (Telegram dosya → inbox) + Master Note DB
       alan normalizasyonu (SCHEMA §3 eşleme)
@@ -44,7 +45,8 @@ içerik, dil politikası + token optimizasyonu kuralları, plan dosyası protoko
 - [ ] hot.md disiplini + lint kuralları tam set (satır bütçeleri dahil)
 - [ ] **Güvenlik lint'i:** hassas glob'larda her dosya GITCRYPT başlıklı +
       kapsam dışı yeni kök dizin uyarısı (git-crypt metadata/glob sınırları,
-      red-team bulgu 6); yıllık anahtar-yedeği unlock testi hatırlatması
+      red-team bulgu 6); yıllık anahtar-yedeği unlock testi hatırlatması;
+      fixture tabanlı canary injection egzersizi (ADR-9 K5)
 
 ### Faz 4 — Anlamsal katman + çoklu düğüm
 - [ ] On-demand semantic: yerel embedding (VPS CPU) + sqlite-vec, `data/` cache

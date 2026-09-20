@@ -11,7 +11,7 @@ her dosya formatı burada. Çelişkide bu dosya kazanır; değişiklik = insan o
 | `atoms/` | Atomik gerçekler: 1 dosya = 1 iddia | APPEND-ONLY — düzeltme = supersede eden yeni atom |
 | `wiki/` | Derlenmiş, bağlantılı bilgi tabanı (Obsidian vault) | Agent: MR ile; insan: serbest |
 | `memory/` | Kullanıcı profili — kanonik kaynak | MR ile |
-| `plans/` | Uzun işlerin plan dosyaları (AGENTS.md §Uzun İşler) | HIZLI şerit |
+| `plans/` | Uzun işlerin plan dosyaları (AGENTS.md §Uzun İşler) | MR ile |
 | `sdata/` | Yapılandırılmış uygulama verisi (JSON/YAML) | Agent serbest |
 | `data/` | Üretilen index, embedding, cache | gitignore — her zaman yeniden üretilebilir |
 | `soul/` `skills/` `mcp/` `deploy/` `docs/` | Runtime katmanları | Normal geliştirme akışı |
