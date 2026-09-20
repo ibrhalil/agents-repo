@@ -1,8 +1,7 @@
 # SCHEMA.md — Veri Sözleşmesi
 
-Bu dosya agents-repo'nun normatif veri tanımlarıdır: insan ve agent'lerin ortak
-okuduğu/yazdığı her dosya formatı burada tanımlanır. Çelişkide bu dosya kazanır;
-değişiklik yalnız insan onayıyla (MR).
+agents-repo'nun normatif veri tanımları: insan ve agent'lerin ortak okuduğu/yazdığı
+her dosya formatı burada. Çelişkide bu dosya kazanır; değişiklik = insan onayı (MR).
 
 ## 1. Dizin anlamları
 
@@ -19,67 +18,88 @@ değişiklik yalnız insan onayıyla (MR).
 
 ## 2. Bilgi hattı
 
-`raw ─çıkarım→ atoms ─derleme→ wiki`. Wiki her zaman atoms'tan, atoms raw'dan
-yeniden üretilebilir olmalıdır. Index/embedding/vector DB **asla** truth değildir.
+`raw ─çıkarım→ atoms ─derleme→ wiki`; wiki her zaman atoms'tan, atoms raw'dan
+yeniden üretilebilir. Index/embedding/vector DB **asla** truth değildir.
 
 ## 3. Wiki not formatı
 
 ```yaml
 ---
-id: spring-transactional        # zorunlu; benzersiz slug = dosya adı; ASCII
-title: Spring Transactional     # zorunlu
-type: concept                   # person | project | area | concept | resource | decision
-status: established             # unverified | established | imported | stub
-created: 2026-09-20
-updated: 2026-09-20
-tags: [transaction, spring]     # kısa ASCII; lint yakın-çoğaltmayı bayraklar
-scope: [software-development]   # opsiyonel hiyerarşik alan; v1'de araç desteği yok
-locked: false                   # opsiyonel; true → agent dokunmaz
+id: Bilgi Hattı                    # zorunlu; benzersiz = dosya adı (insan-okur başlık)
+title: Bilgi hattı raw → atoms → wiki olarak kuruldu   # zorunlu; açıklayıcı
+adr: 1                             # yalnız decisions/; en yüksekten devam, back-fill yok
+type: decision                     # person|project|area|concept|resource|decision|task|issue
+stage: done                        # inbox|next|in_progress|waiting|done|archived (opsiyonel)
+status: established                # unverified | established | stub (epistemik; ADR-5)
+scope: systems                     # work|personal|learning|systems|creator|media|common
+priority: high                     # opsiyonel: high | medium | low | none
+date: 2026-09-20                   # opsiyonel; task/issue: teslim; diğer: inceleme
+url: https://ornek.com             # opsiyonel; resource: orijinal kaynak
+parent: Üst Not Başlığı            # opsiyonel tek üst-link; children index'ten türetilir
+created: 2026-09-20                # değiştirilmez
+updated: 2026-09-20                # her düzenlemede bump (lint)
+tags: [mimari, bilgi-sistemi]      # kısa ASCII; scope değeri tekrarlanmaz (lint)
+locked: false                      # opsiyonel; true → agent dokunmaz
 ---
 ```
 
-**status kuralları:** `unverified` (tek gözlem) → `established` yalnızca ikinci bağımsız
-kaynak veya insan onayıyla yükseltilir. `imported` = inbox'tan mekanik geçti, işlenmedi.
-`stub` = iskelet. Son ikisi tend operasyonunun adaylarıdır.
+**Adlandırma:** wiki dosya adı = insan-okur Türkçe başlık (Unicode serbest); `id` =
+dosya adı; ASCII yalnız tag/atom-id/branch'te (ADR-4). **type ↔ dizin:** `people/
+projects/ areas/ concepts/ resources/ decisions/ tasks/ issues/` — ADR sırası `adr:`
+alanındadır; `scope:` yaşam alanıdır (frontmatter filtresi, dizin değil).
 
-**Dondurulmuş kararlar:** `type: decision` + `status: established` notlar tekrar
-tartışılmaz/tersine çevrilmez; çelişki görürsen yeni ADR yaz, eskiyi supersede et.
+**status (epistemik) × stage (iş akışı) — ortogonal boyutlar (ADR-5):** `status`:
+`unverified` → `established` yalnız ikinci bağımsız kaynak/insan onayıyla; `stub` =
+iskelet (tend adayı). `stage`: `inbox` = işlenmemiş (eski `imported` buraya birleşti);
+task/issue `inbox`'tan başlar. **Dondurulmuş kararlar:** `decision` + `established`
+yeniden tartışılmaz; çelişkide yeni ADR yazılır, eskiyi supersede eder.
 
-**Bölüm düzeni:** `# Başlık` → **tek paragraf özet (zorunlu** — context builder'ın
-birincil malzemesi) → gövde → `## Related`.
+**Yapısal ilk-okuma kuralı:** navigasyon bloğu gövdeden önce — `frontmatter →
+# Başlık → özet → ## İlişkili → gövde`; her kısmi okuma (grep penceresi, cold-open,
+subagent özet) isim+tags+scope+özet+ilişkileri kendi kendine görür; lint denetler (ADR-4).
 
-**Link sözdizimi:** `[[slug]]` — dizin yolu içermez (taşınabilirlik + Obsidian uyumu);
-kırık link lint bulgusudur. **type ↔ dizin:** `people/` `projects/` `areas/` `concepts/`
-`resources/` `decisions/` (ADR: `NNNN-slug.md`; numara boşlukları back-fill edilmez).
+**updated kuralı:** her wiki/memory düzenlemesi `updated:`'i bump eder; bump'sız
+değişen not = lint bulgusu. Geri alma: `git log <dosya>` + MR diff.
+
+**Link:** `[[Başlık]]` — hedefin dosya adı; dizin yolu içermez (Obsidian uyumu).
+Kırık link lint bulgusudur. `## İlişkili` girdisi: `- [[Başlık]] — mikro açıklama`.
+
+**Yalın düğüm ilkesi (ADR-6):** bir not tek fikre odaklanır; gövde kısadır — detay
+büyürse child nota bölünür ya da atoms'ta bırakılır. İlişkiler **tek yönlü** yazılır
+(yön: özelden genele); reciprocal back-link yazılmaz — graph kenarı zaten iki yönlü
+çizer. Aynı şeyi söyleyen notlar birleştirilir (MR).
+
+**Master Note DB eşlemesi (ingest normalizasyonu):** Type:Raw→`stage:inbox` ·
+Note→`concept` · Issue→`issue` · Resource→`resource` · Task&Ticket→`task` ·
+Project→`project`; Area→`scope` · Status→`stage` · Priority→`priority` · URL→`url` ·
+Parent/Children→`parent:` (tek yön) · ID/Identity→`id = dosya adı` (ADR-4).
 
 ## 4. Atom formatı
 
 ```yaml
 ---
-id: 2026-09-20-jarvis-faz0-onaylandi   # benzersiz; tarih önekli önerilir
-claim: Faz 0 onaylandı.                # tek cümlelik iddia (Türkçe)
-source: raw/conversations/2026-09-20-1200.md   # tercihen raw/ yolu
+id: a-0007                         # opak sıralı ASCII id; tarih yalnız date: alanında
+claim: Örnek tek cümlelik iddia.   # tek cümlelik iddia (Türkçe)
+source: raw/conversations/2026-09-20-1707.md   # tercihen raw/ yolu
 date: 2026-09-20
-confidence: high                # high | medium | low
+confidence: high                   # high | medium | low
 status: established
-superseded_by:                  # opsiyonel; geçersiz kılan yeni atomun id'si
+superseded_by:                     # opsiyonel; geçersiz kılan yeni atomun id'si
 ---
 ```
 
-Atom asla düzenlenmez; iddia değişirse yeni atom yazılır, eskisinin `superseded_by`
-alanı lint/mutasyon aracı tarafından işaretlenir.
+Atom asla düzenlenmez; düzeltme = yeni atom + `superseded_by` işareti (lint).
 
 ## 5. raw/ adlandırma
 
-- `conversations/YYYY-MM-DD-HHmm.md` — oturum dökümleri
-- `clippings/<slug>-<YYYYMMDD>.md` — dışarıdan alınan içerik
-- `inbox/*` — işlenmemiş düşme; işlenince asıl yerine taşınır, hedef `log.md`'ye yazılır
+- `conversations/YYYY-MM-DD-HHmm.md` · `clippings/c-<NNNN>.md` — yollar nötrdür
+- `inbox/*` — işlenmemiş düşme; işlenince asıl yerine taşınır, hedef `log.md`'ye
 
 ## 6. wiki/ özel dosyaları
 
 | Dosya | Rol | Kural |
 |---|---|---|
-| `index.md` | Katalog | **ÜRETİLİR** (build_index aracı, Faz 3) — elle düzenlenmez |
+| `index.md` | Katalog | **ÜRETİLİR** (build_index, Faz 3) — wikilink'siz, yol bazlı |
 | `hot.md` | Çalışma özeti | ≤50 satır; her oturumda yüklenir; aşım = lint bulgusu |
 | `log.md` | Operasyon günlüğü | append-only; tek satır kayıtlar; geçmiş asla düzenlenmez |
 
@@ -87,34 +107,33 @@ alanı lint/mutasyon aracı tarafından işaretlenir.
 
 ## 7. memory/profile.md
 
-Bölümler: `## Kimlik` · `## İletişim tercihlerim` · `## Çalışma tarzım` ·
-`## Öncelikler ve sınırlar`. Hermes'in yerleşik hafızası bu dosyanın düğüm-lokal
-önbelleğidir; kanonik kaynak burasıdır.
+Bölümler: Kimlik · İletişim tercihlerim · Çalışma tarzım · Öncelikler ve sınırlar.
+Hermes'in yerleşik hafızası bu dosyanın düğüm-lokal önbelleğidir; kanonik kaynak burası.
 
 ## 8. sdata/
 
-Küçük JSON/YAML dosyaları; programatik uygulama verisi (habit, görev). Bilgi tabanının
-parçası değildir; şema dosyanın kendisinde belgelenir.
+Küçük JSON/YAML dosyaları; programatik uygulama verisi (habit, görev). Bilgi
+tabanının parçası değildir; şema dosyanın kendisinde belgelenir.
 
 ## 9. Öncelik
 
 **SCHEMA.md > AGENTS.md > not içerikleri.** Kural değişikliği = MR.
 
-## 10. Dil Politikası
+## 10. Dil ve Yol Politikası
 
 - Gövde/atom/cevap dili: **Türkçe**; anlam bozan köklü terim/kalıp İngilizce kalabilir.
-- Başka dilde not yazılmaz — **dil öğrenme notları hariç**: opsiyonel `lang:`
-  frontmatter alanı + ad alanı önerisi `wiki/resources/<dil>/` (ör. `resources/japanese/`).
-- `raw/` **verbatim** — kaynak hangi dildeyse öyle saklanır; dil dönüşümü yalnızca
-  atoms/wiki katmanında yapılır.
-- Tag/slug/id: **kısa ASCII** (dil serbest; Türkçe karakterler normalize edilir).
+- Başka dil yok — **dil öğrenme hariç** (`lang:` alanı, `wiki/resources/<dil>/`).
+- `raw/` **verbatim** — kaynak hangi dildeyse öyle saklanır; dönüşüm atoms/wiki'de.
+- Tag/slug/id: **kısa ASCII** (wiki dosya adları hariç — bkz. §3).
+- Yollar fact-düzeyi kişisel bilgi taşımaz (kimlik/sağlık/finans/alışkanlık);
+  konu-düzeyi serbest — kişisel fact nötr ad + şifreli içerikle yaşar.
 
 ## 11. Token verimliliği (format kuralları)
 
-- Frontmatter'a yalnız anlamlı alanlar yazılır; boş opsiyonel alan yazılmaz.
-- Her wiki notu tek paragraf özetle başlar (§3); büyük notlar heading-bazlı dilimlenir —
-  context'e tamamı değil ilgili bölümü girer.
+- Frontmatter'a yalnız anlamlı alanlar yazılır; her not tek paragraf özetle başlar
+  (§3); büyük notlar heading-bazlı dilimlenir — context'e tamamı girmez.
 - `log.md` kaydı tek satır; atom `claim` tek cümle.
-- Türkçe + İngilizce karışımın gerekçesi: eklemeli Türkçe BPE tokenizer'da kelime
-  başına daha çok token'a parçalanır; köklü terimi İngilizce bırakmak anlamı ve token
-  yoğunluğunu korur.
+- ripgrep .gitignore'a saygılıdır → `data/` aramalardan doğal dışlanır;
+  tam-proje taraması yalnızca cron'da (AGENTS.md, ADR-4).
+- Türkçe+İngilizce karışımı: eklemeli Türkçe BPE'de kelime başına daha çok token'a
+  parçalanır; köklü terimi İngilizce bırakmak anlamı ve token yoğunluğunu korur.

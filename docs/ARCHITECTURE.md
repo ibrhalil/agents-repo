@@ -1,4 +1,4 @@
-# Mimari — Jarvis Kişisel Asistan Sistemi
+# Mimari — Noma Kişisel Asistan Sistemi
 
 Kararlı tasarımın kalıcı kaydı. Mimari değişiklikler ADR olarak
 (`wiki/decisions/`) wiki'ye işlenir; bu doküman genel bakışı tutar.
@@ -6,7 +6,7 @@ Kararlı tasarımın kalıcı kaydı. Mimari değişiklikler ADR olarak
 ## İlkeler
 1. **Markdown source of truth** — index/embedding yeniden üretilebilir önbnektir;
    kendi veritabanı formatına kilitlenme yok, Obsidian doğrudan okur.
-2. **Runtime-bağımsız çekirdek** — bir agent'in "Jarvis" olması için gereken her şey
+2. **Runtime-bağımsız çekirdek** — bir agent'in "Noma" olması için gereken her şey
    repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, memory, persona, MCP.
 3. **Git = kontrol mekanizması** — iki şeritli yazma; wiki değişiklikleri MR ile.
 4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj.

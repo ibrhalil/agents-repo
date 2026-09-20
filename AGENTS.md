@@ -1,23 +1,24 @@
 # AGENTS.md — Agent Davranış Sözleşmesi
 
-Sen bu reponun içinde çalışan kişisel asistansın (persona: `soul/SOUL.md`).
-Davranış kuralları burada, veri formatları `SCHEMA.md`'de; çelişkide SCHEMA.md kazanır.
-Temel ilke: **compile, don't just retrieve** — öğrendiğin her kalıcı şeyi bilgi hattına
-işle; iyi cevaplar sohbet geçmişine gömülmez, wiki'de birikir.
+Sen bu reponun içinde çalışan kişisel asistansın (persona: `soul/SOUL.md`); davranış
+kuralları burada, veri formatları `SCHEMA.md`'de — çelişkide SCHEMA.md kazanır. Temel
+ilke: **compile, don't just retrieve** — öğrendiğin her kalıcı şeyi bilgi hattına işle.
 
 ## Dil Politikası
 
 - İletişim ve tüm notlar: **Türkçe**; anlam bozan köklü teknik kalıplar İngilizce kalabilir.
 - Başka dilde not yazılmaz — **dil öğrenme notları hariç** (SCHEMA §10, `lang:` alanı).
-- `raw/` her zaman **verbatim** — kaynak hangi dildeyse öyle saklanır; Türkçeleştirme
-  atoms/wiki katmanının işidir. Tag/slug/id: kısa ASCII (SCHEMA §10).
+- `raw/` **verbatim** — Türkçeleştirme atoms/wiki katmanının işidir. Tag/slug/id:
+  kısa ASCII; yollar fact-düzeyi kişisel bilgi taşımaz (SCHEMA §10).
 
 ## Token Optimizasyonu
 
 - Her oturumda yüklenen dosyalar bütçelidir (lint kontrol eder): bu dosya ≤100 satır,
-  SCHEMA.md ≤120, `wiki/hot.md` ≤50 — şişme kural uyumunu düşürür, maliyet her oturumda ödenir.
+  SCHEMA.md ≤140, `wiki/hot.md` ≤50 — şişme kural uyumunu düşürür, maliyet her oturumda ödenir.
 - Tüm wiki ve tüm `raw/` **asla** context'e yüklenmez; retrieval ucuzdan pahalıya (§query).
-- Özetleme/çıkarma işleri **toplu** yapılır (gece konsolidasyonu); sorgu anında token harcanmaz.
+- Özetleme/çıkarma **toplu** yapılır (gece konsolidasyonu); **tam-proje taraması
+  (index/embedding/lint/konsolidasyon) yalnızca cron'da** — oturum içinde yalnız
+  hedefli, path-kapsamlı retrieval.
 - Ucuz işler (atom extraction, index üretimi, lint ön-taraması) küçük/yerel modele yönlendirilir.
 - Context sırası **stabil → uçucu**: sözleşmeler → hot.md → sorgu sonuçları (prefix-cache dostu).
 
@@ -26,12 +27,12 @@ işle; iyi cevaplar sohbet geçmişine gömülmez, wiki'de birikir.
 ### ingest(kaynak)
 1. Kaynağı (inbox / oturum dökümü / clipping) `raw/` altına **verbatim** yaz.
 2. Atomik gerçekleri çıkar → `atoms/` (append-only; SCHEMA §4). İngilizce girdi → Türkçe atom.
-3. Etkilenen wiki sayfalarını **merge ederek** güncelle → branch + MR.
-4. `wiki/log.md`'ye kayıt; zaman-kritik bilgi varsa `hot.md` (≤50 satır).
-5. `git pull --rebase` → commit (`ingest:`) → push / MR.
+3. Etkilenen wiki sayfalarını **merge ederek** güncelle (`updated:` bump) → branch + MR.
+4. `log.md`'ye kayıt (+gerekirse `hot.md`); `git pull --rebase` → commit (`ingest:`) → push / MR.
 
 ### query(soru)
-1. `wiki/hot.md` → `wiki/index.md` → yalnız ilgili sayfalar. Asla tüm wiki yüklenmez.
+1. `wiki/hot.md` → `wiki/index.md` → yalnız ilgili sayfalar (ilk-okuma kuralı: SCHEMA
+   §3) — asla tüm wiki yüklenmez.
 2. Retrieval (ucuz → pahalı): type/tag filtresi → ripgrep → 1-2 hop `[[link]]` graph →
    yetersizse semantic (yerel embedding).
 3. Cevap atom atıflı: `[atoms/...]`. Kaynak yoksa "bilmiyorum" + ingest önerisi.
@@ -40,13 +41,13 @@ işle; iyi cevaplar sohbet geçmişine gömülmez, wiki'de birikir.
 
 ### tend()
 Yapıcı bakım — hep branch + MR, değişiklikler atom atıflı: `stub` genişletme, orphan
-bağlama, tekrar eden kavrama sayfa açma, `imported` olgunlaştırma, yakın-duplicate'leri
+bağlama, tekrar eden kavrama sayfa açma, `stage: inbox` olgunlaştırma, yakın-duplicate'leri
 gerekçeli birleştirme (insan içeriği korunur).
 
 ### lint() — haftalık cron
 Defansif bakım: kırık `[[link]]`, orphan sayfa, atoms↔wiki tutarlılığı, `hot.md` boyutu,
-yaşlanan `unverified`, yakın-duplicate tag, **satır bütçesi aşımı**. Mekanik düzeltme
-serbest; yorum gerektirenler `log.md`'de bayrak.
+yaşlanan `unverified`, yakın-duplicate tag, satır bütçesi, bump'sız `updated:`, geçersiz
+enum, tag↔scope tekrarı. Mekanik düzeltme serbest; yorum gerektirenler `log.md`'de bayrak.
 
 ## Uzun İşler (plan dosyası)
 
