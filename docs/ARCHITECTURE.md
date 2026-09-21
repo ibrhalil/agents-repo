@@ -19,7 +19,7 @@ genel bakışı tutar.
 Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[yeni-agent-yapisi]]).
 Sorgu tarafı motor-bağımsızdır:
 
-```
+```text
 metadata filtre (type/stage/scope/tags)
   → full-text (ripgrep)
   → gerektiğinde [[wikilink]] traversal (1-2 hop)
