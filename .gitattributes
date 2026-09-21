@@ -1,11 +1,12 @@
 # git-crypt: kişisel veri yolları git geçmişinde ve remote'ta şifreli kalır
-raw/**     filter=git-crypt diff=git-crypt -text
-atoms/**   filter=git-crypt diff=git-crypt -text
-wiki/**    filter=git-crypt diff=git-crypt -text
-memory/**  filter=git-crypt diff=git-crypt -text
-plans/**   filter=git-crypt diff=git-crypt -text
-sdata/**   filter=git-crypt diff=git-crypt -text
-soul/**    filter=git-crypt diff=git-crypt -text
+# Public dizinlere kişisel veri yazılmaz (AGENTS §Görünürlük)
+raw/**               filter=git-crypt diff=git-crypt -text
+wiki/**              filter=git-crypt diff=git-crypt -text
+memories/**          filter=git-crypt diff=git-crypt -text
+agent/prompts/**     filter=git-crypt diff=git-crypt -text
+agent/sessions/**    filter=git-crypt diff=git-crypt -text
+plans/**             filter=git-crypt diff=git-crypt -text
+log/**               filter=git-crypt diff=git-crypt -text
 
 # Yer tutucular plaintext kalsın (unlock öncesi dizin yapısı görünebilsin)
 *.gitkeep !filter !diff

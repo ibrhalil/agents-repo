@@ -1,86 +1,80 @@
 # Yol Haritası (Roadmap)
 
-> Kalan işler planı — agent bunu canlı sürdürür. Tamamlananların özeti aşağıda;
-  karar/kayıt detayları `wiki/decisions/`, mimari `docs/ARCHITECTURE.md`.
+> İki araştırmanın (proje analizi + benzer projeler) sentezinden doğdu; yeni yapı
+> migrasyonuyla (2026-09-21) güncellendi. Karar kayıtları `wiki/` (decision),
+> mimari `docs/ARCHITECTURE.md`, kararlaştırılmamış konular plans/Yeni Agent
+> Yapısı.md §45.
+
+---
 
 ## Mevcut Durum
 
-Faz 0 tamam (2026-09-20): repo iskeleti, sözleşmeler (AGENTS/SCHEMA), bilgi hattı
-iskeleti (raw/atoms/wiki), git-crypt şifreleme, persona ve profil şablonları, örnek
-içerik, dil politikası + token optimizasyonu kuralları, plan dosyası protokolü.
+Faz 0 tamam (2026-09-20); yeni agent yapısı migrasyonu tamam (2026-09-21). Faz 1
+kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 
 ## Tamamlananlar
 
 | Faz | Kapsam | Tarih |
 |---|---|---|
-| 0 — İskelet | sözleşmeler, bilgi hattı, git-crypt, SOUL.md, örnek ADR/atom; dil politikası + token kuralları + plan protokolü (revizyon paketi) | 2026-09-20 |
+| 0 — İskelet | Sözleşmeler, bilgi hattı, git-crypt, 10 ADR, dil+token+plan protokolü | 2026-09-20 |
+| 0.7 — Yeni yapı migrasyonu | atoms kaldırıldı; düz wiki + kebab-case; 12-alan şema; agent/workspace/tools/config/log/web dizinleri; public/şifreli split; yeni-agent-yapisi kararı | 2026-09-21 |
 
-## Kalan İşler
+---
 
-### Faz 1 — Canlıya alınma
-- [x] ~~Private GitHub repo oluştur (MR akışı için) + ilk push + `git-crypt export-key` yedeği~~
-  (geçersiz: repo public bilinçli karar — ADR-7; anahtar yedeği README protokolüne taşındı)
-- [ ] VPS hazırlığı: SSH anahtar, firewall, güncellemeler
-- [ ] Hermes kurulumu (VPS) + çoklu direkt provider (`.env`) + Telegram bot + DM pairing
-- [ ] Workspace = repo klonu; cron job'lar (kullanıcı tanımlar): gece konsolidasyon,
-      haftalık lint, index yenileme, sabah bülteni
-- [ ] Mac klonu + Obsidian vault = `wiki/`
-- [ ] Güvenlik advisory: VPS'te disk şifreleme (LUKS) değerlendir; Obsidian'da
-      buluta senkronizasyon yapan community plugin'lere dikkat (maksimum mahremiyet)
+## Faz 1 — Canlıya Alınma
 
-### Faz 2 — Knowledge MCP v1 (vektörsüz)
-- [ ] `mcp/knowledge`: frontmatter kataloğu, rg search, `[[link]]` graph (≤2 hop / ≤5 komşu),
-      token-bütçeli context builder (4K default, özet-first, dedup, stabil→uçucu sıra)
-- [ ] **Güvenlik:** MCP default bind localhost/Unix socket (uzak erişim gerekirse
-      token + TLS kararı); runtime araç allowlist + oturum profilleri
-      (interactive/cron/ingest — ADR-9); ingest regex ön-taraması (injection flag);
-      push wrapper yalnız opsiyonel derinlik (main direkt push ADR-10 ile kapandı);
-      signed-commits zorunluluğu burada değerlendirilir
-- [ ] `ingest` skill'i + inbox akışı canlı (Telegram dosya → inbox) + Master Note DB
-      alan normalizasyonu (SCHEMA §3 eşleme)
+- [x] ~~A0 Kilitli-klon testi~~ PASSED
+- [x] ~~A1 Plan dosyası~~
+- [ ] A2 Obsidian vault ayarı *(kullanıcı tarafı; `docs/obsidian-recommended.md` yazılacak)*
+- [x] ~~A3 Güvenlik ADR paketi~~ (ADR-7..10)
+- [x] ~~A4 README anahtar yedekleme protokolü~~
+- [ ] B1 VPS hazırlığı
+- [ ] B2 Hermes kurulumu
+- [ ] B3 `.env` oluşturma + **`NODE_ID` ve provider endpoint'leri**
+- [ ] B4 Workspace klonu
+- [ ] B5 Cron job'lar (consolidate, lint, sabah bülteni)
+- [ ] B6 Telegram (sonraya atıldı)
+- [ ] Güvenlik advisory: LUKS + Obsidian plugin denetimi
+- [ ] Branch protection aktifleştirme (ADR-10 koşulu; GitHub ayarı)
 
-### Faz 3 — Bakım döngüsü
-- [ ] `tend` operasyonu (stub/orphan/imported/duplicate)
-- [ ] `build_index` — üretilen `wiki/index.md`
-- [ ] hot.md disiplini + lint kuralları tam set (satır bütçeleri dahil)
-- [ ] **Güvenlik lint'i:** hassas glob'larda her dosya GITCRYPT başlıklı +
-      kapsam dışı yeni kök dizin uyarısı (git-crypt metadata/glob sınırları,
-      red-team bulgu 6); yıllık anahtar-yedeği unlock testi hatırlatması;
-      fixture tabanlı canary injection egzersizi (ADR-9 K5)
+---
 
-### Faz 4 — Anlamsal katman + çoklu düğüm
-- [ ] On-demand semantic: yerel embedding (VPS CPU) + sqlite-vec, `data/` cache
-      (`data/` plaintext → disk şifreleme kapsamında, red-team bulgu 9)
-- [ ] Ev düğümü: Ollama provider, aynı repo klonu (`0.0.0.0` bind yasağı — deploy
-      doc'a not, red-team bulgu 12)
-- [ ] **Yedeklilik:** ikinci bare-mirror (şifreli disk) + anahtar escrow
-      (tek remote/tek arıza noktası, red-team bulgu 10)
-- [ ] Model fallback değerlendirmesi: Hermes konfig → LiteLLM proxy → özel kod
-- [ ] Claims tablosu değerlendirmesi (paralel düğüm yoğunluğu oluşursa)
+## Faz 2 — Ingest Hattı
 
-### Faz 5 — Genişleme
+- [ ] `raw/inbox/` akışı canlı: inbox → anlama → wiki MR
+- [ ] Post-ingest verification — ingest sonrası otomatik format/link denetimi
+- [ ] Ingest regex ön-taraması (injection flag; ADR-9 K3)
+- [ ] FreshRSS kurulumu (Docker) + saatlik keyword push (regex, LLM'siz)
+- [ ] Sabah gündem digest'i; değerli içerik yolu: digest → `raw/clippings/` → wiki MR
+
+---
+
+## Faz 3 — Bakım Döngüsü
+
+- [ ] `lint()` tam set: kırık link, orphan, enum, updated-bump, satır bütçeleri,
+      `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması
+- [ ] `tend()` + `consolidate()` cron'da canlı
+- [ ] `agent/sessions/` adlandırma kuralı + özet şablonu (ilk gerçek session'da)
+- [ ] `log/` runtime logging tasarımı: format (timestamp/level/component/message) +
+      commit/gitignore politikası
+- [ ] Kararlaştırılmayı bekleyen mimariler (plans/Yeni Agent Yapısı.md §45):
+      Master DB view'ları, graph/index, search/embedding — gerçek ihtiyaç
+      ortaya çıktığında tasarım önerisiyle ele alınır
+
+---
+
+## Faz 4 — Semantic + Çoklu Düğüm
+
+- [ ] Ev düğümü: Ollama provider, aynı repo klonu (ADR-8 hassas kapsam yerelde)
+- [ ] On-demand semantic search (yerel embedding; mimari §45-9 ile kararlaştırılacak)
+- [ ] Katman bazlı çatışma çözüm politikası
+- [ ] İkinci bare-mirror (şifreli disk) + anahtar escrow; model fallback
+
+---
+
+## Faz 5 — Genişleme
+
 - [ ] WhatsApp/Signal gateway + sesli not transkripsiyonu
-- [ ] Ek integration'lar (takvim/CalDAV, RSS, e-posta) — talep-kapılı
-
-### Bilgi Akışı — gündem / X / blog takibi (plan aşaması)
-
-> Talep edilmiş, geliştirme sırası belirlenmedi. Kurulum Faz 1 deploy'una
-> (docker-compose'a FreshRSS servisi) eklenir; operasyonlar Faz 2-3 cron'larıyla
-> paralel geliştirilir.
-
-- [ ] FreshRSS kurulumu (VPS, Docker; Google Reader-uyumlu API etkin) +
-      freshrss-x eklentisi — X hesap takibi; blog RSS'leri
-- [ ] `sdata/digest.json` şablonu: `keywords_push` (anlık push kelimeleri, hızlı
-      şerit — Telegram'dan güncellenir), `digest_hour`; kaynak listesi FreshRSS'te
-      kalır (repo dışı — mahremiyet)
-- [ ] Saatlik keyword push: mekanik regex ön-filtre (LLM'siz, token ~0) →
-      eşleşmede LLM özet → anlık Telegram bildirimi (yarı-anlık: FreshRSS
-      refresh 15-30 dk + saatlik check)
-- [ ] Sabah gündem digest'i: trend/gündem web araması + unread ilgi filtresi
-      (hot.md/areas sinyalleri) → ≤20 satır Telegram digest
-- [ ] Değerli içerik yolu: digest'ten seçilenler `raw/clippings/` → atoms →
-      wiki MR (compile, don't just retrieve)
-
-Token koruması: FreshRSS toplama maliyeti sıfır; agent yalnız başlık+snippet
-okur, tam metin yalnız hatta işleneceklerde. Newsletter e-posta köprüsü
-(kill-the-newsletter) değerlendirildi ve atlandı.
+- [ ] Ek integration'lar (takvim, RSS e-posta)
+- [ ] Sözleşme kompakt versiyonu (token verimliliği)
+- [ ] `web/` UI: view katmanı tasarımı (tech seçimi §45-13 ile)

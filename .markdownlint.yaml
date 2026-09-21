@@ -1,0 +1,25 @@
+# markdownlint konfigürasyonu — wiki/ notları için
+# Ref: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+default: true
+
+# MD013: Satır uzunluğu — frontmatter claim'leri ve wikilink'ler uzun olabilir
+MD013: false
+
+# MD033: Inline HTML — Obsidian comment syntax (<!-- ... -->) kullanılıyor
+MD033: false
+
+# MD041: İlk satır H1 olmalı — frontmatter sonrası geçerli
+MD041: false
+
+# MD022: Heading öncesi boş satır — frontmatter sonrasında gerekmez
+MD022: false
+
+# MD024: Aynı başlık tekrarı — ## Links, ## Summary tüm notlarda tekrarlanır
+MD024: false
+
+# MD025: Tek H1 — frontmatter `title` + gövde H1 evrensel not formatıdır (SCHEMA §3)
+MD025: false
+
+# MD032: Liste öncesi/sonrası boş satır — kompakt stil: ## Links/## Karar doğrudan liste
+MD032: false
