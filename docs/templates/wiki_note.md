@@ -1,30 +1,27 @@
 ---
-id: {{unix_timestamp}}-{{kisa-slug}}
-title: {{Tam ve Uzun Başlık}}
-type: {{concept | decision | task | issue | person | project | resource | area}}
-stage: {{inbox | next | in_progress | waiting | done | archived}}
-status: {{stub | unverified | established}}
-scope: {{systems | work | personal | learning | creator | media | common}}
-priority: {{none | low | medium | high}}
-date: {{YYYY-MM-DD - İlgili tarih}}
-url: {{Varsa dış bağlantı}}
-parent: {{Varsa tek bir üst notun adı, köşeli parantezsiz}}
+title: "{{Tam ve Açıklayıcı Başlık}}"
+type: "{{concept | project | task | issue | resource | person | decision}}"
+stage: "{{inbox | next | in_progress | waiting | done | archived}}"
+scope: "{{work | personal | learning | systems | creator | media | common}}"
+status: "{{stub | unverified | established}}"
+# priority: "{{high | medium | low | none}}"
+# custom_date: "{{kullanıcı-anlamlı tarih — format henüz kararlaşmadı}}"
+# url: "{{varsa dış bağlantı}}"
+tags: [{{kisa-ascii-etiket}}]
 created: {{YYYY-MM-DD}}
-updated: {{YYYY-MM-DD - Her değişimde güncellenir}}
-tags:
-  - {{kucuk-harf-ascii-etiket}}
-locked: false
+updated: {{YYYY-MM-DD}}
+# locked: false
 ---
 
-# {{Tam ve Uzun Başlık}}
+# {{Görünen Başlık}}
 
 ## Links
-<!-- Obsidian Graph (Ağ Görünümü) bu bölümden beslenir. Yön daima özelden geneledir (bu nottan, daha geniş veya üst kapsama doğru). -->
-- **Up:** [[{{Üst Not Başlığı}}]]
-- **Related:** [[{{İlgili Başka Not}}]] — Neden ilişkili olduğuna dair mikro açıklama.
+<!-- Obsidian Graph bu bölümden beslenir. Yön daima özelden genele; reciprocal back-link yazılmaz. -->
+- **Up:** [[{{ust-not-slug}}|{{Üst Not Başlığı}}]]
+- **Related:** [[{{ilgili-not-slug}}|{{İlgili Not}}]] — mikro açıklama
 
 ## Summary
-> (Eğer `title` çok uzunsa ve dosya adından farklıysa, gerçek/uzun başlığın bağlamını burada kısaca belirtin.) Notun ana fikrini veya amacını belirten 1-2 cümlelik özet.
+Notun ana fikrini veya amacını belirten 1-2 cümlelik özet.
 
 ## Body
-Buradan itibaren notun içeriği başlar. Yalın düğüm ilkesi gereği not tek bir konuya odaklanmalı, çok uzarsa yeni bir nota bölünmelidir.
+Notun içeriği. Yalın düğüm ilkesi: bir not = bir fikir; büyürse bölünür.
