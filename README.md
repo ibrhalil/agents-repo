@@ -1,9 +1,9 @@
 # Noma
 
 İnsan + agent ortak bahçesi. Kişisel asistanın tek doğruluk kaynağı: bilgi tabanı,
-hafıza, yetenekler ve sözleşmeler bu repoda yaşar. Herhangi bir düğüm (VPS'te Hermes,
-evde Ollama ajanı, herhangi bir MCP uyumlu agent) bu reponun bir klonu + git-crypt
-unlock + bağlantıyla aynı asistana dönüşür.
+hafıza, yetenekler ve sözleşmeler bu repoda yaşar. Herhangi bir agent/model düğümü
+(CLI agent, VPS'te Hermes, evde Ollama) bu reponun bir klonu + git-crypt unlock +
+düğüm kaydı + bağlantıyla aynı asistana dönüşür (`docs/nodes/`).
 
 ## Harita
 
@@ -16,7 +16,7 @@ unlock + bağlantıyla aynı asistana dönüşür.
 | `agent/prompts/` · `agent/sessions/` | Prompt hazırlama · session özetleri [git-crypt] |
 | `plans/` · `log/` | Uzun iş planları · operasyonel log [git-crypt] |
 | `agent/` `workspace/` `tools/` `skills/` `scripts/` | Agent altyapısı · geçici alan · yetenekler |
-| `config/` `web/` `docs/` | Konfigürasyon (secret yok) · web UI · dokümantasyon |
+| `config/` `web/` `docs/` | Konfigürasyon (secret yok) · web UI · dokümantasyon · düğüm kayıtları |
 
 **Görünürlük:** repo public'tir; kişisel içerik git-crypt ile şifrelenir
 (`raw/ wiki/ memories/ agent/prompts/ agent/sessions/ plans/ log/`). Public
@@ -39,7 +39,8 @@ repo public olduğundan güvenlik modeli anahtara dayanır; yedek GitHub ekosist
 ## Kritik kurulum notları
 
 1. **git-crypt anahtarını yedekle** — protokol yukarıda
-2. **Yeni düğüm kurulumu:** klonla → `git-crypt unlock <key>` → `.env` doldur
+2. **Yeni düğüm kurulumu:** klonla → `git-crypt unlock <key>` → `.env` doldur →
+   düğüm kaydı aç (`docs/nodes/`, şablon `docs/templates/node.md`) — AGENTS › Düğümler
 3. **Obsidian:** vault olarak repo kökünü kullanabilirsin; grafik gürültüsünü
    "Excluded files" ile yönet (öneri: `raw/`, `docs/`, `plans/`, `log/` dışla).
    `.obsidian/` gitignore'dır
