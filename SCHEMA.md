@@ -100,8 +100,8 @@ hafızasıdır — birbirinin yerine kullanılmaz.
 ## 7. agent/sessions/
 
 Session summary: kararlar, önemli sonuçlar, değişen kurallar, follow-up'lar, sonraki
-agent için bağlam. Raw chat transcript kalıcı saklanmaz; adlandırma kuralı ilk
-gerçek session'da kararlaştırılacak.
+agent için bağlam. Raw chat transcript kalıcı saklanmaz. Adlandırma:
+`YYYY-MM-DD-<kısa-ascii-slug>.md` (ör: `2026-09-23-yapi-denetimi.md`).
 
 ## 8. log/
 
