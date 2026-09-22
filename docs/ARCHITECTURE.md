@@ -13,7 +13,7 @@ genel bakışı tutar.
 4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj.
 5. **Local-first dostu, bulut esnek** — direkt çoklu provider + Ollama düğümü (ADR-8).
 6. **Gereksiz complexity yok** — yeni katman/alan/dizin gerçek ihtiyaç ister
-   (plans/Yeni Agent Yapısı.md §44).
+   (plans/yeni-agent-yapisi.md §44).
 
 ## Bilgi hattı ve retrieval
 Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[yeni-agent-yapisi]]).

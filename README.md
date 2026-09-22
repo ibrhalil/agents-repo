@@ -1,4 +1,4 @@
-# agents-repo — Noma
+# Noma
 
 İnsan + agent ortak bahçesi. Kişisel asistanın tek doğruluk kaynağı: bilgi tabanı,
 hafıza, yetenekler ve sözleşmeler bu repoda yaşar. Herhangi bir düğüm (VPS'te Hermes,

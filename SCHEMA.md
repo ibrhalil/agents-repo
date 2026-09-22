@@ -2,7 +2,7 @@
 
 Normatif veri tanımları: insan ve agent'lerin ortak okuduğu/yazdığı her format burada.
 Çelişkide bu dosya kazanır; değişiklik = insan onayı (MR). Mimari kararların temel
-kaynağı: `plans/Yeni Agent Yapısı.md` — orada "henüz karar verilmedi" denilen konular
+kaynağı: `plans/yeni-agent-yapisi.md` — orada "henüz karar verilmedi" denilen konular
 burada da kararlaştırılmış sayılmaz.
 
 ## 1. Dizinler ve görünürlük (public repo)
@@ -130,7 +130,7 @@ commit'i hedeflenmez.
   dışlanır; tam-proje taraması yalnızca cron'da. Türkçe+İngilizce karışımı: köklü
   terimi İngilizce bırakmak anlamı ve token yoğunluğunu korur.
 
-## 12. Henüz karar verilmedi (plans/Yeni Agent Yapısı.md §45)
+## 12. Henüz karar verilmedi (plans/yeni-agent-yapisi.md §45)
 
 `custom_date` formatı · yeni not filename üretim algoritması · raw işlenme işareti ·
 maintenance job frekansı · Master DB · graph/index · search/embedding · Docker

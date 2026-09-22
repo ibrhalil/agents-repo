@@ -1,6 +1,6 @@
-# skills/ — Hermes Skill'leri
+# skills/
 
-Hermes'in agent runtime'ına özel prosedürel bellek (agentskills.io standardı).
-Planlanan skill'ler (Faz 2-3): `ingest` (inbox + oturum işleme), `consolidate`
-(gece cron), `tend` (bahçe bakımı), `lint` (haftalık). Runtime-bağımsız yetenekler
-için bkz. `../mcp/`.
+Agent'lerin prosedürel belleği: bir işin hangi yöntemle yapıldığı. Tool = ne
+yapabiliyor; skill = nasıl yapılıyor (ayrım AGENTS › Kod). Planlanan skill'ler
+(Faz 2-3): `ingest` (inbox + oturum işleme), `consolidate` (gece cron), `tend`
+(bahçe bakımı), `lint` (haftalık).

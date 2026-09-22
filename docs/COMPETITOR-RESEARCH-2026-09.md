@@ -1,3 +1,7 @@
+> **Tarihsel belge (2026-09):** Bu rapor eski 3-katmanlı yapıyı (atoms katmanı,
+> `soul/`, `sdata/`, `hot.md`) tarif eder — güncel mimariyle çelişir. Güncel durum:
+> `docs/ARCHITECTURE.md` ve `plans/yeni-agent-yapisi.md`.
+
 # Benzer Projeler Araştırması — Agent-Entegre "İkinci Beyin" Sistemleri
 
 Bu alan 2025-2026'da hızla olgunlaştı. Ortak kalıp **"LLM Wiki"** olarak adlandırılıyor. Noma tam da bu kalıbın disiplinli bir uygulaması.

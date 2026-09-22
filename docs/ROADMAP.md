@@ -57,7 +57,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [ ] `agent/sessions/` adlandırma kuralı + özet şablonu (ilk gerçek session'da)
 - [ ] `log/` runtime logging tasarımı: format (timestamp/level/component/message) +
       commit/gitignore politikası
-- [ ] Kararlaştırılmayı bekleyen mimariler (plans/Yeni Agent Yapısı.md §45):
+- [ ] Kararlaştırılmayı bekleyen mimariler (plans/yeni-agent-yapisi.md §45):
       Master DB view'ları, graph/index, search/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır
 
