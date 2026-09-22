@@ -1,7 +1,7 @@
 # AGENTS.md — Agent Davranış Sözleşmesi
 
 Davranış kuralları burada, veri formatları `SCHEMA.md`'de — çelişkide SCHEMA kazanır;
-mimari kararların kaynağı `plans/Yeni Agent Yapısı.md` — kararlaştırılmamış konularda kural icat edilmez.
+mimari kararların kaynağı `plans/yeni-agent-yapisi.md` — kararlaştırılmamış konularda kural icat edilmez.
 
 ## Dil Politikası
 

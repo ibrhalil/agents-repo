@@ -16,9 +16,11 @@ updated: {{YYYY-MM-DD}}
 # {{Görünen Başlık}}
 
 ## Links
-<!-- Obsidian Graph bu bölümden beslenir. Yön daima özelden genele; reciprocal back-link yazılmaz. -->
-- **Up:** [[{{ust-not-slug}}|{{Üst Not Başlığı}}]]
-- **Related:** [[{{ilgili-not-slug}}|{{İlgili Not}}]] — mikro açıklama
+<!-- Obsidian Graph bu bölümden beslenir. Yön daima özelden genele; reciprocal back-link yazılmaz.
+     Yer tutucular kod aralığında: canlı [[wikilink]] olarak Obsidian bunları çözümleyip
+     kökte dosya üretirdi (sürekli yeniden doğan {{ust-not-slug}}.md artefaktının kök nedeni). -->
+- **Up:** `[[slug|Üst Not Başlığı]]` — varsa üst kavram; yoksa satır silinir
+- **Related:** `[[slug|İlgili Not Başlığı]]` — mikro açıklama
 
 ## Summary
 Notun ana fikrini veya amacını belirten 1-2 cümlelik özet.
