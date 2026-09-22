@@ -18,10 +18,8 @@ mimari kararların kaynağı `plans/yeni-agent-yapisi.md` — kararlaştırılma
 
 - Yüklenen dosyalar bütçelidir (lint): AGENTS ≤100, SCHEMA ≤140 satır.
 - Tüm wiki ve tüm `raw/` **asla** context'e yüklenmez; retrieval: metadata filtre →
-  full-text (ripgrep) → gerektiğinde `[[wikilink]]` traversal; yalnız gerekli
-  context modele girer; belirli graph/search/embedding motoru zorunlu değildir.
-- Tam-proje taraması yalnızca cron'da; oturumda hedefli retrieval; ucuz işler küçük
-  modele; context stabil → uçucu (prefix-cache).
+  full-text (ripgrep) → `[[wikilink]]` traversal; graph/search/embedding zorunlu değil.
+- Tam-proje taraması yalnızca cron'da; oturumda hedefli retrieval; ucuz işler küçük modele.
 
 ## Operasyonlar
 
@@ -95,6 +93,7 @@ yapı eklenmez. `tool` = ne yapabiliyor; `skill` = hangi yöntemle; `scripts/` =
 
 ## Düğümler
 
-**Hermes (VPS, 7/24):** workspace = bu repo; cron: gece konsolidasyon, haftalık lint,
-sabah bülteni. **Ev düğümü:** aynı SCHEMA, Ollama provider. Yeni düğüm: klon →
-`git-crypt unlock` → `.env` → bağlan; fazlar: `docs/ROADMAP.md`.
+Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model (runtime bağımsız).
+Katılım: klon → `git-crypt unlock` → `.env` → düğüm kaydı `docs/nodes/` (şablon:
+`docs/templates/node.md`, MR ile) → bağlan. Örnekler: Hermes (VPS, 7/24; cron:
+konsolidasyon/lint/bülten), ev düğümü (Ollama). Fazlar: `docs/ROADMAP.md`.

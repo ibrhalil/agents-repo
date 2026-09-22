@@ -7,8 +7,8 @@ genel bakışı tutar.
 ## İlkeler
 1. **Markdown source of truth** — index/graph/view'lar yeniden üretilebilir; kendi
    veritabanı formatına kilitlenme yok, Obsidian doğrudan okur.
-2. **Runtime-bağamsız çekirdek** — bir agent'in "Noma" olması için gereken her şey
-   repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, memories, yetenekler.
+2. **Runtime-bağımsız çekirdek** — herhangi bir agent'ın "Noma" olması için gereken
+   her şey repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, memories, yetenekler.
 3. **Git = kontrol mekanizması** — her agent değişikliği branch + PR (ADR-10).
 4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj.
 5. **Local-first dostu, bulut esnek** — direkt çoklu provider + Ollama düğümü (ADR-8).
@@ -39,8 +39,11 @@ veri yol adlarında bile yaşamaz (SCHEMA §10). Hassas kapsam yalnız yerel mod
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
 
 ## Düğümler
-- **VPS (7/24 birincil):** Hermes + Telegram gateway + cron (gece konsolidasyon,
-  haftalık lint, sabah bülteni). Workspace = bu reponun klonu.
+Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model; kayıtlar `docs/nodes/`
+(public; şablon `docs/templates/node.md`).
+- **Laptop (aktif):** opencode — etkileşimli geliştirme düğümü.
+- **VPS (7/24 birincil, planlı):** ilk runtime adayı Hermes + Telegram gateway +
+  cron (gece konsolidasyon, haftalık lint, sabah bülteni). Workspace = klon.
 - **Ev (test/local):** Ollama provider, aynı repo klonu, aynı SCHEMA.
 - **İnsan düğümü:** Obsidian ile `wiki/` doğrudan düzenleme.
 - **Senkron:** git (`pull --rebase → merge → commit → push`); append-only tasarım
@@ -50,9 +53,9 @@ veri yol adlarında bile yaşamaz (SCHEMA §10). Hassas kapsam yalnız yerel mod
 Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
 
 ## Teknoloji gerekçeleri (özet)
-- **Hermes hibrit:** agent loop / cron / gateway / model yönetimi yeniden yazılmaz;
-  özel geliştirme bilgi sistemine odaklanır. Sıfırdan runtime değerlendirildi ve
-  reddedildi (aylarca sürecek, tek kişi için bakımsız).
+- **Hermes (VPS düğümü runtime adayı):** agent loop / cron / gateway / model
+  yönetimi yeniden yazılmaz; özel geliştirme bilgi sistemine odaklanır. Sıfırdan
+  runtime değerlendirildi ve reddedildi (aylarca sürecek, tek kişi için bakımsız).
 - **MCP:** taşınabilirlik katmanı adayı; nihai kullanımı/sınırları henüz kararlaşmadı
   (§45-11) — ihtiyaç yokken katman eklenmez.
 - **git-crypt:** kişisel veri için; retrofit git history yeniden yazma gerektirdiğinden
