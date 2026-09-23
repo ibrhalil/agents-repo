@@ -27,8 +27,12 @@ def generate():
         slug = filepath.stem
         content = filepath.read_text(encoding="utf-8")
 
-        title_match = re.search(r'^title:\s*"([^"]+)"', content, re.MULTILINE)
-        title = title_match.group(1) if title_match else slug
+        title = slug
+        fm_match = re.match(r"^---\n(.*?)\n---", content, re.S)
+        if fm_match:
+            title_match = re.search(r'^title:\s*(.+?)\s*$', fm_match.group(1), re.M)
+            if title_match:
+                title = title_match.group(1).strip('"')
 
         stage_match = re.search(r"^stage:\s*(\S+)", content, re.MULTILINE)
         stage = stage_match.group(1) if stage_match else ""

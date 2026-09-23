@@ -20,7 +20,7 @@
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
 - [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]] — Ne nereye gider: hassas kapsam yalnız yerel model.
-- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
+- [[uzun-not-politikasi|Uzun Not Politikası]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
 - [[veri-butunlugu|Veri Bütünlüğü Politikası]] — Ham kaynaklar ve insan içeriği mutasyon-dışıdır; her değişiklik geri alınabilir iz bırakır.
 - [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
 
@@ -70,7 +70,7 @@
 - [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
 - [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]] — Agent'ların sürekli PR açıp insan onayı beklemesi eş zamanlı çalışmada darboğaz yarattığı için eski "Agent…
 - [[noma|Noma (agents-repo)]] — Kişisel asistan / koç / ikinci beyin projesi: insan + çoklu-agent ortak bahçesi; her düğüm (herhangi bir ag… [in_progress]
-- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[not-alma-rehberi|Not Alma Rehberi]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
 - [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]] — Repo'nun eski 3-katmanlı yapı döneminde (2026-09-20) yapılmış kapsamlı denetim analizi: güçlü yönler ve 22… [archived]
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
@@ -106,7 +106,7 @@
 - [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
 
 ### [[not-alma-rehberi]]
-- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
+- [[uzun-not-politikasi|Uzun Not Politikası]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
 
 ### [[public-repo-durusu]]
 - [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]] — Sırlar plaintext'te yaşamaz, public yüzey kişisel veriden arındırılır; git-crypt anahtarının yedeği güvenli…
@@ -126,22 +126,16 @@
 - [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
 
 ### [[wiki-adlandirma-ve-not-yapisi]]
-- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
 - [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]] — Master Note DB yapısı (Area/Status/Priority/URL/Parent/Date) epistemik şema ile birleştirildi; `status` × `… [archived]
-- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
 - [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[wiki-not-semasi]]
-- [[epistemik-hijyen|Epistemik Hijyen Politikası]] — Bilgi kaynağıyla girer; emin olunmayan bilgi işaretlenir; uydurma asla yoktur.
-- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
-- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
-- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
 - [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[yalin-dugum-ilkesi]]
 - [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
-- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
-- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
+- [[not-alma-rehberi|Not Alma Rehberi]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[uzun-not-politikasi|Uzun Not Politikası]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
 
 ### [[yazilim-disi-ilgi-alanlari]]
 - [[sevdigim-muzikler|Sevdiğim Müzikler]] — Kullanıcının sevdiği şarkıların tek düz listesi; kullanıcı bildirdikçe oturumlarda eklendir. [in_progress]
