@@ -1,6 +1,6 @@
 > **Tarihsel belge (2026-09):** Bu rapor eski 3-katmanlı yapıyı (atoms katmanı,
 > `soul/`, `sdata/`, `hot.md`) tarif eder — güncel mimariyle çelişir. Güncel durum:
-> `docs/ARCHITECTURE.md` ve `plans/yeni-agent-yapisi.md`.
+> `docs/ARCHITECTURE.md` ve `wiki/yeni-agent-yapisi.md`.
 
 Bağ: [[index]] · [[wiki/yeni-agent-yapisi|Yeni Agent Yapısı]]
 

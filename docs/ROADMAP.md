@@ -59,7 +59,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [ ] `agent/sessions/` adlandırma kuralı + özet şablonu (ilk gerçek session'da)
 - [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,
       `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §8)
-- [ ] Kararlaştırılmayı bekleyen mimariler (plans/yeni-agent-yapisi.md §45):
+- [ ] Kararlaştırılmayı bekleyen mimariler (wiki/yeni-agent-yapisi.md §45):
       Master DB view'ları, graph/index, search/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır
 

@@ -2,7 +2,7 @@
 
 Normatif veri tanımları: insan ve agent'lerin ortak okuduğu/yazdığı her format burada.
 Çelişkide bu dosya kazanır; değişiklik = insan onayı (MR). Mimari kararların kaynağı
-`plans/yeni-agent-yapisi.md` — orası "henüz karar verilmedi" diyorsa burada da değildir.
+`wiki/yeni-agent-yapisi.md` — orası "henüz karar verilmedi" diyorsa burada da değildir.
 
 ## 1. Dizinler ve görünürlük (public repo)
 
@@ -131,7 +131,7 @@ güncel gün girer, geçmiş ripgrep; append çakışmasında iki satır da tutu
 - Log kaydı tek satır. ripgrep .gitignore'a saygılı → `data/` aramalardan doğal dışlanır;
   tam-proje taraması yalnızca cron'da. Köklü terim İngilizce kalır — anlam + token yoğunluğu.
 
-## 12. Henüz karar verilmedi (plans/yeni-agent-yapisi.md §45)
+## 12. Henüz karar verilmedi (wiki/yeni-agent-yapisi.md §45)
 
 `custom_date` formatı · yeni not filename üretim algoritması · raw işlenme işareti ·
 maintenance job frekansı · Master DB · graph motoru · search/embedding · Docker sandbox
