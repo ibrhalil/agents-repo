@@ -13,3 +13,5 @@ added: YYYY-MM-DD
 - **Erişim:** repo read/write (serbest yazma; commit ve conflict çözümü cron'da — bkz. `[[main-insana-aittir]]`); `raw/` append-only
 - **Kısıtlar:** <ör: hassas scope yalnız yerel model — ADR-8 uyum beyanı>
 - **Notlar:** kurulum özellikleri; sırlar asla burada (yalnız `.env`)
+
+Kök: [[index]]

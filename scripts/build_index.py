@@ -30,6 +30,19 @@ def generate():
         title_match = re.search(r'^title:\s*"([^"]+)"', content, re.MULTILINE)
         title = title_match.group(1) if title_match else slug
 
+        stage_match = re.search(r"^stage:\s*(\S+)", content, re.MULTILINE)
+        stage = stage_match.group(1) if stage_match else ""
+        summary_match = re.search(r"## Summary\n(.*?)(?=\n## |\Z)", content, re.DOTALL)
+        desc = ""
+        if summary_match:
+            first_line = next((l.strip() for l in summary_match.group(1).splitlines() if l.strip()), "")
+            sentence = re.match(r"(.+?[.!?])", first_line)
+            desc = (sentence.group(1) if sentence else first_line).strip()
+            if len(desc) > 110:
+                desc = desc[:107].rstrip() + "…"
+        if stage and stage != "done":
+            desc = f"{desc} [{stage}]" if desc else f"[{stage}]"
+
         # ## Links bölümünü bul
         links_match = re.search(r"## Links\n(.*?)(?=\n## Summary)", content, re.DOTALL)
         if links_match:
@@ -39,11 +52,14 @@ def generate():
 
             if extracted_links:
                 for link in extracted_links:
-                    hubs[link].append((slug, title))
+                    hubs[link].append((slug, title, desc))
             else:
-                uncategorized.append((slug, title))
+                uncategorized.append((slug, title, desc))
         else:
-            uncategorized.append((slug, title))
+            uncategorized.append((slug, title, desc))
+
+    root_hubs = [u for u in uncategorized if u[0] in hubs]
+    uncategorized = [u for u in uncategorized if u[0] not in hubs]
 
     parts = []
     parts.append("# index — Vault Kökü")
@@ -55,18 +71,33 @@ def generate():
         parts.append(f"- [[log/{log_stem}]] (Günlük Log)\n")
     else:
         parts.append("")
+    if root_hubs:
+        parts.append("## Kök Hub'lar")
+        for leaf_slug, leaf_title, leaf_desc in sorted(root_hubs):
+            line = f"- [[{leaf_slug}|{leaf_title}]]"
+            if leaf_desc:
+                line += f" — {leaf_desc}"
+            parts.append(line)
+        parts.append("")
+
     parts.append("## Ağaç (Tree) — Hub'lar ve Yapraklar\n")
 
     for hub_slug in sorted(hubs.keys()):
         parts.append(f"### [[{hub_slug}]]")
-        for leaf_slug, leaf_title in sorted(hubs[hub_slug]):
-            parts.append(f"- [[{leaf_slug}|{leaf_title}]]")
+        for leaf_slug, leaf_title, leaf_desc in sorted(hubs[hub_slug]):
+            line = f"- [[{leaf_slug}|{leaf_title}]]"
+            if leaf_desc:
+                line += f" — {leaf_desc}"
+            parts.append(line)
         parts.append("")
 
     if uncategorized:
         parts.append("## Kategorize Edilmemiş (Tend Adayları)")
-        for leaf_slug, leaf_title in sorted(uncategorized):
-            parts.append(f"- [[{leaf_slug}|{leaf_title}]]")
+        for leaf_slug, leaf_title, leaf_desc in sorted(uncategorized):
+            line = f"- [[{leaf_slug}|{leaf_title}]]"
+            if leaf_desc:
+                line += f" — {leaf_desc}"
+            parts.append(line)
         parts.append("")
 
     return "\n".join(parts)

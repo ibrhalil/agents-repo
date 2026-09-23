@@ -2,6 +2,7 @@
 """AGENTS lint() mekanik kontrolleri (ERR=ihlal, WRN=yorum insan'a, INFO=bilgi).
 Exit 1 iff ERR > 0; cron ve pre-commit bu sözleşmeye bağlanır."""
 import re, subprocess, sys
+from datetime import date, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,7 +45,7 @@ for f, n in BUDGETS.items():
     add(sev, 'BUDGET', f'{f}: {c}/{n} satır')
 
 wiki = sorted((ROOT / 'wiki').glob('*.md'))
-links_in, links_out = {}, {}
+links_in, links_out, tree_out = {}, {}, {}
 for p in wiki:
     rel = f'wiki/{p.name}'
     text = p.read_text(encoding='utf-8')
@@ -67,6 +68,15 @@ for p in wiki:
     body = strip_code(text)
     links_out[rel] = {s.strip() for s in re.findall(r'\[\[([^\]|#]+)', body)}
     for s in links_out[rel]: links_in.setdefault(s.lower(), set()).add(rel)
+    sec = re.search(r'## Links\n(.*?)(?=\n## )', text, re.S)
+    if sec: tree_out[p.stem] = {s.strip() for s in re.findall(r'\[\[([^\]|#]+)', sec.group(1))}
+    st = fm.get('stage', '')
+    upd = (fm.get('updated') or '')[:10]
+    if st in ('inbox', 'next', 'in_progress', 'waiting'):
+        try:
+            if date.fromisoformat(upd) < date.today() - timedelta(days=30):
+                add('WRN', 'STALE', f'{rel}: stage={st} ama updated={upd} (30+ gün, tend adayı)')
+        except ValueError: pass
     r = subprocess.run(['git', 'log', '-1', '--format=%as', '--', str(p)],
                        cwd=ROOT, capture_output=True, text=True)
     last = r.stdout.strip()
@@ -81,6 +91,11 @@ for rel, slugs in links_out.items():
     for s in slugs:
         if not (ROOT / 'wiki' / f'{s}.md').exists():
             add('ERR', 'LINK', f'{rel}: [[{s}]] hedefi yok')
+
+for a, outs in tree_out.items():
+    for b in outs:
+        if b in tree_out and a in tree_out[b] and a < b:
+            add('WRN', 'CYCLE', f'wiki/{a}.md <-> wiki/{b}.md karşılıklı Links (Tree ihlali)')
 
 for p in ROOT.rglob('*_v[0-9]*.md'):
     if '.git' not in p.parts: add('ERR', 'SUFFIX', str(p.relative_to(ROOT)))

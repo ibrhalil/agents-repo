@@ -67,3 +67,5 @@ Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
 - **forgesys aktarımları:** plan dosyası protokolü (resume + step contract), ROADMAP,
   dondurulmuş karar kuralı, dokümantasyon satır bütçeleri ve dil politikasının token
   optimizasyonu gerekçesi — olgun bir çok-agent deposundan (forgesys) devralındı.
+
+Kök: [[index]]

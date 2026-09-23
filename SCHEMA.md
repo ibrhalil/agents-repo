@@ -11,8 +11,10 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `agent/` (Public): Agent root altyapısı.
 `skills/` & `scripts/` (Public): Yetenek tanımları ve çalıştırılabilir kodlar.
 `docs/` (Public): Mimari kararlar, şablonlar, yol haritası.
+ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzerinden ulaşılır; yenisi oraya bağlanır.
 ## 2. Bilgi Hattı ve Keşif
 Üretim: `raw/` -> `wiki/` (2 katman).
+Geri besleme: Değerli query sentezleri atomik wiki notu olarak geri dosyalanır (`-> filed: wiki/slug.md` log kaydıyla; AGENTS §2 query).
 Harita: Tek kanonik giriş `index.md`'dir. `index.md` cron tarafından wiki'deki `## Links` yönünden (özelden genele) otomatik üretilir.
 ## 3. Wiki Not Formatı (Frontmatter)
 ZORUNLU ŞABLON: `docs/templates/wiki_note.md`

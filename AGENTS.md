@@ -7,7 +7,7 @@ GENİŞLETME: Yeni not (yaprak) üretildiğinde, `## Links` üzerinden KESİNLİ
 BÖLME: Büyüyen notlar Hub'a dönüştürülüp alt yapraklara bölünerek ağaç organik genişletilir.
 ## 2. Operasyonlar
 ingest: Kaynağı `raw/` altına verbatim yaz. Anla, wiki ile merge et, `log/` kaydı düş.
-query: [[index]] -> Hub -> Yaprak rotasını izle. Cevaplar KESİNLİKLE path atıflıdır. UYDURMAK YASAKTIR.
+query: [[index]] -> Hub -> Yaprak rotasını izle. Cevaplar KESİNLİKLE path atıflıdır. UYDURMAK YASAKTIR. Değerli sentez (karşılaştırma, analiz, yeni bağlantı) atomik not olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` yazılır.
 tend: Kullanıcı serbest girdilerini (eksik frontmatter, kırık link) normalize et, stub genişlet, duplicate birleştir.
 lint: Kırık link, orphan, updated bump denetimi.
 YAZMA AKIŞI: PR darboğazı yoktur. Agent'lar serbestçe yazar, Git commit ve conflict çözümü periyodik cron job'a aittir.

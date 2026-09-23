@@ -5,166 +5,158 @@
 - [[AGENTS]] · [[SCHEMA]] · [[README]]
 - [[log/2026-09-23]] (Günlük Log)
 
+## Kök Hub'lar
+- [[kisisel-bilgi-sistemi|Personal Knowledge System (bu sistemin kendisi)]] — Bu repo insan + agent'in ortak bahçesidir: aynı bilgi tabanına insan (Obsidian) ve agent'ler (ingest/query/…
+
 ## Ağaç (Tree) — Hub'lar ve Yapraklar
 
 ### [[agent-policy]]
-- [[bakim-disiplini|Bakım Disiplini Politikası]]
-- [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]]
-- [[epistemik-hijyen|Epistemik Hijyen Politikası]]
-- [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]]
-- [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]]
-- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]]
-- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
-- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
-- [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]]
-- [[uzun-not-politikasi|uzun-not-politikasi]]
-- [[veri-butunlugu|Veri Bütünlüğü Politikası]]
-- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]]
+- [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
+- [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]] — Dil politikası + token optimizasyonu + plan dosyası protokolü tek revizyonda kuruldu; kökler forgesys prati…
+- [[epistemik-hijyen|Epistemik Hijyen Politikası]] — Bilgi kaynağıyla girer; emin olunmayan bilgi işaretlenir; uydurma asla yoktur.
+- [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]] — Sırlar plaintext'te yaşamaz, public yüzey kişisel veriden arındırılır; git-crypt anahtarının yedeği güvenli…
+- [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]] — Agent'ların sürekli PR açıp insan onayı beklemesi eş zamanlı çalışmada darboğaz yarattığı için eski "Agent…
+- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
+- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
+- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
+- [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]] — Ne nereye gider: hassas kapsam yalnız yerel model.
+- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
+- [[veri-butunlugu|Veri Bütünlüğü Politikası]] — Ham kaynaklar ve insan içeriği mutasyon-dışıdır; her değişiklik geri alınabilir iz bırakır.
+- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
 
 ### [[ai-agent-teknolojileri]]
-- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]]
-- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]]
-- [[model-secimi-ve-eval|Model Seçimi ve Eval]]
+- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
+- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
+- [[model-secimi-ve-eval|Model Seçimi ve Eval]] — Model seçimi benchmark skoruyla değil davranış ve karakterle yapılır; ucuz token kötü sonuç demek değildir,…
 
 ### [[asistan-system-prompt-yapitaslari]]
-- [[ai-agent-teknolojileri|AI / Agent Teknolojileri]]
-- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]]
-- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]]
+- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
+- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
 
 ### [[bakim-disiplini]]
-- [[hata-yonetimi|Hata Yönetimi: Hatayı Sisteme Dönüştürmek]]
-- [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]]
-- [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]]
+- [[hata-yonetimi|Hata Yönetimi: Hatayı Sisteme Dönüştürmek]] — Her hata yama olarak değil sistem dönüşümü olarak ele alınır: kural, test veya guardrail olarak yapıya yazı…
+- [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]] — Tekrar eden prompt yapıları otomasyonu hakeder (script); N varyant üretüp en iyisini seçmek (best-of-N) mal…
+- [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
 ### [[bilgi-hatti]]
-- [[context-yonetimi|Context Yönetimi]]
-- [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]]
-- [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]]
-- [[kisisel-bilgi-sistemi|Personal Knowledge System (bu sistemin kendisi)]]
-- [[noma|Noma (agents-repo)]]
-- [[uzun-not-politikasi|uzun-not-politikasi]]
-- [[veri-butunlugu|Veri Bütünlüğü Politikası]]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]]
+- [[context-yonetimi|Context Yönetimi]] — Context sonlu ve çürüyebilir bir kaynaktır: her şeyi içine atmak dikkati dağıtır ve erken alınmış yanlış ka…
+- [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]] — Dil politikası + token optimizasyonu + plan dosyası protokolü tek revizyonda kuruldu; kökler forgesys prati…
+- [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]] — Agent tam yetkilidir (ekle/sil/güncelle) ama wiki/profil değişiklikleri branch + MR üzerinden geçer; insan… [archived]
+- [[noma|Noma (agents-repo)]] — Kişisel asistan / koç / ikinci beyin projesi: insan + çoklu-agent ortak bahçesi; her düğüm (herhangi bir ag… [in_progress]
+- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
+- [[veri-butunlugu|Veri Bütünlüğü Politikası]] — Ham kaynaklar ve insan içeriği mutasyon-dışıdır; her değişiklik geri alınabilir iz bırakır.
+- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[context-yonetimi]]
-- [[hafiza-ve-karar-yonetimi|Hafıza ve Karar Yönetimi]]
+- [[hafiza-ve-karar-yonetimi|Hafıza ve Karar Yönetimi]] — Hafıza salt konuşma geçmişi (transcript) değil, karar altyapısıdır; iyi bir sistemde "facts, decisions, pre…
 
 ### [[dil-politikasi-ve-token-kurallari]]
-- [[model-secimi-ve-eval|Model Seçimi ve Eval]]
-- [[noma|Noma (agents-repo)]]
-- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]]
-- [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]]
+- [[model-secimi-ve-eval|Model Seçimi ve Eval]] — Model seçimi benchmark skoruyla değil davranış ve karakterle yapılır; ucuz token kötü sonuç demek değildir,…
+- [[noma|Noma (agents-repo)]] — Kişisel asistan / koç / ikinci beyin projesi: insan + çoklu-agent ortak bahçesi; her düğüm (herhangi bir ag… [in_progress]
+- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
+- [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]] — Tekrar eden prompt yapıları otomasyonu hakeder (script); N varyant üretüp en iyisini seçmek (best-of-N) mal…
 
 ### [[epistemik-hijyen]]
-- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]]
-- [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]]
+- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
+- [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
 ### [[forgesys]]
-- [[bilgi-hatti|ADR-1 (superseded): Bilgi hattı raw → atoms → wiki olarak kuruldu]]
-- [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]]
-- [[urun-ve-girisimcilik|Ürün / Girişimcilik]]
+- [[bilgi-hatti|ADR-1 (superseded): Bilgi hattı raw → atoms → wiki olarak kuruldu]] — Kişisel bilgi tabanı üç katmanlı, markdown-merkezli kuruldu; vector DB asla truth değildir. [archived]
 
 ### [[iki-seritli-yazma-ve-mr]]
-- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
+- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
 
 ### [[kisisel-bilgi-sistemi]]
-- [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]]
-- [[ai-agent-teknolojileri|AI / Agent Teknolojileri]]
-- [[bilgi-hatti|ADR-1 (superseded): Bilgi hattı raw → atoms → wiki olarak kuruldu]]
-- [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]]
-- [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]]
-- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]]
-- [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]]
-- [[noma|Noma (agents-repo)]]
-- [[not-alma-rehberi|Kafka'nın retry semantiği]]
-- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]]
-- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
-- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
-- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]]
-- [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]]
-- [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]]
-- [[urun-ve-girisimcilik|Ürün / Girişimcilik]]
-- [[wiki-adlandirma-ve-not-yapisi|ADR-4 (superseded): İnsan başlıklı adlandırma, ilk-okuma yapısı, tarama politikası]]
-- [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]]
-- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]]
-- [[yazilim-disi-ilgi-alanlari|Yazılım Dışı İlgi Alanları]]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]]
+- [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]] — İnsan ve agent'ı birlikte bağleyen politikaların dizin notu; kural içeriği burada yaşamaz, alt notlarda yaşar.
+- [[ai-agent-teknolojileri|AI / Agent Teknolojileri]] — Sürekli ilgi alanı: LLM araçları, agent sistemleri, RAG, retrieval mimarileri. [next]
+- [[arac-zemini|Araç Zemini Register: repo yüzeyleri dizini]] — Repo'nun public yüzeyleri (skills/scripts/docs) wiki ağacına bu not üzerinden bağlanır; içerik burada yaşam…
+- [[bilgi-hatti|ADR-1 (superseded): Bilgi hattı raw → atoms → wiki olarak kuruldu]] — Kişisel bilgi tabanı üç katmanlı, markdown-merkezli kuruldu; vector DB asla truth değildir. [archived]
+- [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]] — Dil politikası + token optimizasyonu + plan dosyası protokolü tek revizyonda kuruldu; kökler forgesys prati…
+- [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]] — Agent tam yetkilidir (ekle/sil/güncelle) ama wiki/profil değişiklikleri branch + MR üzerinden geçer; insan… [archived]
+- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
+- [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]] — Agent'ların sürekli PR açıp insan onayı beklemesi eş zamanlı çalışmada darboğaz yarattığı için eski "Agent…
+- [[noma|Noma (agents-repo)]] — Kişisel asistan / koç / ikinci beyin projesi: insan + çoklu-agent ortak bahçesi; her düğüm (herhangi bir ag… [in_progress]
+- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]] — Repo'nun eski 3-katmanlı yapı döneminde (2026-09-20) yapılmış kapsamlı denetim analizi: güçlü yönler ve 22… [archived]
+- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
+- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
+- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]] — 2026-09-20 döneminde incelenen 8 benzer proje (LLM Wiki kalıbı) ve Noma için çıkarılan dersler. [archived]
+- [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]] — Ne nereye gider: hassas kapsam yalnız yerel model.
+- [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]] — Sürekli ilgi alanı: sistem tasarımı, mimari, dağıtık sistemler. [inbox]
+- [[urun-ve-girisimcilik|Ürün / Girişimcilik]] — Sürekli ilgi alanı: ürün düşünme, girişimcilik, iş modelleme. [inbox]
+- [[wiki-adlandirma-ve-not-yapisi|ADR-4 (superseded): İnsan başlıklı adlandırma, ilk-okuma yapısı, tarama politikası]] — Dosya adları grafik düğüm adlarıdır → insan-okur Türkçe başlıklar; navigasyon bloğu gövdeden önce; tam-proj… [archived]
+- [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]] — Master Note DB yapısı (Area/Status/Priority/URL/Parent/Date) epistemik şema ile birleştirildi; `status` × `… [archived]
+- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
+- [[yazilim-disi-ilgi-alanlari|Yazılım Dışı İlgi Alanları]] — Kişisel ilgi alanları hub'ı — içerik gözlemle doldurulur; her alan somutlaştıkça kendi notuna bağlanır. [inbox]
+- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[llm-sistem-ilkeleri]]
-- [[ai-agent-teknolojileri|AI / Agent Teknolojileri]]
-- [[arac-tasarimi-ve-kalitesi|Araç Tasarımı ve Kalitesi]]
-- [[context-yonetimi|Context Yönetimi]]
-- [[hafiza-ve-karar-yonetimi|Hafıza ve Karar Yönetimi]]
-- [[hata-yonetimi|Hata Yönetimi: Hatayı Sisteme Dönüştürmek]]
-- [[model-secimi-ve-eval|Model Seçimi ve Eval]]
-- [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]]
-- [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]]
+- [[arac-tasarimi-ve-kalitesi|Araç Tasarımı ve Kalitesi]] — Tool kalitesi model kalitesi kadar belirleyicidir; kötü araçlar güçlü modeli verimsizleştirir.
+- [[context-yonetimi|Context Yönetimi]] — Context sonlu ve çürüyebilir bir kaynaktır: her şeyi içine atmak dikkati dağıtır ve erken alınmış yanlış ka…
+- [[hafiza-ve-karar-yonetimi|Hafıza ve Karar Yönetimi]] — Hafıza salt konuşma geçmişi (transcript) değil, karar altyapısıdır; iyi bir sistemde "facts, decisions, pre…
+- [[hata-yonetimi|Hata Yönetimi: Hatayı Sisteme Dönüştürmek]] — Her hata yama olarak değil sistem dönüşümü olarak ele alınır: kural, test veya guardrail olarak yapıya yazı…
+- [[model-secimi-ve-eval|Model Seçimi ve Eval]] — Model seçimi benchmark skoruyla değil davranış ve karakterle yapılır; ucuz token kötü sonuç demek değildir,…
+- [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]] — Tekrar eden prompt yapıları otomasyonu hakeder (script); N varyant üretüp en iyisini seçmek (best-of-N) mal…
+- [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
 ### [[main-insana-aittir]]
-- [[bakim-disiplini|Bakım Disiplini Politikası]]
-- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
-- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
-- [[veri-butunlugu|Veri Bütünlüğü Politikası]]
+- [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
+- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
+- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
+- [[veri-butunlugu|Veri Bütünlüğü Politikası]] — Ham kaynaklar ve insan içeriği mutasyon-dışıdır; her değişiklik geri alınabilir iz bırakır.
 
 ### [[noma]]
-- [[ai-agent-teknolojileri|AI / Agent Teknolojileri]]
-- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]]
-- [[forgesys|ForgeSys]]
-- [[kisisel-bilgi-sistemi|Personal Knowledge System (bu sistemin kendisi)]]
-- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]]
-
-### [[noma-asistan-prompt-uyarlamasi]]
-- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]]
+- [[ai-agent-teknolojileri|AI / Agent Teknolojileri]] — Sürekli ilgi alanı: LLM araçları, agent sistemleri, RAG, retrieval mimarileri. [next]
+- [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
+- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
+- [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
 
 ### [[not-alma-rehberi]]
-- [[uzun-not-politikasi|uzun-not-politikasi]]
+- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
 
 ### [[public-repo-durusu]]
-- [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]]
-- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
-- [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]]
+- [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]] — Sırlar plaintext'te yaşamaz, public yüzey kişisel veriden arındırılır; git-crypt anahtarının yedeği güvenli…
+- [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
+- [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]] — Ne nereye gider: hassas kapsam yalnız yerel model.
 
 ### [[scope-bazli-llm-veri-politikasi]]
-- [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]]
-
-### [[sevdigim-muzikler]]
-- [[yazilim-disi-ilgi-alanlari|Yazılım Dışı İlgi Alanları]]
+- [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]] — Sırlar plaintext'te yaşamaz, public yüzey kişisel veriden arındırılır; git-crypt anahtarının yedeği güvenli…
 
 ### [[sistem-tasarimi-ve-mimari]]
-- [[forgesys|ForgeSys]]
+- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
 
 ### [[uretici-dogrulayici-ayrimi]]
-- [[arac-tasarimi-ve-kalitesi|Araç Tasarımı ve Kalitesi]]
+- [[arac-tasarimi-ve-kalitesi|Araç Tasarımı ve Kalitesi]] — Tool kalitesi model kalitesi kadar belirleyicidir; kötü araçlar güçlü modeli verimsizleştirir.
 
 ### [[urun-ve-girisimcilik]]
-- [[forgesys|ForgeSys]]
+- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
 
 ### [[wiki-adlandirma-ve-not-yapisi]]
-- [[not-alma-rehberi|Kafka'nın retry semantiği]]
-- [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]]
-- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]]
+- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]] — Master Note DB yapısı (Area/Status/Priority/URL/Parent/Date) epistemik şema ile birleştirildi; `status` × `… [archived]
+- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
+- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[wiki-not-semasi]]
-- [[epistemik-hijyen|Epistemik Hijyen Politikası]]
-- [[not-alma-rehberi|Kafka'nın retry semantiği]]
-- [[uzun-not-politikasi|uzun-not-politikasi]]
-- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]]
+- [[epistemik-hijyen|Epistemik Hijyen Politikası]] — Bilgi kaynağıyla girer; emin olunmayan bilgi işaretlenir; uydurma asla yoktur.
+- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
+- [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
+- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[yalin-dugum-ilkesi]]
-- [[bakim-disiplini|Bakım Disiplini Politikası]]
-- [[not-alma-rehberi|Kafka'nın retry semantiği]]
-- [[uzun-not-politikasi|uzun-not-politikasi]]
+- [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
+- [[not-alma-rehberi|Kafka'nın retry semantiği]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[uzun-not-politikasi|uzun-not-politikasi]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
 
 ### [[yazilim-disi-ilgi-alanlari]]
-- [[sevdigim-muzikler|Sevdiğim Müzikler]]
+- [[sevdigim-muzikler|Sevdiğim Müzikler]] — Kullanıcının sevdiği şarkıların tek düz listesi; kullanıcı bildirdikçe oturumlarda eklendir. [in_progress]
 
 ### [[yeni-agent-yapisi]]
-- [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]]
-- [[context-yonetimi|Context Yönetimi]]
-- [[epistemik-hijyen|Epistemik Hijyen Politikası]]
-- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]]
-- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]]
-- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]]
-- [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]]
+- [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]] — İnsan ve agent'ı birlikte bağleyen politikaların dizin notu; kural içeriği burada yaşamaz, alt notlarda yaşar.
+- [[context-yonetimi|Context Yönetimi]] — Context sonlu ve çürüyebilir bir kaynaktır: her şeyi içine atmak dikkati dağıtır ve erken alınmış yanlış ka…
+- [[epistemik-hijyen|Epistemik Hijyen Politikası]] — Bilgi kaynağıyla girer; emin olunmayan bilgi işaretlenir; uydurma asla yoktur.
+- [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
+- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]] — Repo'nun eski 3-katmanlı yapı döneminde (2026-09-20) yapılmış kapsamlı denetim analizi: güçlü yönler ve 22… [archived]
+- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]] — 2026-09-20 döneminde incelenen 8 benzer proje (LLM Wiki kalıbı) ve Noma için çıkarılan dersler. [archived]
+- [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]] — Sürekli ilgi alanı: sistem tasarımı, mimari, dağıtık sistemler. [inbox]
