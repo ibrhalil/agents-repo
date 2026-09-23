@@ -1,0 +1,115 @@
+"""Agent scriptlerinin paylaşılan yardımcıları (stdlib only).
+Sabitler SCHEMA.md'den alınmıştır; lint_repo.py ile tutarlı tutulur."""
+import os
+import re
+from datetime import date, datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+TYPES = 'concept project task issue resource person decision'.split()
+STAGES = 'inbox next in_progress waiting done archived'.split()
+SCOPES = 'work personal learning systems creator media common'.split()
+STATUS = 'unverified established stub'.split()
+LOG_OPS = 'ingest query tend lint sync'.split()
+MSG_LIMIT = 120
+SLUG_RE = re.compile(r'[a-z0-9]+(-[a-z0-9]+)*')
+TR = str.maketrans({'ı': 'i', 'İ': 'I', 'ş': 's', 'Ş': 'S', 'ğ': 'g', 'Ğ': 'G',
+                    'ü': 'u', 'Ü': 'U', 'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C'})
+
+
+def slugify(text):
+    s = text.translate(TR).lower()
+    return re.sub(r'[^a-z0-9]+', '-', s).strip('-')
+
+
+def check_slug(slug):
+    if not SLUG_RE.fullmatch(slug) or re.search(r'_v[0-9]|_yeni', slug):
+        raise SystemExit(f'hata: slug="{slug}" ASCII kebab-case olmalı (_v2/_yeni yasak)')
+    return slug
+
+
+def check_choice(name, value, ok):
+    if value is not None and value not in ok:
+        raise SystemExit(f'hata: {name}={value} (geçerli: {"|".join(ok)})')
+
+
+def today():
+    return date.today().isoformat()
+
+
+def now_stamp():
+    return datetime.now().strftime('%Y-%m-%d-%H%M')
+
+
+def now_hhmm():
+    return datetime.now().strftime('%H:%M')
+
+
+def node_id():
+    env = ROOT / '.env'
+    if env.exists():
+        for line in env.read_text(encoding='utf-8').splitlines():
+            m = re.match(r'\s*(?:export\s+)?NODE_ID\s*=\s*(\S+)', line)
+            if m:
+                return m.group(1)
+    return os.environ.get('NODE_ID', 'local')
+
+
+def parse_fm(text):
+    m = re.match(r'^---\n(.*?)\n---', text, re.S)
+    if not m:
+        return None
+    d = {}
+    for line in m.group(1).splitlines():
+        if line.startswith((' ', '#')):
+            continue
+        mm = re.match(r'^([A-Za-z_][\w-]*):(.*)$', line)
+        if mm:
+            d[mm.group(1)] = mm.group(2).strip()
+    return d
+
+
+def parse_tags(raw):
+    if not raw:
+        return None
+    seen = []
+    for t in raw.split(','):
+        t = slugify(t)
+        if t and t not in seen:
+            seen.append(t)
+    return seen or None
+
+
+def append_log(op, msg):
+    if op not in LOG_OPS:
+        raise SystemExit(f'hata: op={op} (geçerli: {"|".join(LOG_OPS)})')
+    msg = ' '.join(msg.split())
+    if len(msg) > MSG_LIMIT:
+        raise SystemExit(f'hata: log mesajı {len(msg)} karakter (> {MSG_LIMIT})')
+    p = ROOT / 'log' / f'{today()}.md'
+    if not p.exists():
+        p.write_text(f'# {today()}\n', encoding='utf-8')
+    with p.open('a', encoding='utf-8') as f:
+        f.write(f'{now_hhmm()} {op} @{node_id()} | {msg}\n')
+    return p
+
+
+def render_note(slug, title, type_, scope, stage='inbox', status=None,
+                tags=None, url=None, source_path=None):
+    """docs/templates/wiki_note.md'den doldurulmuş not içeriği üretir (kural 9).
+    Verilmeyen opsiyonel alanlar yazılmaz — yalnız anlamlı alan (SCHEMA §11)."""
+    title = title.replace('"', "'")
+    tpl = (ROOT / 'docs/templates/wiki_note.md').read_text(encoding='utf-8')
+    body = tpl.split('---', 2)[2].lstrip('\n').replace('{{Görünen Başlık}}', title)
+    if source_path:
+        body = body.rstrip('\n') + f'\n\nKaynak: {source_path}\n'
+    fm = ['---', f'title: "{title}"', f'type: {type_}', f'stage: {stage}',
+          f'scope: {scope}']
+    if status:
+        fm.append(f'status: {status}')
+    if url:
+        fm.append(f'url: {url}')
+    if tags:
+        fm.append('tags: [' + ', '.join(tags) + ']')
+    fm += [f'created: {today()}', f'updated: {today()}', '---']
+    return '\n'.join(fm) + '\n' + body

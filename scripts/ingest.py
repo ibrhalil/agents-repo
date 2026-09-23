@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""ingest() mekanik adımları: kaynağı raw/'a verbatim kopyala + şablondan wiki
+notu üret + log satırı yaz (AGENTS ingest; SCHEMA §5, §8). Git işlemi yapmaz."""
+import argparse
+import re
+import sys
+from pathlib import Path
+
+import lib_repo as lib
+
+# ADR-9: untrusted kaynakta bilinen injection desenleri — uyarı + [flag], bloklamaz
+INJECTION = re.compile(
+    r'ignore (?:all )?(?:previous|prior|above) instructions'
+    r'|disregard (?:all )?(?:previous|prior|above)'
+    r'|system prompt'
+    r'|<\|im_start\|>'
+    r'|reveal (?:your )?(?:instructions|prompt)', re.I)
+
+
+def raw_target(kind, name_hint):
+    if kind == 'conversations':
+        return lib.ROOT / 'raw' / 'conversations' / f'{lib.now_stamp()}.md'
+    if kind == 'clippings':
+        n = 0
+        for f in (lib.ROOT / 'raw' / 'clippings').glob('c-*.md'):
+            m = re.fullmatch(r'c-(\d+)', f.stem)
+            if m:
+                n = max(n, int(m.group(1)))
+        return lib.ROOT / 'raw' / 'clippings' / f'c-{n + 1:04d}.md'
+    stem = Path(name_hint).stem if name_hint else ''
+    name = (lib.slugify(stem) or 'kaynak') + (Path(name_hint).suffix if name_hint else '.md')
+    p = lib.ROOT / 'raw' / 'inbox' / name
+    if p.exists():
+        p = p.with_name(f'{p.stem}-{lib.now_stamp().split("-")[-1]}{p.suffix}')
+    return p
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('source', help="kaynak dosya yolu veya '-' (stdin)")
+    ap.add_argument('--kind', choices=['inbox', 'conversations', 'clippings'],
+                    default='inbox')
+    ap.add_argument('--slug')
+    ap.add_argument('--title')
+    ap.add_argument('--type', dest='type_', default='resource')
+    ap.add_argument('--scope', default='common')
+    ap.add_argument('--stage', default='inbox')
+    ap.add_argument('--status')
+    ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
+    ap.add_argument('--url')
+    ap.add_argument('--no-note', action='store_true', help='yalnız raw kopyası')
+    a = ap.parse_args()
+    lib.check_choice('type', a.type_, lib.TYPES)
+    lib.check_choice('scope', a.scope, lib.SCOPES)
+    lib.check_choice('stage', a.stage, lib.STAGES)
+    lib.check_choice('status', a.status, lib.STATUS)
+
+    is_file = a.source != '-'
+    data = Path(a.source).read_bytes() if is_file else sys.stdin.buffer.read()
+    if not data:
+        raise SystemExit('hata: kaynak boş')
+    hint = Path(a.source).name if is_file else None
+    p = raw_target(a.kind, hint)
+    if p.exists():
+        raise SystemExit(f'hata: {p} var — raw/ append-only, üzerine yazılmaz')
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_bytes(data)
+
+    rel = p.relative_to(lib.ROOT).as_posix()
+    flag = bool(INJECTION.search(data.decode('utf-8', errors='ignore')))
+    if flag:
+        print(f'UYARI: olası prompt-injection deseni (ADR-9) — {rel}', file=sys.stderr)
+    suffix = ' [flag]' if flag else ''
+    if a.no_note:
+        print(f'{rel} yazıldı')
+        lib.append_log('ingest', f'raw-only: {rel}{suffix}')
+        return
+
+    title = a.title or (Path(a.source).stem if is_file else 'Kaynak')
+    slug = lib.check_slug(a.slug or lib.slugify(title))
+    note = lib.ROOT / 'wiki' / f'{slug}.md'
+    if note.exists():
+        print(f'wiki/{slug}.md zaten var — raw kopyası yapıldı, not atlandı '
+              '(mevcut notla merge edin, kural 2)', file=sys.stderr)
+        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}')
+        return
+    tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
+    note.write_text(lib.render_note(slug, title, a.type_, a.scope, a.stage,
+                                    a.status, tags or None, a.url,
+                                    source_path=rel), encoding='utf-8')
+    print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
+    lib.append_log('ingest', f'{slug} <- {rel}{suffix}')
+
+
+if __name__ == '__main__':
+    main()
