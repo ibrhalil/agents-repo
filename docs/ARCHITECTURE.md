@@ -8,7 +8,8 @@ genel bakışı tutar.
 1. **Markdown source of truth** — index/graph/view'lar yeniden üretilebilir; kendi
    veritabanı formatına kilitlenme yok, Obsidian doğrudan okur.
 2. **Runtime-bağımsız çekirdek** — herhangi bir agent'ın "Noma" olması için gereken
-   her şey repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, memories, yetenekler.
+   her şey repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, kullanıcı profili
+   (`wiki/kullanici-profili.md`), yetenekler.
 3. **Git = kontrol mekanizması** — Agent'lar serbestçe çalışır, commit ve conflict çözümü periyodik cron job ile yönetilir (ADR-10 Güncellendi).
 4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj. Sözleşmeler LLM-optimize edilmiştir.
 5. **Local-first dostu, bulut esnek** — direkt çoklu provider + Ollama düğümü (ADR-8).
@@ -33,7 +34,7 @@ insan onayı ister.
 
 ## Görünürlük ve güvenlik
 Repo bilinçli public (ADR-7): kod/mimari/dokümantasyon açık; kişisel knowledge
-git-crypt ile şifreli (`raw/ wiki/ memories/ agent/prompts/ agent/sessions/ plans/
+git-crypt ile şifreli (`raw/ wiki/ agent/prompts/ agent/sessions/ plans/
 log/ tmp/`). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
 veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
@@ -62,8 +63,10 @@ Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
 - **git-crypt:** kişisel veri için; retrofit git history yeniden yazma gerektirdiğinden
   günden bir kuruldu.
 - **graph/index üretimi:** `index.md`, cron tarafından (`scripts/build_index.py` aracılığıyla) wiki notlarının `## Links` bölümündeki "özelden genele" yönleri taranarak deterministik olarak üretilir.
-- **`memories/` repo içinde:** Hermes yerleşik hafızası düğüm-lokal olduğundan çok
-  düğümlü senaryoda kanonik profil repoda taşınır.
+- **Kanonik profil wiki'de:** Hermes yerleşik hafızası düğüm-lokal olduğundan çok
+  düğümlü senaryoda kanonik profil repoda taşınır; `memories/` dizini 2026-09-23'te
+  kaldırıldı — profil `wiki/kullanici-profili.md` olarak yaşar, tüm düğümlere
+  şifreli sync olur.
 - **forgesys aktarımları:** plan dosyası protokolü (resume + step contract), ROADMAP,
   dondurulmuş karar kuralı, dokümantasyon satır bütçeleri ve dil politikasının token
   optimizasyonu gerekçesi — olgun bir çok-agent deposundan (forgesys) devralındı.

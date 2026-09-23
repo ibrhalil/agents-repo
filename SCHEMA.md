@@ -2,8 +2,7 @@
 ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için wiki'ye (örn: [[agent-policy]]) bakınız. Çelişkide SCHEMA kazanır.
 ## 1. Dizinler ve Rolleri
 `raw/` (Şifreli): Ham kaynaklar (inbox, conversations). APPEND-ONLY.
-`wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR.
-`memories/` (Şifreli): Agent kalıcı hafıza ve kullanıcı profili.
+`wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR. Kullanıcı profili dahil tüm kanonik içerik burada yaşar (örn: [[kullanici-profili]]).
 `agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri (`YYYY-MM-DD-<kısa-slug>.md`).
 `plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).

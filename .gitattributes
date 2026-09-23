@@ -2,7 +2,6 @@
 # Public dizinlere kişisel veri yazılmaz (AGENTS §Görünürlük)
 raw/**               filter=git-crypt diff=git-crypt -text
 wiki/**              filter=git-crypt diff=git-crypt -text
-memories/**          filter=git-crypt diff=git-crypt -text
 agent/prompts/**     filter=git-crypt diff=git-crypt -text
 agent/sessions/**    filter=git-crypt diff=git-crypt -text
 plans/**             filter=git-crypt diff=git-crypt -text

@@ -12,7 +12,7 @@ SCOPES = 'work personal learning systems creator media common'.split()
 STATUS = 'unverified established stub'.split()
 ORDER = 'title type stage scope status tags created updated locked'.split()
 ISO_DT = re.compile(r'\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z))?')
-ENCRYPTED = ['raw/', 'wiki/', 'memories/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
+ENCRYPTED = ['raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
 BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
 EMAIL = re.compile(r'[\w.+-]+@[\w-]+\.[A-Za-z]{2,}')
 PHONE = re.compile(r'\b0?5\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}\b')
@@ -128,15 +128,6 @@ for d in ENCRYPTED:
 for c in crypt_globs:
     if c.rstrip('*').rstrip('/') + '/' not in ENCRYPTED:
         add('WRN', 'CRYPT', f'.gitattributes: beklenmedik glob {c}')
-
-for p in [ROOT / 'memories' / 'profile.md']:
-    if p.exists():
-        fm, _ = parse_fm(p.read_text(encoding='utf-8'))
-        r = subprocess.run(['git', 'log', '-1', '--format=%as', '--', str(p)],
-                           cwd=ROOT, capture_output=True, text=True)
-        last = r.stdout.strip()
-        if fm and last and fm.get('updated', '') < last:
-            add('ERR', 'BUMP', f'memories/profile.md: updated={fm.get("updated")} < son commit {last}')
 
 files = [ROOT / f for f in ('README.md', 'AGENTS.md', 'SCHEMA.md', '.env.example')]
 for d in ('docs', 'scripts'):
