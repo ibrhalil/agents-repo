@@ -139,7 +139,7 @@ for p in [ROOT / 'memories' / 'profile.md']:
             add('ERR', 'BUMP', f'memories/profile.md: updated={fm.get("updated")} < son commit {last}')
 
 files = [ROOT / f for f in ('README.md', 'AGENTS.md', 'SCHEMA.md', '.env.example')]
-for d in ('docs', 'scripts', 'skills'):
+for d in ('docs', 'scripts'):
     files += [q for q in (ROOT / d).rglob('*') if q.is_file()]
 for p in files:
     if not p.exists(): continue

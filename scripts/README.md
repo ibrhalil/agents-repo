@@ -13,7 +13,7 @@ cron job'a aittir.
 | `ingest.py` | kaynağı `raw/`'a verbatim kopyalar + wiki notu üretir + log yazar |
 | `find.py` | retrieval: metadata filtre → full-text (rg) → wikilink traversal |
 | `wiki.py` | insan yüzü arama CLI: `search/pick/hub/recent/links/stats` — skorlı, Türkçe katlamalı; yalnız yol+başlık+metadata basar (R4) |
-| `bootstrap_node.sh` | düğüm kurulum desteği: git-crypt denetimi, `.env`, `docs/nodes/` kaydı |
+| `bootstrap_node.sh` | düğüm kurulum desteği: git-crypt denetimi ve `.env` hazırlığı |
 | `build_index.py` | `index.md` üretici (cron): wiki `## Links` (özelden genele) yönünden ağaç |
 
 ## Örnekler
@@ -31,7 +31,7 @@ w hub kisisel-bilgi-sistemi
 w recent --limit 5
 w links llm-sistem-ilkeleri --hop 2
 w stats
-bash scripts/bootstrap_node.sh --id hermes-vps --runtime Hermes --model "GLM (z.ai)" --role "7/24 cron düğümü"
+bash scripts/bootstrap_node.sh --id hermes-vps
 ```
 
 Notlar:

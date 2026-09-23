@@ -57,10 +57,10 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [ ] `lint()` tam set: kırık link, orphan, enum, updated-bump, satır bütçeleri,
       `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması,
       döngüsel Links (CYCLE), bayat stage (STALE) — son ikisi 2026-09-23'te eklendi
-      (`llm-wiki` deseninden adaptasyon)
+      (`llm-wiki-deseni` notundan adaptasyon)
 - [x] Filed-back query kuralı kabul edildi (2026-09-23): değerli sentez atomik not
       olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` kaydı
-      (AGENTS §2, SCHEMA §2; `skills/llm-wiki` deseninden adaptasyon)
+      (AGENTS §2, SCHEMA §2; [[llm-wiki-deseni]] adaptasyonu)
 - [ ] `tend()` + `consolidate()` cron'da canlı
 - [x] `agent/sessions/` adlandırma kuralı + özet şablonu (2026-09-23): adlandırma
       SCHEMA §1; şablon `docs/templates/session_summary.md`

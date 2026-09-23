@@ -9,7 +9,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).
 `tmp/` (Şifreli/Gitignore): Geçici (scratch) işlem dizini. Kalıcı çöp bırakılmaz.
 `agent/` (Public): Agent root altyapısı.
-`skills/` & `scripts/` (Public): Yetenek tanımları ve çalıştırılabilir kodlar.
+`scripts/` (Public): Çalıştırılabilir kodlar.
 `docs/` (Public): Mimari kararlar, şablonlar, yol haritası.
 ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzerinden ulaşılır; yenisi oraya bağlanır.
 ## 2. Bilgi Hattı ve Keşif

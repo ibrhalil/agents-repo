@@ -39,8 +39,8 @@ veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
 
 ## Düğümler
-Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model; kayıtlar `docs/nodes/`
-(public; şablon `docs/templates/node.md`).
+Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model (kayıt dizini
+`docs/nodes/` 2026-09-23'te kaldırıldı; düğüm envanteri bu bölümde yaşar).
 - **Laptop (aktif):** opencode — etkileşimli geliştirme düğümü.
 - **VPS (7/24 birincil, planlı):** ilk runtime adayı Hermes + Telegram gateway +
   cron (gece konsolidasyon, haftalık lint, sabah bülteni). Workspace = klon.
