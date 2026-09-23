@@ -15,6 +15,8 @@ cron job'a aittir.
 | `wiki.py` | insan yüzü arama CLI: `search/pick/hub/recent/links/stats` — skorlı, Türkçe katlamalı; yalnız yol+başlık+metadata basar (R4) |
 | `bootstrap_node.sh` | düğüm kurulum desteği: git-crypt denetimi ve `.env` hazırlığı |
 | `build_index.py` | `index.md` üretici (cron): wiki `## Links` (özelden genele) yönünden ağaç |
+| `docker-compose.hermes.yml` | Hermes Agent runtime compose (yerel doğrulandı; VPS Faz 1 B2-B4 notları dosyada) |
+| `hermes_wiki_context.py` | Hermes `pre_llm_call` hook'u: wiki ağaç haritasını her turda mesaja enjekte eder (model bağımsızlığı) |
 
 ## Örnekler
 

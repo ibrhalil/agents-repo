@@ -1,0 +1,67 @@
+# docker-compose.hermes.yml — Hermes Agent runtime (canonical)
+#
+# Yerel testte doğrulandı (2026-09-23, tmp/hermes-local): resmi imaj v2026.9.21,
+# zai/glm-5.3 provider, repo rw mount, dashboard host-net. Bkz. wiki/hermes-agent-rehber.
+#
+# --- Yerel kullanım (Mac, tmp/hermes-local'daki çalışan kopya) ---
+#   docker compose -f scripts/docker-compose.hermes.yml --env-file .env run --rm hermes --tui
+#   docker compose -f scripts/docker-compose.hermes.yml --env-file .env up -d dashboard
+#   docker compose -f scripts/docker-compose.hermes.yml --env-file .env down
+#
+# --- VPS (Faz 1 B2-B4) farklılıkları ---
+#   - AGENTS_REPO_PATH: klon yolunu VPS'te ~/agents-repo yap (B4: git-crypt unlock).
+#   - HERMES_UID / HERMES_GID: VPS kullanıcısının id -u / id -g değerleri.
+#   - network_mode: host Linux'ta gerçek host ağı (Mac'te Docker Desktop VM'i).
+#   - gateway servisi (aşağıda yorumda): B6 Telegram sonrası aktif edilir.
+#   - İmaj güncelleme: hermes update yerine `docker compose pull` (imaj sabit sürümlü).
+#   - B1 hatırlatma: ufw default deny incoming; gateway için ek inbound port YOK.
+#
+# Provider: z.ai coding plan → GLM_API_KEY (repo .env; kalıcı kopyası ~/.hermes/.env'de).
+# Sır içermeyen dosyadır — PUBLIC yüzeye değer gömülmez (AGENTS §3).
+
+services:
+  hermes:
+    image: nousresearch/hermes-agent:v2026.9.21
+    container_name: hermes
+    tty: true
+    stdin_open: true
+    working_dir: /workspace # context-files: CWD → git kökü → AGENTS.md system prompt'a girer
+    volumes:
+      - ~/.hermes:/opt/data # HERMES_HOME: config, hafıza, oturumlar (kalıcı)
+      - ${AGENTS_REPO_PATH:-~/dev/IdeaProjects/agents-repo}:/workspace # rw: B4 workspace
+    environment:
+      - HERMES_UID=${HERMES_UID:-501}
+      - HERMES_GID=${HERMES_GID:-20}
+      - GLM_API_KEY=${GLM_API_KEY:-}
+    command: ["--tui"]
+
+  dashboard:
+    image: nousresearch/hermes-agent:v2026.9.21
+    container_name: hermes-dashboard
+    restart: unless-stopped
+    network_mode: host # imaj guard'ı: auth'suz 0.0.0.0 reddi → 127.0.0.1 bind
+    working_dir: /workspace # web TUI oturumları da repo bağlamında açılsın
+    volumes:
+      - ~/.hermes:/opt/data
+      - ${AGENTS_REPO_PATH:-~/dev/IdeaProjects/agents-repo}:/workspace # rw: B4 workspace
+    environment:
+      - HERMES_UID=${HERMES_UID:-501}
+      - HERMES_GID=${HERMES_GID:-20}
+    command: ["dashboard", "--host", "127.0.0.1", "--no-open"]
+
+  # --- B6 Telegram gateway (sonraya atıldı; aktifleştirmek için yorumu aç) ---
+  # gateway:
+  #   image: nousresearch/hermes-agent:v2026.9.21
+  #   container_name: hermes-gateway
+  #   restart: unless-stopped
+  #   network_mode: host
+  #   volumes:
+  #     - ~/.hermes:/opt/data
+  #     - ${AGENTS_REPO_PATH:-~/agents-repo}:/workspace
+  #   environment:
+  #     - HERMES_UID=${HERMES_UID:-1000}
+  #     - HERMES_GID=${HERMES_GID:-1000}
+  #     - GLM_API_KEY=${GLM_API_KEY:-}
+  #     - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}      # DM pairing: TELEGRAM_ALLOWED_USER_ID zorunlu
+  #     - TELEGRAM_ALLOWED_USER_ID=${TELEGRAM_ALLOWED_USER_ID:-}
+  #   command: ["gateway", "run"]
