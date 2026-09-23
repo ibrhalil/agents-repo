@@ -87,6 +87,23 @@ for p in ROOT.rglob('*_v[0-9]*.md'):
 for p in ROOT.rglob('*_yeni*.md'):
     if '.git' not in p.parts: add('ERR', 'SUFFIX', str(p.relative_to(ROOT)))
 
+LOG_LINE = re.compile(r'\d{2}:\d{2} (ingest|query|tend|lint|sync) @[\w-]+ \| (.+)')
+for p in sorted((ROOT / 'log').glob('*.md')):
+    if p.name == 'log.md': continue
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}\.md', p.name):
+        add('ERR', 'LOGF', f'log/{p.name}: dosya adı YYYY-MM-DD.md değil'); continue
+    in_comment = False
+    for line in p.read_text(encoding='utf-8').splitlines():
+        s = line.strip()
+        if '<!--' in s: in_comment = True
+        if in_comment:
+            if '-->' in s: in_comment = False
+            continue
+        if not s or s.startswith('#'): continue
+        m = LOG_LINE.fullmatch(s)
+        if not m: add('ERR', 'LOGF', f'log/{p.name}: satır formatı hatalı: {s[:60]}')
+        elif len(m.group(2)) > 120: add('ERR', 'LOGB', f'log/{p.name}: mesaj >120 karakter')
+
 ga = (ROOT / '.gitattributes').read_text(encoding='utf-8')
 crypt_globs = [l.split()[0] for l in ga.splitlines()
                if 'git-crypt' in l and not l.startswith('#') and l.strip()]

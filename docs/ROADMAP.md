@@ -55,8 +55,8 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
       `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması
 - [ ] `tend()` + `consolidate()` cron'da canlı
 - [ ] `agent/sessions/` adlandırma kuralı + özet şablonu (ilk gerçek session'da)
-- [ ] `log/` runtime logging tasarımı: format (timestamp/level/component/message) +
-      commit/gitignore politikası
+- [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,
+      `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §8)
 - [ ] Kararlaştırılmayı bekleyen mimariler (plans/yeni-agent-yapisi.md §45):
       Master DB view'ları, graph/index, search/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır

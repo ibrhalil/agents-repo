@@ -105,10 +105,10 @@ agent için bağlam. Raw chat transcript kalıcı saklanmaz. Adlandırma:
 
 ## 8. log/
 
-Operasyonel log. Hedef format Spring-Boot benzeri satır (`timestamp level component
-message`) ama implementasyon **henüz tasarlanmadı**. Mevcut `log/log.md` geçmiş kayıtları
-**verbatim** korunur; yeni kayıtlar aynı formatta eklenir. Runtime logların tamamının
-commit'i hedeflenmez.
+Günlük dosyalar: `log/YYYY-MM-DD.md`; satır `HH:mm <op> @<node> | mesaj ≤120 karakter`
+(detay session özeti/plans'ta; `<op>` = commit prefix). Append-only; context'e yalnız
+güncel gün girer, geçmiş ripgrep; append çakışmasında iki satır da tutulur (HH:mm sıralı).
+`log/log.md` donmuş arşiv — yeni kayıt eklenmez.
 
 ## 9. Öncelik
 
