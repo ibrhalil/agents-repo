@@ -66,10 +66,10 @@ iskelet (tend adayı). `stage` kayıt içeriğinden değerlendirilerek atanır �
 otomatik eşlemesi yoktur; çıkarılamıyorsa `inbox`.
 
 **Yapısal ilk-okuma kuralı:** `frontmatter → # Başlık → ## Links → ## Summary →
-gövde` — her kısmi okuma (grep penceresi, subagent özeti) kendi kendine yeter; lint
-denetler.
+gövde` — kısmi okuma kendi kendine yeter; lint denetler. Üst bölge yoğundur: `---`'dan
+Summary sonuna boş satır/tekrar yok (pencere agent'a göre 15–100+); eskiler dokunuldukça sıkışır.
 
-**Link:** `[[slug|Görünen Başlık]]` — hedef filename, alias görüneni korur. Kırık
+**Link:** `[[slug]]` baz form; slug kendini açıklamıyorsa `|Görünen Başlık` alias. Kırık
 link lint bulgusudur. İlişkiler **tek yönlü** yazılır (özelden genele); reciprocal
 back-link yazılmaz; `parent:` alanı yok — graph kenarı zaten iki yönlü çizer. Bir
 not tek fikre odaklanır (yalın düğüm); aynı şeyi söyleyen notlar birleştirilir (MR).

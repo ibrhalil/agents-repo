@@ -12,18 +12,16 @@ created: {{YYYY-MM-DD}}
 updated: {{YYYY-MM-DD}}
 # locked: false
 ---
-
 # {{Görünen Başlık}}
-
 ## Links
-<!-- Obsidian Graph bu bölümden beslenir. Yön daima özelden genele; reciprocal back-link yazılmaz.
-     Yer tutucular kod aralığında: canlı [[wikilink]] olarak Obsidian bunları çözümleyip
-     kökte dosya üretirdi (sürekli yeniden doğan {{ust-not-slug}}.md artefaktının kök nedeni). -->
-- **Up:** `[[slug|Üst Not Başlığı]]` — varsa üst kavram; yoksa satır silinir
-- **Related:** `[[slug|İlgili Not Başlığı]]` — mikro açıklama
-
+<!-- Obsidian Graph bu bölümden beslenir. Tek satır düz liste; yön özelden genele; reciprocal back-link yok;
+     slug kendini açıklamıyorsa alias. Yer tutucular kod aralığında: canlı wikilink olarak Obsidian bunları
+     çözümleyip kökte dosya üretirdi (sürekli yeniden doğan {{ust-not-slug}}.md artefaktının kök nedeni). -->
+`[[ust-not-slug]], [[anlasilmaz-slug|Açıklayıcı Başlık]]`
 ## Summary
 Notun ana fikrini veya amacını belirten 1-2 cümlelik özet.
 
 ## Body
-Notun içeriği. Yalın düğüm ilkesi: bir not = bir fikir; büyürse bölünür.
+Notun içeriği. Yalın düğüm ilkesi: bir not = bir fikir; büyürse bölünür. Üst bölge
+(frontmatter → Summary sonu) boş satırsız ve tekrarsızdır — pencere agent'a göre
+değişir (15–100+ satır); gövdede boş satır serbesttir.
