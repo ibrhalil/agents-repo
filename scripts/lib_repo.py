@@ -84,6 +84,49 @@ def parse_tags(raw):
     return seen or None
 
 
+LINK_RE = re.compile(r'\[\[([^\]|#]+)')
+
+
+def strip_code(text):
+    text = re.sub(r'```.*?```', '', text, flags=re.S)
+    return re.sub(r'`[^`\n]*`', '', text)
+
+
+def fold_tr(text):
+    """Türkçe karakter katlama: 'yapıtaşları' → 'yapitaslari'."""
+    return text.translate(TR).lower()
+
+
+def load_wiki_index(with_body=False):
+    """wiki/*.md → {slug: {fm, tags, out, parents[, fields]}}.
+    out: koddan arındırılmış tüm [[link]] hedefleri;
+    parents: ## Links bölümündeki hedefler (ağaç yönü);
+    fields: with_body=True ise skorlama için katlanmış alan metinleri."""
+    idx = {}
+    for p in sorted((ROOT / 'wiki').glob('*.md')):
+        text = p.read_text(encoding='utf-8')
+        fm = parse_fm(text) or {}
+        clean = strip_code(text)
+        links_m = re.search(r'## Links\n(.*?)(?=\n## |\Z)', clean, re.S)
+        parents = [s.strip() for s in LINK_RE.findall(links_m.group(1))] if links_m else []
+        entry = {'fm': fm,
+                 'tags': [t.strip() for t in fm.get('tags', '').strip('[]')
+                          .replace('"', '').split(',') if t.strip()],
+                 'out': {s.strip() for s in LINK_RE.findall(clean)} | set(parents),
+                 'parents': parents}
+        if with_body:
+            summary_m = re.search(r'## Summary\n(.*?)(?=\n## |\Z)', clean, re.S)
+            entry['fields'] = {
+                'slug': fold_tr(p.stem),
+                'title': fold_tr(fm.get('title', '').strip('"')),
+                'tags': fold_tr(fm.get('tags', '')),
+                'summary': fold_tr(summary_m.group(1) if summary_m else ''),
+                'body': fold_tr(clean),
+            }
+        idx[p.stem] = entry
+    return idx
+
+
 def append_log(op, msg):
     if op not in LOG_OPS:
         raise SystemExit(f'hata: op={op} (geçerli: {"|".join(LOG_OPS)})')
