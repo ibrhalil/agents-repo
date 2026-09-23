@@ -66,10 +66,10 @@ for p in wiki:
     if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*\.md', p.name):
         add('ERR', 'SLUG', f'{rel}: ASCII kebab-case değil')
     body = strip_code(text)
-    links_out[rel] = {s.strip() for s in re.findall(r'\[\[([^\]|#]+)', body)}
+    links_out[rel] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', body)}
     for s in links_out[rel]: links_in.setdefault(s.lower(), set()).add(rel)
     sec = re.search(r'## Links\n(.*?)(?=\n## )', text, re.S)
-    if sec: tree_out[p.stem] = {s.strip() for s in re.findall(r'\[\[([^\]|#]+)', sec.group(1))}
+    if sec: tree_out[p.stem] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', sec.group(1))}
     st = fm.get('stage', '')
     upd = (fm.get('updated') or '')[:10]
     if st in ('inbox', 'next', 'in_progress', 'waiting'):

@@ -2,8 +2,10 @@
 # Lint girişi: sözleşme linter (ERR'de durur) + pre-commit (stil)
 set -e
 python3 "$(dirname "$0")/lint_repo.py"
-if ! command -v pre-commit &> /dev/null; then
-  echo "pre-commit not installed. Installing..."
-  pip install pre-commit
+if command -v pre-commit &> /dev/null; then
+  pre-commit run --all-files
+elif python3 -m pre_commit --version &> /dev/null 2>&1; then
+  python3 -m pre_commit run --all-files
+else
+  echo "WARN: pre-commit kurulu değil — stil kontrolleri atlandı (kurulum: pip3 install --user pre-commit)"
 fi
-pre-commit run --all-files

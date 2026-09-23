@@ -35,7 +35,7 @@ insan onayı ister.
 ## Görünürlük ve güvenlik
 Repo bilinçli public (ADR-7): kod/mimari/dokümantasyon açık; kişisel knowledge
 git-crypt ile şifreli (`raw/ wiki/ agent/prompts/ agent/sessions/ plans/
-log/ tmp/`). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
+log/`; `tmp/` yerel/gitignore — şifrelenmez). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
 veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
 

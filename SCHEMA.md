@@ -6,7 +6,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri (`YYYY-MM-DD-<kısa-slug>.md`).
 `plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).
-`tmp/` (Şifreli/Gitignore): Geçici (scratch) işlem dizini. Kalıcı çöp bırakılmaz.
+`tmp/` (Yerel/Gitignore): Geçici (scratch) işlem dizini; git'e girmez, şifrelenmez. Kalıcı çöp bırakılmaz.
 `agent/` (Public): Agent root altyapısı.
 `scripts/` (Public): Çalıştırılabilir kodlar.
 `docs/` (Public): Mimari kararlar, şablonlar, yol haritası.
