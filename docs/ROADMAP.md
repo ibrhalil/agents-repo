@@ -2,8 +2,8 @@
 
 > İki araştırmanın (proje analizi + benzer projeler) sentezinden doğdu; yeni yapı
 > migrasyonuyla (2026-09-21) güncellendi. Karar kayıtları `wiki/` (decision),
-> mimari `docs/ARCHITECTURE.md`, kararlaştırılmamış konular plans/Yeni Agent
-> Yapısı.md §45.
+> mimari `docs/ARCHITECTURE.md`, kararlaştırılmamış konular
+> `wiki/yeni-agent-yapisi.md` §45.
 
 Bağ: [[index]] · [[wiki/yeni-agent-yapisi|Yeni Agent Yapısı]]
 
@@ -56,7 +56,8 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [ ] `lint()` tam set: kırık link, orphan, enum, updated-bump, satır bütçeleri,
       `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması
 - [ ] `tend()` + `consolidate()` cron'da canlı
-- [ ] `agent/sessions/` adlandırma kuralı + özet şablonu (ilk gerçek session'da)
+- [x] `agent/sessions/` adlandırma kuralı + özet şablonu (2026-09-23): adlandırma
+      SCHEMA §7; şablon `docs/templates/session_summary.md`
 - [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,
       `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §8)
 - [ ] Kararlaştırılmayı bekleyen mimariler (wiki/yeni-agent-yapisi.md §45):
