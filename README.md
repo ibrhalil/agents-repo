@@ -49,6 +49,12 @@ Ayrıntılı mimari ve karar gerekçeleri: [docs/ARCHITECTURE.md](docs/ARCHITECT
 
 ## Standartlar ve Katkı
 
+### Politika register
+
+İnsan ve agent'ı birlikte bağleyen politikalar wiki'de dizinlenir: `wiki/agent-policy.md`
+[git-crypt]. Kuralların kanonik açıklaması alt politika notlarında yaşar; register yalnızca
+dizindir.
+
 ### Şablon zorunluluğu (AGENTS.md §Sert kurallar 9)
 
 Yeni bir wiki notu oluştururken sıfırdan format üretilmez; şablon kopyalanır:
