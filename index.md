@@ -48,7 +48,7 @@
 - [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
 ### [[ilgi-alanlari]]
-- [[muzik-zevki|Müzik Zevki]] — Sevilen şarkıların tek düz listesi; kullanıcı bildirdikçe oturumlarda eklendir. [in_progress]
+- [[muzik-zevki|Müzik Zevki]] — Sevilen şarkıların tek düz listesi; kullanıcı bildirdikçe oturumlarda eklenir. [in_progress]
 
 ### [[kisisel-bilgi-sistemi]]
 - [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]] — İnsan ve agent'ı birlikte bağleyen politikaların dizin notu; kural içeriği burada yaşamaz, alt notlarda yaşar.
@@ -88,7 +88,7 @@
 
 ### [[noma]]
 - [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
-- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
+- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu; kullanıcı beyanı kaynaklı proje kaydı (ham kaynak `raw/`'da yok — bilg… [in_progress]
 - [[hermes-agent-rehber|Hermes Agent Rehberi: Noma'nın VPS Runtime Düğümü]] — NousResearch hermes-agent'ın (MIT, Python) Noma VPS düğümü runtime'ı olarak kurulum ve operasyon rehberi: C… [next]
 - [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
 
@@ -104,13 +104,13 @@
 - [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]] — Sırlar plaintext'te yaşamaz, public yüzey kişisel veriden arındırılır; git-crypt anahtarının yedeği güvenli…
 
 ### [[sistem-tasarimi-ve-mimari]]
-- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
+- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu; kullanıcı beyanı kaynaklı proje kaydı (ham kaynak `raw/`'da yok — bilg… [in_progress]
 
 ### [[uretici-dogrulayici-ayrimi]]
 - [[arac-tasarimi-ve-kalitesi|Araç Tasarımı ve Kalitesi]] — Tool kalitesi model kalitesi kadar belirleyicidir; kötü araçlar güçlü modeli verimsizleştirir.
 
 ### [[urun-ve-girisimcilik]]
-- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
+- [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu; kullanıcı beyanı kaynaklı proje kaydı (ham kaynak `raw/`'da yok — bilg… [in_progress]
 
 ### [[yalin-dugum-ilkesi]]
 - [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
