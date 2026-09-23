@@ -10,6 +10,9 @@
 
 ## Ağaç (Tree) — Hub'lar ve Yapraklar
 
+### [[agent-mimarisi]]
+- [[hermes-agent-rehber|Hermes Agent Rehberi: Noma'nın VPS Runtime Düğümü]] — NousResearch hermes-agent'ın (MIT, Python) Noma VPS düğümü runtime'ı olarak kurulum ve operasyon rehberi: C… [next]
+
 ### [[agent-policy]]
 - [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
 - [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]] — Dil politikası + token optimizasyonu + plan dosyası protokolü tek revizyonda kuruldu; kökler forgesys prati…
@@ -89,6 +92,7 @@
 ### [[noma]]
 - [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
 - [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
+- [[hermes-agent-rehber|Hermes Agent Rehberi: Noma'nın VPS Runtime Düğümü]] — NousResearch hermes-agent'ın (MIT, Python) Noma VPS düğümü runtime'ı olarak kurulum ve operasyon rehberi: C… [next]
 - [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]] — [[asistan-system-prompt-yapitaslari|Yapıtaşları]] çerçevesinin Noma'ya eşlemesi: altı kategoriden dördü mev…
 
 ### [[not-alma-rehberi]]
