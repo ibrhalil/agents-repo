@@ -27,3 +27,4 @@ __pycache__/
 
 # opencode oturum durumu
 .opencode/
+tmp/

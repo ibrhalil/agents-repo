@@ -9,8 +9,8 @@ genel bakışı tutar.
    veritabanı formatına kilitlenme yok, Obsidian doğrudan okur.
 2. **Runtime-bağımsız çekirdek** — herhangi bir agent'ın "Noma" olması için gereken
    her şey repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, memories, yetenekler.
-3. **Git = kontrol mekanizması** — her agent değişikliği branch + PR (ADR-10).
-4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj.
+3. **Git = kontrol mekanizması** — Agent'lar serbestçe çalışır, commit ve conflict çözümü periyodik cron job ile yönetilir (ADR-10 Güncellendi).
+4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj. Sözleşmeler LLM-optimize edilmiştir.
 5. **Local-first dostu, bulut esnek** — direkt çoklu provider + Ollama düğümü (ADR-8).
 6. **Gereksiz complexity yok** — yeni katman/alan/dizin gerçek ihtiyaç ister
    (wiki/yeni-agent-yapisi.md §44).
@@ -34,8 +34,8 @@ insan onayı ister.
 ## Görünürlük ve güvenlik
 Repo bilinçli public (ADR-7): kod/mimari/dokümantasyon açık; kişisel knowledge
 git-crypt ile şifreli (`raw/ wiki/ memories/ agent/prompts/ agent/sessions/ plans/
-log/`). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
-veri yol adlarında bile yaşamaz (SCHEMA §10). Hassas kapsam yalnız yerel model
+log/ tmp/`). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
+veri yol adlarında bile yaşamaz (SCHEMA §1). Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
 
 ## Düğümler
@@ -60,8 +60,7 @@ Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
   (§45-11) — ihtiyaç yokken katman eklenmez.
 - **git-crypt:** kişisel veri için; retrofit git history yeniden yazma gerektirdiğinden
   günden bir kuruldu.
-- **graph/index üretimi:** mimari henüz kararlaşmadı (§45-8); gerçek ihtiyaç gelince
-  deterministik araçla tasarlanır — LLM disiplinine dayanmaz.
+- **graph/index üretimi:** `index.md`, cron tarafından (`scripts/build_index.py` aracılığıyla) wiki notlarının `## Links` bölümündeki "özelden genele" yönleri taranarak deterministik olarak üretilir.
 - **`memories/` repo içinde:** Hermes yerleşik hafızası düğüm-lokal olduğundan çok
   düğümlü senaryoda kanonik profil repoda taşınır.
 - **forgesys aktarımları:** plan dosyası protokolü (resume + step contract), ROADMAP,

@@ -1,140 +1,42 @@
 # SCHEMA.md — Veri Sözleşmesi
-
-Normatif veri tanımları: insan ve agent'lerin ortak okuduğu/yazdığı her format burada.
-Çelişkide bu dosya kazanır; değişiklik = insan onayı (MR). Mimari kararların kaynağı
-`wiki/yeni-agent-yapisi.md` — orası "henüz karar verilmedi" diyorsa burada da değildir.
-
-## 1. Dizinler ve görünürlük (public repo)
-
-| Dizin | Görünürlük | Rol | Yazma kuralı |
-|---|---|---|---|
-| `raw/` | şifreli | Ham kaynaklar: inbox, conversations, clippings | APPEND-ONLY — sonradan değiştirilmez/silinmez |
-| `wiki/` | şifreli | Kanonik knowledge garden — **düz**, alt klasörsüz | Agent: MR ile; insan: serbest |
-| `memories/` | şifreli | Agent'ın kalıcı hafızası / kullanıcı profili | MR ile |
-| `agent/prompts/` | şifreli | Prompt hazırlama / normalizasyon | MR ile |
-| `agent/sessions/` | şifreli | Session summary (transcript **değil**) | MR ile |
-| `plans/` | şifreli | Uzun iş plan dosyaları | MR ile |
-| `log/` | şifreli | Operasyonel log (commit edilen kayıtlar) | append-only |
-| `agent/` (kök) | public | Agent altyapısı | normal geliştirme |
-| `workspace/` | public | Geçici çalışma alanı — canonical değil | serbest; kalıcı değer canonical alana taşınır |
-| `tools/` `skills/` `scripts/` | public | Tool tanımı · çalışma yöntemi · executable | normal geliştirme |
-| `config/` | public | Konfigürasyon — **secret plaintext yasak** | normal geliştirme |
-| `web/` | public | Web UI — presentation layer, truth değil | normal geliştirme |
-| `docs/` | public | Teknik dokümantasyon, şablonlar | normal geliştirme |
-| `index.md` | public | Vault kökü/haritası — türetilmiş görünüm (truth değil) | MR ile |
-
-Public dizinlere kişisel/fact-düzeyi veri yazılmaz (AGENTS §Görünürlük).
-
-**Kök bağlantı:** wiki dışı her düzenlenebilir `.md` en az bir wikilink taşır (`Kök:
-[[index]]` ya da ilgili wiki notuna); `raw/` + `log/` append-only olduğundan bağ ancak
-index.md'den verilir. Wiki notları (ve wiki notu şablonu) index'e bağlanmaz.
-
-## 2. Bilgi hattı
-
-`raw ─derleme→ wiki` (iki katman; `atoms/` kaldırıldı — [[yeni-agent-yapisi|Yeni Agent
-Yapısı]] kararı). Wiki tek kanonik tabandır; index/graph/view'lar türetilir — truth değildir.
-
-## 3. Wiki not formatı
-
+ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için wiki'ye (örn: [[agent-policy]]) bakınız. Çelişkide SCHEMA kazanır.
+## 1. Dizinler ve Rolleri
+`raw/` (Şifreli): Ham kaynaklar (inbox, conversations). APPEND-ONLY.
+`wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR.
+`memories/` (Şifreli): Agent kalıcı hafıza ve kullanıcı profili.
+`agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri.
+`plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
+`log/` (Şifreli): Günlük operasyonel loglar (Append-only).
+`tmp/` (Şifreli/Gitignore): Geçici (scratch) işlem dizini. Kalıcı çöp bırakılmaz.
+`agent/` (Public): Agent root altyapısı.
+`skills/` & `scripts/` (Public): Yetenek tanımları ve çalıştırılabilir kodlar.
+`docs/` (Public): Mimari kararlar, şablonlar, yol haritası.
+## 2. Bilgi Hattı ve Keşif
+Üretim: `raw/` -> `wiki/` (2 katman).
+Harita: Tek kanonik giriş `index.md`'dir. `index.md` cron tarafından wiki'deki `## Links` yönünden (özelden genele) otomatik üretilir.
+## 3. Wiki Not Formatı (Frontmatter)
+ZORUNLU ŞABLON: `docs/templates/wiki_note.md`
 ```yaml
 ---
-title: "Tam ve açıklayıcı başlık"  # zorunlu; insan-okur, Unicode serbest
-type: concept                      # zorunlu; concept|project|task|issue|resource|person|decision
-stage: done                        # zorunlu; inbox|next|in_progress|waiting|done|archived
-scope: systems                     # zorunlu; work|personal|learning|systems|creator|media|common
-status: established                # opsiyonel; unverified|established|stub
-priority: none                     # opsiyonel; high|medium|low|none
-custom_date:                       # opsiyonel; kullanıcı-anlamlı tarih (format HENÜZ KARAR VERİLMEDİ)
-url: https://...                   # opsiyonel; kaynak/bookmark — type bağımsız
-tags: [kisa, ascii]                # opsiyonel; scope değeri tekrarlanmaz (lint)
-created: 2026-09-20                # system-managed; değiştirilmez
-updated: 2026-09-21                # system-managed; anlamlı değişiklikte bump (lint)
-locked: false                      # opsiyonel; true → agent mutation + otomatik bakım dışı
+title: "İnsan okur başlık" # ZORUNLU
+type: concept # ZORUNLU (concept | project | task | issue | resource | person | decision)
+stage: done # ZORUNLU (inbox | next | in_progress | waiting | done | archived)
+scope: systems # ZORUNLU (work | personal | learning | systems | creator | media | common)
+status: established # OPSİYONEL (unverified | established | stub)
+tags: [kisa, ascii] # OPSİYONEL (scope tekrarı YASAKTIR)
+created: 2026-09-23T15:42:00+03:00 # ZORUNLU (ISO 8601)
+updated: 2026-09-23T15:42:00+03:00 # ZORUNLU (ISO 8601, her değişimde bump edilir)
+locked: false # OPSİYONEL (true ise model dokunamaz)
 ---
 ```
-
-**Kimlik:** global `id` yok — **dosya adı = stable kimlik**.
-
-**Adlandırma:** `kebab-case.md` — küçük harf ASCII slug (translit: ı/İ→i, ş→s,
-ğ→g, ü→u, ö→o, ç→c; boşluk→tire). Filename kişisel bilgi/secret taşımaz; `title` ≠
-filename serbesttir. `_v2`/`_yeni` gibi sürüm ekleri yasak — bilgi değişirse mevcut
-dosya güncellenir.
-
-**type:** klasör yok; classification yalnız metadatada (`note`/`area` type'ı yok —
-domain `scope`'ta). Yeni type ancak gerçek ihtiyaçla eklenir.
-
-**stage × status — ortogonal:** `stage` iş/lifecycle; `status` epistemik.
-`unverified → established` yalnız ikinci bağımsız kaynak/insan onayıyla; `stub` =
-iskelet (tend adayı). `stage` kayıt içeriğinden değerlendirilerek atanır — type→stage
-otomatik eşlemesi yoktur; çıkarılamıyorsa `inbox`.
-
-**Yapısal ilk-okuma kuralı:** `frontmatter → # Başlık → ## Links → ## Summary →
-gövde` — kısmi okuma kendi kendine yeter; lint denetler. Üst bölge yoğundur: `---`'dan
-Summary sonuna boş satır/tekrar yok (pencere agent'a göre 15–100+); eskiler dokunuldukça sıkışır.
-
-**Link:** `[[slug]]` baz form; slug kendini açıklamıyorsa `|Görünen Başlık` alias. Kırık
-link lint bulgusudur. İlişkiler **tek yönlü** yazılır (özelden genele); reciprocal
-back-link yazılmaz; `parent:` alanı yok — graph kenarı zaten iki yönlü çizer. Bir
-not tek fikre odaklanır (yalın düğüm); aynı şeyi söyleyen notlar birleştirilir (MR).
-
-**`created`/`updated`:** system-managed — kullanıcıya manuel yönettirilmez;
-düzenleyen agent bump eder, lint bump'sız değişimi bulur. Geri alma: `git log
-<dosya>` + MR diff.
-
-## 4. Karar kayıtları
-
-Eski `adr:` numaraları (ADR-1..10) tarihsel referans olarak title'da yaşar. Yeni
-kararlar **numarasız** `type: decision` kaydıdır. Bir kararı geçersiz kılan yeni
-kayıt, supersede edilen notun gövdesinde açıkça belirtilir — sessiz unutma yok.
-Dondurulmuş kararlar (established decision) yeniden tartışılmaz; çelişkide yeni
-karar kaydı yazılır.
-
-## 5. raw/ adlandırma
-
-- `conversations/YYYY-MM-DD-HHmm.md` · `clippings/c-<NNNN>.md` · `inbox/*` — yollar nötr; işlenme işaretleme **henüz karar verilmedi**, dosya yerinde kalır (hedef log'da)
-
-## 6. memories/
-
-`memories/profile.md` — kanonik kullanıcı profili (Kimlik · İletişim · Çalışma
-tarzı · Öncelikler/sınırlar). Wiki genel bilgi bahçesidir; memories agent'ın kalıcı
-hafızasıdır — birbirinin yerine kullanılmaz.
-
-## 7. agent/sessions/
-
-Session summary: kararlar, önemli sonuçlar, değişen kurallar, follow-up'lar, sonraki
-agent için bağlam. Raw chat transcript kalıcı saklanmaz. Adlandırma:
-`YYYY-MM-DD-<kısa-ascii-slug>.md` (ör: `2026-09-23-yapi-denetimi.md`).
-
-## 8. log/
-
-Günlük dosyalar: `log/YYYY-MM-DD.md`; satır `HH:mm <op> @<node> | mesaj ≤120 karakter`
-(detay session özeti/plans'ta; `<op>` = commit prefix). Append-only; context'e yalnız
-güncel gün girer, geçmiş ripgrep; append çakışmasında iki satır da tutulur (HH:mm sıralı).
-`log/log.md` donmuş arşiv — yeni kayıt eklenmez.
-
-## 9. Öncelik
-
-**SCHEMA.md > AGENTS.md > not içerikleri.** Kural değişikliği = MR.
-
-## 10. Dil ve yol politikası
-
-- Gövde/cevap dili: **Türkçe**; anlam bozan köklü terim/kalıp İngilizce kalabilir.
-- Başka dil yok — **dil öğrenme notları hariç** (`lang:` alanı).
-- `raw/` **verbatim** — kaynak hangi dildeyse öyle saklanır; dönüşüm wiki'de.
-- Tag/slug/filename: **kısa ASCII**. Yollar fact-düzeyi kişisel bilgi taşımaz
-  (kimlik/sağlık/finans/alışkanlık); kişisel fact nötr ad + şifreli içerikle yaşar.
-
-## 11. Token verimliliği
-
-- Frontmatter'a yalnız anlamlı alanlar; her not özetle başlar; büyük notlar
-  heading-bazlı dilimlenir — context'e tamamı girmez.
-- Log kaydı tek satır. ripgrep .gitignore'a saygılı → `data/` aramalardan doğal dışlanır;
-  tam-proje taraması yalnızca cron'da. Köklü terim İngilizce kalır — anlam + token yoğunluğu.
-
-## 12. Henüz karar verilmedi (wiki/yeni-agent-yapisi.md §45)
-
-`custom_date` formatı · yeni not filename üretim algoritması · raw işlenme işareti ·
-maintenance job frekansı · Master DB · graph motoru · search/embedding · Docker sandbox
-güvenlik modeli · tools/skills/MCP sınırları · config dosya formatı · web teknolojisi ·
-SOUL/USER gibi context dosyaları · log runtime · `data/`/`sdata/`/`deploy/` geleceği.
-Bunlar hakkında konuşurken "henüz karar verilmedi" kabul et.
+## 4. Dosya İsimlendirme ve İçerik
+KİMLİK: Global ID yoktur, dosya adı = kimlik (`kebab-case-ascii.md`).
+YAPI: `frontmatter` -> `# Başlık` -> `## Links` -> `## Summary` -> `Gövde`. `---` ile Summary sonu arasında boş satır YASAKTIR.
+LİNK: `## Links` altında virgülle ayrılmış düz liste kullanılır. Yön ZORUNLU olarak ÖZELDEN GENELE'dir (Yaprak -> Hub). Parent alanı yoktur.
+KARARLAR: Yeni kararlar numarasız `type: decision` notudur. Eski kararı supersede eden açıkça belirtir.
+## 5. Log Formatı
+DOSYA: `log/YYYY-MM-DD.md`
+SATIR FORMATI: `HH:mm <op> @<node> | mesaj ≤120 karakter` (op: ingest, query, tend, lint, sync).
+## 6. Dil ve Optimizasyon
+DİL: Gövde TÜRKÇE. Tag/slug/filename KISA ASCII.
+TOKEN: Frontmatter'a gereksiz alan eklemek YASAKTIR. Dosyalar satır bütçelidir. Kök terimler İngilizce kalabilir.
