@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """ingest() mekanik adımları: kaynağı raw/'a verbatim kopyala + şablondan wiki
-notu üret + log satırı yaz (AGENTS ingest; SCHEMA §5, §8). Git işlemi yapmaz."""
+notu üret + log satırı yaz (AGENTS ingest; SCHEMA §1, §5). Git işlemi yapmaz."""
 import argparse
 import re
 import sys
@@ -47,7 +47,6 @@ def main():
     ap.add_argument('--stage', default='inbox')
     ap.add_argument('--status')
     ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
-    ap.add_argument('--url')
     ap.add_argument('--no-note', action='store_true', help='yalnız raw kopyası')
     a = ap.parse_args()
     lib.check_choice('type', a.type_, lib.TYPES)
@@ -81,12 +80,12 @@ def main():
     note = lib.ROOT / 'wiki' / f'{slug}.md'
     if note.exists():
         print(f'wiki/{slug}.md zaten var — raw kopyası yapıldı, not atlandı '
-              '(mevcut notla merge edin, kural 2)', file=sys.stderr)
+              '(mevcut notla merge edin, AGENTS R2)', file=sys.stderr)
         lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}')
         return
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
     note.write_text(lib.render_note(slug, title, a.type_, a.scope, a.stage,
-                                    a.status, tags or None, a.url,
+                                    a.status, tags or None,
                                     source_path=rel), encoding='utf-8')
     print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
     lib.append_log('ingest', f'{slug} <- {rel}{suffix}')

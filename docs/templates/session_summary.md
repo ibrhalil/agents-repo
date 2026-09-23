@@ -1,6 +1,6 @@
 # Session Özeti Şablonu (agent/sessions/)
 
-Adlandırma: `YYYY-MM-DD-<kısa-ascii-slug>.md` (SCHEMA §7). Transcript yazılmaz —
+Adlandırma: `YYYY-MM-DD-<kısa-ascii-slug>.md` (SCHEMA §1). Transcript yazılmaz —
 yalnız özet. Session özeti frontmatter taşımaz. Yer tutucular kod aralığında:
 canlı wikilink olarak Obsidian bunları çözümleyip kökte dosya üretirdi
 (bkz. wiki_note.md'deki artefakt notu).
@@ -27,5 +27,3 @@ Bağ: [[index]] · `[[{{ilgili-wiki-notu}}|{{Görünen Başlık}}]]`
 ## Sonraki agent bağlamı
 - `{{devam eden işler, dikkat edilecekler, doğrulama komutları}}`
 ---
-
-Kök: [[index]]

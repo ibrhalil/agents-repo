@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Düğüm kurulum desteği (ROADMAP B1-B4): git-crypt denetimi, .env hazırlığı,
-# docs/nodes/ kaydı üretimi. Git mutation yapmaz; kayıt MR ile insan onayına (ADR-10).
+# docs/nodes/ kaydı üretimi. Git mutation yapmaz; commit/conflict çözümü cron'a aittir.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 id=""; runtime=""; model=""; role=""
@@ -58,4 +58,4 @@ t = t.replace('YYYY-MM-DD', datetime.date.today().isoformat())
 pathlib.Path(out_p).write_text(t, encoding='utf-8')
 PY
 echo "üretildi: docs/nodes/$id.md"
-echo "sonraki adımlar: (1) .env anahtarlarını doldur  (2) 'pre-commit install'  (3) node kaydını MR ile commit et"
+echo "sonraki adımlar: (1) .env anahtarlarını doldur  (2) 'pre-commit install'  (3) node kaydını doldur — commit/conflict çözümü cron'a aittir"

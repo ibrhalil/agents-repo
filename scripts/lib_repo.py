@@ -37,6 +37,10 @@ def today():
     return date.today().isoformat()
 
 
+def iso_now():
+    return datetime.now().astimezone().isoformat(timespec='seconds')
+
+
 def now_stamp():
     return datetime.now().strftime('%Y-%m-%d-%H%M')
 
@@ -95,9 +99,9 @@ def append_log(op, msg):
 
 
 def render_note(slug, title, type_, scope, stage='inbox', status=None,
-                tags=None, url=None, source_path=None):
-    """docs/templates/wiki_note.md'den doldurulmuş not içeriği üretir (kural 9).
-    Verilmeyen opsiyonel alanlar yazılmaz — yalnız anlamlı alan (SCHEMA §11)."""
+                tags=None, source_path=None):
+    """docs/templates/wiki_note.md'den doldurulmuş not içeriği üretir (AGENTS R5).
+    Verilmeyen opsiyonel alanlar yazılmaz — yalnız anlamlı alan (SCHEMA §6)."""
     title = title.replace('"', "'")
     tpl = (ROOT / 'docs/templates/wiki_note.md').read_text(encoding='utf-8')
     body = tpl.split('---', 2)[2].lstrip('\n').replace('{{Görünen Başlık}}', title)
@@ -107,9 +111,7 @@ def render_note(slug, title, type_, scope, stage='inbox', status=None,
           f'scope: {scope}']
     if status:
         fm.append(f'status: {status}')
-    if url:
-        fm.append(f'url: {url}')
     if tags:
         fm.append('tags: [' + ', '.join(tags) + ']')
-    fm += [f'created: {today()}', f'updated: {today()}', '---']
+    fm += [f'created: {iso_now()}', f'updated: {iso_now()}', '---']
     return '\n'.join(fm) + '\n' + body

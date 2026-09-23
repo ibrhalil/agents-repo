@@ -37,17 +37,18 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [ ] B5 Cron job'lar (consolidate, lint, sabah bülteni)
 - [ ] B6 Telegram (sonraya atıldı)
 - [ ] Güvenlik advisory: LUKS + Obsidian plugin denetimi
-- [ ] Branch protection aktifleştirme (ADR-10 koşulu; GitHub ayarı)
+- [x] ~~Branch protection aktifleştirme~~ (gerek kalmadı — PR darboğazı kaldırıldı,
+      commit/conflict çözümü cron'a devredildi; bkz. `wiki/main-insana-aittir.md`)
 
 ---
 
 ## Faz 2 — Ingest Hattı
 
-- [ ] `raw/inbox/` akışı canlı: inbox → anlama → wiki MR
+- [ ] `raw/inbox/` akışı canlı: inbox → anlama → wiki (serbest yazma)
 - [ ] Post-ingest verification — ingest sonrası otomatik format/link denetimi
 - [ ] Ingest regex ön-taraması (injection flag; ADR-9 K3)
 - [ ] FreshRSS kurulumu (Docker) + saatlik keyword push (regex, LLM'siz)
-- [ ] Sabah gündem digest'i; değerli içerik yolu: digest → `raw/clippings/` → wiki MR
+- [ ] Sabah gündem digest'i; değerli içerik yolu: digest → `raw/clippings/` → wiki (serbest yazma)
 
 ---
 
@@ -57,9 +58,9 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
       `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması
 - [ ] `tend()` + `consolidate()` cron'da canlı
 - [x] `agent/sessions/` adlandırma kuralı + özet şablonu (2026-09-23): adlandırma
-      SCHEMA §7; şablon `docs/templates/session_summary.md`
+      SCHEMA §1; şablon `docs/templates/session_summary.md`
 - [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,
-      `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §8)
+      `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §5)
 - [ ] Kararlaştırılmayı bekleyen mimariler (wiki/yeni-agent-yapisi.md §45):
       Master DB view'ları, graph/index, search/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır
@@ -79,5 +80,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 
 - [ ] WhatsApp/Signal gateway + sesli not transkripsiyonu
 - [ ] Ek integration'lar (takvim, RSS e-posta)
-- [ ] Sözleşme kompakt versiyonu (token verimliliği)
-- [ ] `web/` UI: view katmanı tasarımı (tech seçimi §45-13 ile)
+- [x] ~~Sözleşme kompakt versiyonu (token verimliliği)~~ (2026-09-23: AGENTS/SCHEMA
+      makine-okunur kompakt formda yeniden yazıldı)
+- [ ] Web UI: view katmanı tasarımı (tech seçimi §45-13 ile; `web/` iskeleti
+      2026-09-23'te kaldırıldı — gerekirse yeniden kurulur)

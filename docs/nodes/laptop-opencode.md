@@ -10,7 +10,6 @@ added: 2026-09-23
 # Laptop — opencode
 
 - **Kanallar:** CLI (insan ile doğrudan oturum)
-- **Erişim:** repo read/write (branch+PR, ADR-10); `main` asla; `raw/` append-only
-- **Kısıtlar:** ADR-8 uyumlu; şifreli içerik yalnız LLM context'ine (sert kural 4)
+- **Erişim:** repo read/write (serbest yazma; commit ve conflict çözümü cron'da — bkz. `[[main-insana-aittir]]`); `raw/` append-only
+- **Kısıtlar:** ADR-8 uyumlu; şifreli içerik yalnız LLM context'ine (AGENTS R4)
 - **Notlar:** İlk kayıtlı düğüm. macOS çalışma klonu; git-crypt açık.
-- **Kök:** [[index]]

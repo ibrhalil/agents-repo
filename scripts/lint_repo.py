@@ -9,8 +9,8 @@ TYPES = 'concept project task issue resource person decision'.split()
 STAGES = 'inbox next in_progress waiting done archived'.split()
 SCOPES = 'work personal learning systems creator media common'.split()
 STATUS = 'unverified established stub'.split()
-PRIORITY = 'high medium low none'.split()
-ORDER = 'title type stage scope status priority custom_date url tags created updated locked'.split()
+ORDER = 'title type stage scope status tags created updated locked'.split()
+ISO_DT = re.compile(r'\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z))?')
 ENCRYPTED = ['raw/', 'wiki/', 'memories/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
 BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
 EMAIL = re.compile(r'[\w.+-]+@[\w-]+\.[A-Za-z]{2,}')
@@ -54,14 +54,14 @@ for p in wiki:
     for k in ('title', 'type', 'stage', 'scope'):
         if not fm.get(k): add('ERR', 'FM', f'{rel}: zorunlu alan {k} yok')
     for k, ok in (('type', TYPES), ('stage', STAGES), ('scope', SCOPES),
-                  ('status', STATUS), ('priority', PRIORITY)):
+                  ('status', STATUS)):
         v = fm.get(k, '').strip('"')
         if v and v not in ok: add('ERR', 'ENUM', f'{rel}: {k}={v}')
     idx = [ORDER.index(f2) for f2 in order if f2 in ORDER]
     if idx != sorted(idx): add('ERR', 'ORDER', f'{rel}: frontmatter sırası {order}')
     for k in ('created', 'updated'):
-        if fm.get(k) and not re.fullmatch(r'\d{4}-\d{2}-\d{2}', fm[k]):
-            add('ERR', 'DATE', f'{rel}: {k}={fm.get(k)}')
+        if fm.get(k) and not ISO_DT.fullmatch(fm[k]):
+            add('ERR', 'DATE', f'{rel}: {k}={fm.get(k)} (ISO 8601 date/datetime değil)')
     if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*\.md', p.name):
         add('ERR', 'SLUG', f'{rel}: ASCII kebab-case değil')
     body = strip_code(text)
@@ -124,7 +124,7 @@ for p in [ROOT / 'memories' / 'profile.md']:
             add('ERR', 'BUMP', f'memories/profile.md: updated={fm.get("updated")} < son commit {last}')
 
 files = [ROOT / f for f in ('README.md', 'AGENTS.md', 'SCHEMA.md', '.env.example')]
-for d in ('docs', 'scripts', 'skills', 'tools', 'config', 'web', 'workspace'):
+for d in ('docs', 'scripts', 'skills'):
     files += [q for q in (ROOT / d).rglob('*') if q.is_file()]
 for p in files:
     if not p.exists(): continue
@@ -134,6 +134,13 @@ for p in files:
             add('WRN', 'PRIV', f'{p.relative_to(ROOT)}: e-posta benzeri {m.group()}')
     for m in PHONE.finditer(t):
         add('WRN', 'PRIV', f'{p.relative_to(ROOT)}: telefon benzeri {m.group()}')
+
+try:
+    import build_index
+    if (ROOT / 'index.md').read_text(encoding='utf-8') != build_index.generate():
+        add('WRN', 'INDEX', 'index.md bayat — python3 scripts/build_index.py ile yeniden üretilmeli')
+except Exception as e:
+    add('WRN', 'INDEX', f'denetlenemedi: {e}')
 
 print('\n'.join(out) if out else 'temiz')
 print(f'\n== {err} ERR · {wrn} WRN · {sum(o.startswith("INFO") for o in out)} INFO ==')

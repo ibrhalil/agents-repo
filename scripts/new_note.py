@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Şablondan yeni wiki notu iskeleti üretir (AGENTS kural 9; SCHEMA §3).
-Git işlemi yapmaz — branch/commit/PR akışı agent/insan tarafındadır (ADR-10)."""
+"""Şablondan yeni wiki notu iskeleti üretir (AGENTS R5; SCHEMA §3).
+Git işlemi yapmaz — commit ve conflict çözümü periyodik cron'a aittir."""
 import argparse
 
 import lib_repo as lib
@@ -15,7 +15,6 @@ def main():
     ap.add_argument('--scope', default='common')
     ap.add_argument('--status')
     ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
-    ap.add_argument('--url')
     ap.add_argument('--log-op', choices=lib.LOG_OPS,
                     help='verilirse log satırı da yazar')
     a = ap.parse_args()
@@ -28,9 +27,9 @@ def main():
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
     out = lib.ROOT / 'wiki' / f'{a.slug}.md'
     if out.exists():
-        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (kural 2)')
+        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
     out.write_text(lib.render_note(a.slug, title, a.type_, a.scope, a.stage,
-                                   a.status, tags or None, a.url), encoding='utf-8')
+                                   a.status, tags or None), encoding='utf-8')
     print(f'wiki/{a.slug}.md üretildi (stage: {a.stage})')
     msg = f'not üretildi: wiki/{a.slug}.md'
     if a.log_op:

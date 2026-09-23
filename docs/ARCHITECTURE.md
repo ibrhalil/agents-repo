@@ -35,7 +35,7 @@ insan onayı ister.
 Repo bilinçli public (ADR-7): kod/mimari/dokümantasyon açık; kişisel knowledge
 git-crypt ile şifreli (`raw/ wiki/ memories/ agent/prompts/ agent/sessions/ plans/
 log/ tmp/`). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
-veri yol adlarında bile yaşamaz (SCHEMA §1). Hassas kapsam yalnız yerel model
+veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
 
 ## Düğümler
@@ -46,8 +46,9 @@ Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model; kayıtlar `d
   cron (gece konsolidasyon, haftalık lint, sabah bülteni). Workspace = klon.
 - **Ev (test/local):** Ollama provider, aynı repo klonu, aynı SCHEMA.
 - **İnsan düğümü:** Obsidian ile `wiki/` doğrudan düzenleme.
-- **Senkron:** git (`pull --rebase → merge → commit → push`); append-only tasarım
-  çoklu yazıcıda çatışmaları seyrekleştirir.
+- **Senkron:** git; düğümler serbest yazar, commit ve conflict çözümü periyodik
+  cron job'a aittir ([[wiki/main-insana-aittir]] kararı, 2026-09-23); append-only
+  tasarım çoklu yazıcıda çatışmaları seyrekleştirir.
 
 ## Faz durumu
 Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.

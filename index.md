@@ -3,7 +3,7 @@
 
 ## Sözleşmeler ve Kök Dizinler
 - [[AGENTS]] · [[SCHEMA]] · [[README]]
-- [[log/2026-09-23]] (Günlük Log Örneği)
+- [[log/2026-09-23]] (Günlük Log)
 
 ## Ağaç (Tree) — Hub'lar ve Yapraklar
 
@@ -12,7 +12,7 @@
 - [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]]
 - [[epistemik-hijyen|Epistemik Hijyen Politikası]]
 - [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]]
-- [[main-insana-aittir|ADR-10: Agent yalnız branch + PR; main'e commit/push yalnız insan]]
+- [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]]
 - [[noma-asistan-prompt-uyarlamasi|Noma Asistan Prompt Uyarlaması: 6 kategorinin karşılıkları ve gap'ler]]
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
@@ -65,7 +65,6 @@
 - [[urun-ve-girisimcilik|Ürün / Girişimcilik]]
 
 ### [[iki-seritli-yazma-ve-mr]]
-- [[main-insana-aittir|ADR-10: Agent yalnız branch + PR; main'e commit/push yalnız insan]]
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
 
 ### [[kisisel-bilgi-sistemi]]
@@ -75,11 +74,13 @@
 - [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]]
 - [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]]
 - [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]]
-- [[main-insana-aittir|ADR-10: Agent yalnız branch + PR; main'e commit/push yalnız insan]]
+- [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]]
 - [[noma|Noma (agents-repo)]]
 - [[not-alma-rehberi|Kafka'nın retry semantiği]]
+- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]]
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
+- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]]
 - [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]]
 - [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]]
 - [[urun-ve-girisimcilik|Ürün / Girişimcilik]]
@@ -102,6 +103,7 @@
 ### [[main-insana-aittir]]
 - [[bakim-disiplini|Bakım Disiplini Politikası]]
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]]
+- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]]
 - [[veri-butunlugu|Veri Bütünlüğü Politikası]]
 
 ### [[noma]]
@@ -116,9 +118,6 @@
 
 ### [[not-alma-rehberi]]
 - [[uzun-not-politikasi|uzun-not-politikasi]]
-
-### [[prompt-injection-savunmasi]]
-- [[main-insana-aittir|ADR-10: Agent yalnız branch + PR; main'e commit/push yalnız insan]]
 
 ### [[public-repo-durusu]]
 - [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]]
@@ -166,5 +165,6 @@
 - [[context-yonetimi|Context Yönetimi]]
 - [[epistemik-hijyen|Epistemik Hijyen Politikası]]
 - [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]]
+- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]]
+- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]]
 - [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]]
-
