@@ -37,10 +37,6 @@
 - [[otomasyon-ve-paralellik|Otomasyon ve Paralellik]] — Tekrar eden prompt yapıları otomasyonu hakeder (script); N varyant üretüp en iyisini seçmek (best-of-N) mal…
 - [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
-### [[bilgi-hatti]]
-- [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]] — Agent tam yetkilidir (ekle/sil/güncelle) ama wiki/profil değişiklikleri branch + MR üzerinden geçer; insan… [archived]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
-
 ### [[context-yonetimi]]
 - [[hafiza-ve-karar-yonetimi|Hafıza ve Karar Yönetimi]] — Hafıza salt konuşma geçmişi (transcript) değil, karar altyapısıdır; iyi bir sistemde "facts, decisions, pre…
 
@@ -54,34 +50,22 @@
 - [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
 - [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
-### [[forgesys]]
-- [[bilgi-hatti|ADR-1 (superseded): Bilgi hattı raw → atoms → wiki olarak kuruldu]] — Kişisel bilgi tabanı üç katmanlı, markdown-merkezli kuruldu; vector DB asla truth değildir. [archived]
-
-### [[iki-seritli-yazma-ve-mr]]
-- [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
-
 ### [[kisisel-bilgi-sistemi]]
 - [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]] — İnsan ve agent'ı birlikte bağleyen politikaların dizin notu; kural içeriği burada yaşamaz, alt notlarda yaşar.
 - [[ai-agent-teknolojileri|AI / Agent Teknolojileri]] — Sürekli ilgi alanı: LLM araçları, agent sistemleri, RAG, retrieval mimarileri. [next]
 - [[arac-zemini|Araç Zemini Register: repo yüzeyleri dizini]] — Repo'nun public yüzeyleri (scripts/docs) wiki ağacına bu not üzerinden bağlanır; içerik burada yaşamaz, dos…
-- [[bilgi-hatti|ADR-1 (superseded): Bilgi hattı raw → atoms → wiki olarak kuruldu]] — Kişisel bilgi tabanı üç katmanlı, markdown-merkezli kuruldu; vector DB asla truth değildir. [archived]
 - [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]] — Dil politikası + token optimizasyonu + plan dosyası protokolü tek revizyonda kuruldu; kökler forgesys prati…
-- [[iki-seritli-yazma-ve-mr|ADR-2 (superseded): Yazma, iki şerit + MR disipliniyle yönetilir]] — Agent tam yetkilidir (ekle/sil/güncelle) ama wiki/profil değişiklikleri branch + MR üzerinden geçer; insan… [archived]
 - [[kullanici-profili|Kullanıcı Profili]] — Kullanıcının (Halil) kimliği, iletişim tercihleri, çalışma tarzı ve öncelikleri; tüm düğümlerin (Hermes dah…
 - [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
 - [[llm-wiki-deseni|LLM Wiki: Kalıcı Bilgi Arşivi Deseni]] — RAG'ın aksine her sorguda bilgiyi yeniden keşfetmeyen, LLM ajanın ham kaynaklarla insan arasında kalıcı ve…
 - [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]] — Agent'ların sürekli PR açıp insan onayı beklemesi eş zamanlı çalışmada darboğaz yarattığı için eski "Agent…
 - [[noma|Noma (agents-repo)]] — Kişisel asistan / koç / ikinci beyin projesi: insan + çoklu-agent ortak bahçesi; her düğüm (herhangi bir ag… [in_progress]
 - [[not-alma-rehberi|Not Alma Rehberi]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
-- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]] — Repo'nun eski 3-katmanlı yapı döneminde (2026-09-20) yapılmış kapsamlı denetim analizi: güçlü yönler ve 22… [archived]
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
-- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]] — 2026-09-20 döneminde incelenen 8 benzer proje (LLM Wiki kalıbı) ve Noma için çıkarılan dersler. [archived]
 - [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]] — Ne nereye gider: hassas kapsam yalnız yerel model.
 - [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]] — Sürekli ilgi alanı: sistem tasarımı, mimari, dağıtık sistemler. [inbox]
 - [[urun-ve-girisimcilik|Ürün / Girişimcilik]] — Sürekli ilgi alanı: ürün düşünme, girişimcilik, iş modelleme. [inbox]
-- [[wiki-adlandirma-ve-not-yapisi|ADR-4 (superseded): İnsan başlıklı adlandırma, ilk-okuma yapısı, tarama politikası]] — Dosya adları grafik düğüm adlarıdır → insan-okur Türkçe başlıklar; navigasyon bloğu gövdeden önce; tam-proj… [archived]
-- [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]] — Master Note DB yapısı (Area/Status/Priority/URL/Parent/Date) epistemik şema ile birleştirildi; `status` × `… [archived]
 - [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
 - [[yazilim-disi-ilgi-alanlari|Yazılım Dışı İlgi Alanları]] — Kişisel ilgi alanları hub'ı — içerik gözlemle doldurulur; her alan somutlaştıkça kendi notuna bağlanır. [inbox]
 - [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
@@ -127,13 +111,6 @@
 ### [[urun-ve-girisimcilik]]
 - [[forgesys|ForgeSys]] — Modüler multi-tenant SaaS platformu: Java 21 + Spring Boot 4. [in_progress]
 
-### [[wiki-adlandirma-ve-not-yapisi]]
-- [[wiki-not-semasi|ADR-5 (superseded): Wiki not şemasına yaşam döngüsü alanları eklendi (Master Note DB sentezi)]] — Master Note DB yapısı (Area/Status/Priority/URL/Parent/Date) epistemik şema ile birleştirildi; `status` × `… [archived]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
-
-### [[wiki-not-semasi]]
-- [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
-
 ### [[yalin-dugum-ilkesi]]
 - [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
 - [[not-alma-rehberi|Not Alma Rehberi]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
@@ -153,7 +130,5 @@
 - [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
 - [[metadata-alanlari|Wiki Metadata Alanları]] — Wiki metadata şemasının alan bazlı detayı: zorunlu/opsiyonel alanlar, type/stage/status/scope değer kümeler…
 - [[not-adlandirma-ve-iliskiler|Wiki Adlandırma ve İlişkiler]] — Wiki dosya adlandırma (kebab-case ASCII slug), filename ile title ayrımı ve wikilink tabanlı tek-yön ilişki…
-- [[proje-analizi-2026-09|agents-repo (Noma) Kapsamlı Analiz ve Öneriler (2026-09)]] — Repo'nun eski 3-katmanlı yapı döneminde (2026-09-20) yapılmış kapsamlı denetim analizi: güçlü yönler ve 22… [archived]
-- [[rakip-arastirmasi-2026-09|Benzer Projeler Araştırması — Agent-Entegre İkinci Beyin Sistemleri (2026-09)]] — 2026-09-20 döneminde incelenen 8 benzer proje (LLM Wiki kalıbı) ve Noma için çıkarılan dersler. [archived]
 - [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]] — Sürekli ilgi alanı: sistem tasarımı, mimari, dağıtık sistemler. [inbox]
 - [[turetilmis-yuzeyler|Türetilmiş Yüzeyler: Master DB, Graph, Search]] — Dosyalar tek gerçekliktir: master database, graph ve search/index türetilmiş, silinse yeniden üretilebilir…
