@@ -17,6 +17,7 @@ cron job'a aittir.
 | `build_index.py` | `index.md` üretici (cron): wiki `## Links` (özelden genele) yönünden ağaç |
 | `docker-compose.hermes.yml` | Hermes Agent runtime compose (yerel doğrulandı; VPS Faz 1 B2-B4 notları dosyada) |
 | `hermes_wiki_context.py` | Hermes `pre_llm_call` hook'u: wiki ağaç haritasını her turda mesaja enjekte eder (model bağımsızlığı) |
+| `test_hermes_node.py` | Hermes düğüm smoke testi: altyapı + agent testleri (PASS/FAIL/WARN raporu, FAIL'de exit 1) |
 
 ## Örnekler
 
