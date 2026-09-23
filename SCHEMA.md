@@ -1,9 +1,8 @@
 # SCHEMA.md — Veri Sözleşmesi
 
 Normatif veri tanımları: insan ve agent'lerin ortak okuduğu/yazdığı her format burada.
-Çelişkide bu dosya kazanır; değişiklik = insan onayı (MR). Mimari kararların temel
-kaynağı: `plans/yeni-agent-yapisi.md` — orada "henüz karar verilmedi" denilen konular
-burada da kararlaştırılmış sayılmaz.
+Çelişkide bu dosya kazanır; değişiklik = insan onayı (MR). Mimari kararların kaynağı
+`plans/yeni-agent-yapisi.md` — orası "henüz karar verilmedi" diyorsa burada da değildir.
 
 ## 1. Dizinler ve görünürlük (public repo)
 
@@ -22,14 +21,18 @@ burada da kararlaştırılmış sayılmaz.
 | `config/` | public | Konfigürasyon — **secret plaintext yasak** | normal geliştirme |
 | `web/` | public | Web UI — presentation layer, truth değil | normal geliştirme |
 | `docs/` | public | Teknik dokümantasyon, şablonlar | normal geliştirme |
+| `index.md` | public | Vault kökü/haritası — türetilmiş görünüm (truth değil) | MR ile |
 
 Public dizinlere kişisel/fact-düzeyi veri yazılmaz (AGENTS §Görünürlük).
 
+**Kök bağlantı:** wiki dışı her düzenlenebilir `.md` en az bir wikilink taşır (`Kök:
+[[index]]` ya da ilgili wiki notuna); `raw/` + `log/` append-only olduğundan bağ ancak
+index.md'den verilir. Wiki notları (ve wiki notu şablonu) index'e bağlanmaz.
+
 ## 2. Bilgi hattı
 
-`raw ─derleme→ wiki` (iki katman; `atoms/` kaldırıldı — [[yeni-agent-yapisi|Yeni
-Agent Yapısı]] kararı). Wiki tek kanonik tabandır; index/graph/view'lar türetilir,
-silinse yeniden üretilebilir — **asla truth değildir**.
+`raw ─derleme→ wiki` (iki katman; `atoms/` kaldırıldı — [[yeni-agent-yapisi|Yeni Agent
+Yapısı]] kararı). Wiki tek kanonik tabandır; index/graph/view'lar türetilir — truth değildir.
 
 ## 3. Wiki not formatı
 
@@ -88,8 +91,7 @@ karar kaydı yazılır.
 
 ## 5. raw/ adlandırma
 
-- `conversations/YYYY-MM-DD-HHmm.md` · `clippings/c-<NNNN>.md` · `inbox/*` — yollar nötr
-- İşlenme işaretleme/taşıma **henüz karar verilmedi**; dosya append-only yerinde kalır, hedefi log'a kaydedilir.
+- `conversations/YYYY-MM-DD-HHmm.md` · `clippings/c-<NNNN>.md` · `inbox/*` — yollar nötr; işlenme işaretleme **henüz karar verilmedi**, dosya yerinde kalır (hedef log'da)
 
 ## 6. memories/
 
@@ -126,15 +128,13 @@ güncel gün girer, geçmiş ripgrep; append çakışmasında iki satır da tutu
 
 - Frontmatter'a yalnız anlamlı alanlar; her not özetle başlar; büyük notlar
   heading-bazlı dilimlenir — context'e tamamı girmez.
-- Log kaydı tek satır. ripgrep .gitignore'a saygılıdır → `data/` aramalardan doğal
-  dışlanır; tam-proje taraması yalnızca cron'da. Türkçe+İngilizce karışımı: köklü
-  terimi İngilizce bırakmak anlamı ve token yoğunluğunu korur.
+- Log kaydı tek satır. ripgrep .gitignore'a saygılı → `data/` aramalardan doğal dışlanır;
+  tam-proje taraması yalnızca cron'da. Köklü terim İngilizce kalır — anlam + token yoğunluğu.
 
 ## 12. Henüz karar verilmedi (plans/yeni-agent-yapisi.md §45)
 
 `custom_date` formatı · yeni not filename üretim algoritması · raw işlenme işareti ·
-maintenance job frekansı · Master DB · graph/index · search/embedding · Docker
-sandbox güvenlik modeli · tools/skills/MCP sınırları · config dosya formatı · web
-teknolojisi · SOUL/USER gibi context dosyaları · log runtime implementasyonu ·
-`data/`/`sdata/`/`deploy/` gibi ek dizinlerin geleceği. Bunlar hakkında konuşurken
-"henüz karar verilmedi" kabul et.
+maintenance job frekansı · Master DB · graph motoru · search/embedding · Docker sandbox
+güvenlik modeli · tools/skills/MCP sınırları · config dosya formatı · web teknolojisi ·
+SOUL/USER gibi context dosyaları · log runtime · `data/`/`sdata/`/`deploy/` geleceği.
+Bunlar hakkında konuşurken "henüz karar verilmedi" kabul et.

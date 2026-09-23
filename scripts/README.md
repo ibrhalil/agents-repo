@@ -33,3 +33,5 @@ Notlar:
 - Log satırları SCHEMA §8 formatındadır: `HH:mm <op> @<node> | mesaj ≤120`.
 - Enum varsayılanları: `new_note` → `concept/common/inbox`; `ingest` →
   `resource/common/inbox`. Değerler SCHEMA §3'teki listelerle doğrulanır.
+
+Kök: [[index]]

@@ -16,7 +16,7 @@ genel bakışı tutar.
    (plans/yeni-agent-yapisi.md §44).
 
 ## Bilgi hattı ve retrieval
-Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[yeni-agent-yapisi]]).
+Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[wiki/yeni-agent-yapisi]]).
 Sorgu tarafı motor-bağımsızdır:
 
 ```text

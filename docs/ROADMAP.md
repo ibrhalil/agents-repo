@@ -5,6 +5,8 @@
 > mimari `docs/ARCHITECTURE.md`, kararlaştırılmamış konular plans/Yeni Agent
 > Yapısı.md §45.
 
+Bağ: [[index]] · [[wiki/yeni-agent-yapisi|Yeni Agent Yapısı]]
+
 ---
 
 ## Mevcut Durum
