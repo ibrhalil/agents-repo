@@ -3,7 +3,7 @@
 
 ## Sözleşmeler ve Kök Dizinler
 - [[AGENTS]] · [[SCHEMA]] · [[README]]
-- [[log/2026-09-23]] (Günlük Log)
+- [[log/2026-09-24]] (Günlük Log)
 
 ## Kök Hub'lar
 - [[kisisel-bilgi-sistemi|Personal Knowledge System (bu sistemin kendisi)]] — Bu repo insan + agent'in ortak bahçesidir: aynı bilgi tabanına insan (Obsidian) ve agent'ler (ingest/query/…
@@ -47,11 +47,15 @@
 - [[asistan-system-prompt-yapitaslari|Asistan System Prompt Yapıtaşları (6 Kategori)]] — Kişisel asistan system prompt'u ve mimarisini kuran altı yapıtaşı kategorisi: kimlik/rol, davranış kurallar…
 - [[uretici-dogrulayici-ayrimi|Üretici–Doğrulayıcı Ayrımı]] — Üreten mekanizma kendi yapıtını test etmez: üretici, kontrol/doğrulama ve test ayrı bileşenlerdir; determin…
 
+### [[ilgi-alanlari]]
+- [[muzik-zevki|Müzik Zevki]] — Sevilen şarkıların tek düz listesi; kullanıcı bildirdikçe oturumlarda eklendir. [in_progress]
+
 ### [[kisisel-bilgi-sistemi]]
 - [[agent-policy|Politika Register: insan ve agent'ın ortak kuralları]] — İnsan ve agent'ı birlikte bağleyen politikaların dizin notu; kural içeriği burada yaşamaz, alt notlarda yaşar.
 - [[ai-agent-teknolojileri|AI / Agent Teknolojileri]] — Sürekli ilgi alanı: LLM araçları, agent sistemleri, RAG, retrieval mimarileri. [next]
 - [[arac-zemini|Araç Zemini Register: repo yüzeyleri dizini]] — Repo'nun public yüzeyleri (scripts/docs) wiki ağacına bu not üzerinden bağlanır; içerik burada yaşamaz, dos…
 - [[dil-politikasi-ve-token-kurallari|ADR-3: Dil politikası, token optimizasyonu ve plan dosyası protokolü eklendi]] — Dil politikası + token optimizasyonu + plan dosyası protokolü tek revizyonda kuruldu; kökler forgesys prati…
+- [[ilgi-alanlari|İlgi Alanları]] — Kişisel ilgi alanları hub'ı — içerik gözlemle doldurulur; her alan somutlaştıkça kendi notuna bağlanır. [inbox]
 - [[kullanici-profili|Kullanıcı Profili]] — Kullanıcının (Halil) kimliği, iletişim tercihleri, çalışma tarzı ve öncelikleri; tüm düğümlerin (Hermes dah…
 - [[llm-sistem-ilkeleri|LLM Sistem Kurma İlkeleri: Sistem > Model]] — Ana tez: asıl fark modelde değil, modelin etrafına kurulan sistemdedir — belirleyici olan context, hafıza v…
 - [[llm-wiki-deseni|LLM Wiki: Kalıcı Bilgi Arşivi Deseni]] — RAG'ın aksine her sorguda bilgiyi yeniden keşfetmeyen, LLM ajanın ham kaynaklarla insan arasında kalıcı ve…
@@ -64,7 +68,6 @@
 - [[sistem-tasarimi-ve-mimari|Sistem Tasarımı / Mimari]] — Sürekli ilgi alanı: sistem tasarımı, mimari, dağıtık sistemler. [next]
 - [[urun-ve-girisimcilik|Ürün / Girişimcilik]] — Sürekli ilgi alanı: ürün düşünme, girişimcilik, iş modelleme. [inbox]
 - [[yalin-dugum-ilkesi|ADR-6: Düğümler yalın ve tek-odaklı; ilişkiler tek yönlü]] — Bir düğüm tek bir fikre odaklanır; grafik yalın kalır.
-- [[yazilim-disi-ilgi-alanlari|Yazılım Dışı İlgi Alanları]] — Kişisel ilgi alanları hub'ı — içerik gözlemle doldurulur; her alan somutlaştıkça kendi notuna bağlanır. [inbox]
 - [[yeni-agent-yapisi|Yeni agent yapısı: atoms kaldırıldı; düz wiki, kebab-case ve yeni metadata şeması]] — Knowledge Base yeni kök yapıya geçti: atoms katmanı kaldırıldı, wiki fiziksel type klasörleri olmadan düz ç…
 
 ### [[llm-sistem-ilkeleri]]
@@ -113,9 +116,6 @@
 - [[bakim-disiplini|Bakım Disiplini Politikası]] — Kayıtsız mutasyon olmaz; kalite mekanik olarak (lint) korunur; tekrar birleştirilir.
 - [[not-alma-rehberi|Not Alma Rehberi]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
 - [[uzun-not-politikasi|Uzun Not Politikası]] — Bölme kriteri satır sayısı değil yapıdır: tek konunun derinliği heading disipliniyle kalır, bağımsız çoklu…
-
-### [[yazilim-disi-ilgi-alanlari]]
-- [[sevdigim-muzikler|Sevdiğim Müzikler]] — Kullanıcının sevdiği şarkıların tek düz listesi; kullanıcı bildirdikçe oturumlarda eklendir. [in_progress]
 
 ### [[yeni-agent-yapisi]]
 - [[agent-mimarisi|Agent Mimarisi ve Sınırları]] — Agent mimarisinin yönü: prompt hazırlığı, agent context, tool/skill/MCP sınırları, Docker izolasyonu, git o…
