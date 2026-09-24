@@ -24,7 +24,9 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_test_node.py` | Salt-okunur, LLM'siz indeks/compose/hook/lint smoke testi; dashboard yoksa WARN |
 | `test_noma_guardrails.py` | Sentetik, model çağrısız raw yarış / mevcut not / log gizliliği regresyonları |
 | `test_noma_retrieval.py` | Sentetik Türkçe sorgu, hub filtresi, sıralama ve çıktı regresyonları |
+| `test_noma_context.py` | Üst hub seçimi ile gerekçeli gövde çağrışımının sentetik regresyonları |
 | `noma_eval_retrieval.py` | Şifreli plandaki temsilî sorguların toplu ilk-3/ikinci-rota isabetini ölçer (içerik basmaz) |
+| `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
 
 ## Örnekler
 
@@ -47,6 +49,8 @@ w stats
 bash scripts/noma-bootstrap.sh --id hermes-vps
 python3 -B -m unittest discover -s scripts -p 'test_*.py'
 python3 -B scripts/noma_eval_retrieval.py
+python3 -B scripts/noma_eval_context.py
+python3 -B scripts/noma_eval_context.py --fresh
 python3 -B scripts/noma_bench_index.py 1000 10000
 python3 -B scripts/noma_bench_index.py 100000 --search
 python3 -B scripts/noma_test_node.py --no-llm
@@ -68,8 +72,9 @@ Notlar:
   çıktısından değil seçilen `wiki/` dosyasından okunur.
 - `--search` sentetik tam taramayı da ölçer: üretim ve genel arama hâlâ bütün
   wiki'yi tarar; sayfalar yalnız gezinmeyi O(tek sayfa) yapar.
-  Belirsizse `w s <terimler> --json [--hub <slug>]`; zayıf sonuçta kısa terimlerle bir kez yinele.
-  Kısmi eşleşme kanıt değil, okunacak adaydır.
+  Belirsizse soru önce 2-4 kavrama damıtılır: `w s <kavramlar> --json [--hub <slug>]`;
+  zayıf sonuçta kısa kök terimlerle bir kez yinele.
+  Kısmi eşleşme kanıt değil, okunacak adaydır (bkz. `wiki/cekirdek-bilgi-erisimi.md`).
 - `noma_wiki.py` Türkçe karakter katlar: `w s hafiza` → "Hafıza" başlıklı notları
   bulur. Skor: slug > başlık > tag > özet > gövde; tam kelime eşleşmesi yoksa
   kısmi adayları gösterir. Güncellik yalnız eşitlik çözümüdür; `status`/`stage`
