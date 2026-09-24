@@ -34,7 +34,7 @@ insan onayı ister.
 
 ## Görünürlük ve güvenlik
 Repo bilinçli public (ADR-7): kod/mimari/dokümantasyon açık; kişisel knowledge
-git-crypt ile şifreli (`raw/ wiki/ agent/prompts/ agent/sessions/ plans/
+git-crypt ile şifreli (`index.md`, `raw/ wiki/ agent/prompts/ agent/sessions/ plans/
 log/`; `tmp/` yerel/gitignore — şifrelenmez). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
 veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
@@ -43,13 +43,21 @@ veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model (kayıt dizini
 `docs/nodes/` 2026-09-23'te kaldırıldı; düğüm envanteri bu bölümde yaşar).
 - **Laptop (aktif):** opencode — etkileşimli geliştirme düğümü.
-- **VPS (7/24 birincil, planlı):** ilk runtime adayı Hermes + Telegram gateway +
-  cron (gece konsolidasyon, haftalık lint, sabah bülteni). Workspace = klon.
-- **Ev (test/local):** Ollama provider, aynı repo klonu, aynı SCHEMA.
+- **VPS (7/24 birincil, planlı):** Hermes bulut runtime'ı yalnız public
+  `AGENTS/SCHEMA/README/docs/scripts` read-only mount alır; şifreli wiki, indeks,
+  `.env` ve Git kimliği bu konteynerde bulunmaz. Özel bilgi işi yerel düğümü
+  bekler. Önceki tam-klon Hermes mount'u güvenlik nedeniyle kaldırıldı.
+- **Ev (planlı local):** Ollama provider, aynı repo klonu, aynı SCHEMA.
 - **İnsan düğümü:** Obsidian ile `wiki/` doğrudan düzenleme.
-- **Senkron:** git; düğümler serbest yazar, commit ve conflict çözümü periyodik
-  cron job'a aittir ([[wiki/main-insana-aittir]] kararı, 2026-09-23); append-only
-  tasarım çoklu yazıcıda çatışmaları seyrekleştirir.
+- **Senkron:** git; yetkili yerel düğümler serbest yazar, commit ve conflict çözümü
+  periyodik cron job'a aittir ([[wiki/main-insana-aittir]] kararı, 2026-09-23);
+  append-only tasarım çoklu yazıcıda çatışmaları seyrekleştirir.
+
+Bulut Hermes home'u `~/.hermes-cloud` ile eskisinden ayrıdır;
+eski `~/.hermes` hafızası/cron'u otomatik olarak taşınmaz. `pre_llm_call` hook'u
+yalnız statik gezinme talimatı verir; yerel model ilgili hub'ı ihtiyaç anında
+dosyadan okur. Sağlayıcı API anahtarı Hermes işlem ortamında kalır; tool
+işlemlerinden ayrıca izole edilmesi için provider proxy/araç sınırı gerekir.
 
 ## Faz durumu
 Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.

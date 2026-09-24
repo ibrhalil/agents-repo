@@ -14,7 +14,7 @@ ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzer
 ## 2. Bilgi Hattı ve Keşif
 Üretim: `raw/` -> `wiki/` (2 katman).
 Geri besleme: Değerli query sentezleri atomik wiki notu olarak geri dosyalanır (`-> filed: wiki/slug.md` log kaydıyla; AGENTS §2 query).
-Harita: Tek kanonik giriş `index.md`'dir. `index.md` cron tarafından wiki'deki `## Links` yönünden (özelden genele) otomatik üretilir.
+Harita: Tek kanonik giriş şifreli `index.md`'dir; kilit açıldıktan sonra okunur. Cron, wiki'deki `## Links` yönünden (özelden genele) üretir; wiki başlık/özetleri public yüzeye kopyalanmaz.
 ## 3. Wiki Not Formatı (Frontmatter)
 ZORUNLU ŞABLON: `docs/templates/wiki_note.md`
 ```yaml

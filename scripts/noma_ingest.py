@@ -18,20 +18,34 @@ INJECTION = re.compile(
     r'|reveal (?:your )?(?:instructions|prompt)', re.I)
 
 
-def raw_target(kind, name_hint):
+def raw_target(kind, name_hint, attempt=0):
     if kind == 'clippings':
         n = 0
         for f in (lib.ROOT / 'raw' / 'clippings').glob('c-*.md'):
             m = re.fullmatch(r'c-(\d+)', f.stem)
             if m:
                 n = max(n, int(m.group(1)))
-        return lib.ROOT / 'raw' / 'clippings' / f'c-{n + 1:04d}.md'
+        return lib.ROOT / 'raw' / 'clippings' / f'c-{n + 1 + attempt:04d}.md'
     stem = Path(name_hint).stem if name_hint else ''
     name = (lib.slugify(stem) or 'kaynak') + (Path(name_hint).suffix if name_hint else '.md')
     p = lib.ROOT / 'raw' / 'inbox' / name
-    if p.exists():
-        p = p.with_name(f'{p.stem}-{lib.now_stamp().split("-")[-1]}{p.suffix}')
+    if attempt:
+        p = p.with_name(f'{p.stem}-{lib.now_stamp()}-{attempt}{p.suffix}')
     return p
+
+
+def write_raw(kind, name_hint, data):
+    """Eşzamanlı ingest'lerde bile var olan raw dosyasını asla açıp ezme."""
+    attempt = 0
+    while True:
+        p = raw_target(kind, name_hint, attempt)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with p.open('xb') as stream:
+                stream.write(data)
+            return p
+        except FileExistsError:
+            attempt += 1
 
 
 def main():
@@ -63,11 +77,7 @@ def main():
     if not data:
         raise SystemExit('hata: kaynak boş')
     hint = Path(a.source).name if is_file else None
-    p = raw_target(a.kind, hint)
-    if p.exists():
-        raise SystemExit(f'hata: {p} var — raw/ append-only, üzerine yazılmaz')
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_bytes(data)
+    p = write_raw(a.kind, hint, data)
 
     rel = p.relative_to(lib.ROOT).as_posix()
     flag = bool(INJECTION.search(data.decode('utf-8', errors='ignore')))
@@ -88,9 +98,15 @@ def main():
         lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=a.actor)
         return
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
-    note.write_text(lib.render_note(slug, title, a.type_, a.scope, a.stage,
-                                    a.status, tags or None,
-                                    source_path=rel), encoding='utf-8')
+    try:
+        with note.open('x', encoding='utf-8') as stream:
+            stream.write(lib.render_note(slug, title, a.type_, a.scope, a.stage,
+                                         a.status, tags or None, source_path=rel))
+    except FileExistsError:
+        print(f'wiki/{slug}.md aynı anda üretildi — raw kopyası yapıldı, '
+              'mevcut notla merge edin (AGENTS R2)', file=sys.stderr)
+        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=a.actor)
+        return
     print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
     lib.append_log('ingest', f'{slug} <- {rel}{suffix}', actor=a.actor)
 

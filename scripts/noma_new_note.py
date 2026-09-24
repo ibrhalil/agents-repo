@@ -30,8 +30,12 @@ def main():
     out = lib.ROOT / 'wiki' / f'{a.slug}.md'
     if out.exists():
         raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
-    out.write_text(lib.render_note(a.slug, title, a.type_, a.scope, a.stage,
-                                   a.status, tags or None), encoding='utf-8')
+    try:
+        with out.open('x', encoding='utf-8') as stream:
+            stream.write(lib.render_note(a.slug, title, a.type_, a.scope, a.stage,
+                                         a.status, tags or None))
+    except FileExistsError:
+        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
     print(f'wiki/{a.slug}.md üretildi (stage: {a.stage})')
     msg = f'not üretildi: wiki/{a.slug}.md'
     if a.log_op:

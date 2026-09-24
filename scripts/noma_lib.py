@@ -12,6 +12,7 @@ SCOPES = 'work personal learning systems creator media common'.split()
 STATUS = 'unverified established stub'.split()
 LOG_OPS = 'ingest query tend lint sync'.split()
 MSG_LIMIT = 120
+LOG_LINE = re.compile(r'\d{2}:\d{2} (ingest|query|tend|lint|sync) @[\w-]+(?: [\w./-]+)? \| (.+)')
 SLUG_RE = re.compile(r'[a-z0-9]+(-[a-z0-9]+)*')
 TR = str.maketrans({'ı': 'i', 'İ': 'I', 'ş': 's', 'Ş': 'S', 'ğ': 'g', 'Ğ': 'G',
                     'ü': 'u', 'Ü': 'U', 'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C'})
@@ -73,6 +74,14 @@ def parse_fm(text):
     return d
 
 
+def needs_updated_bump(current, previous):
+    """Gövde aynı gün değişse bile eski updated damgasını kabul etme."""
+    old = parse_fm(previous)
+    new = parse_fm(current)
+    return bool(old and new and current != previous
+                and new.get('updated', '') <= old.get('updated', ''))
+
+
 def parse_tags(raw):
     if not raw:
         return None
@@ -130,8 +139,8 @@ def load_wiki_index(with_body=False):
 def append_log(op, msg, actor=None):
     if op not in LOG_OPS:
         raise SystemExit(f'hata: op={op} (geçerli: {"|".join(LOG_OPS)})')
-    if actor is not None and not re.fullmatch(r'[\w.-]+', actor):
-        raise SystemExit(f'hata: aktör={actor} (format: harf/rakam/nokta/tire)')
+    if actor is not None and not re.fullmatch(r'[\w./-]+', actor):
+        raise SystemExit('hata: aktör biçimi geçersiz (harf/rakam/nokta/tire/slash)')
     msg = ' '.join(msg.split())
     if len(msg) > MSG_LIMIT:
         raise SystemExit(f'hata: log mesajı {len(msg)} karakter (> {MSG_LIMIT})')
@@ -142,6 +151,26 @@ def append_log(op, msg, actor=None):
     with p.open('a', encoding='utf-8') as f:
         f.write(f'{now_hhmm()} {op} @{node_id()}{who} | {msg}\n')
     return p
+
+
+def log_issues(path):
+    """Günlük biçimini denetle; özel satır metnini tanıya ASLA ekleme."""
+    in_comment = False
+    for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+        s = line.strip()
+        if '<!--' in s:
+            in_comment = True
+        if in_comment:
+            if '-->' in s:
+                in_comment = False
+            continue
+        if not s or s.startswith('#'):
+            continue
+        match = LOG_LINE.fullmatch(s)
+        if not match:
+            yield ('LOGF', number)
+        elif len(match.group(2)) > MSG_LIMIT:
+            yield ('LOGB', number)
 
 
 def render_note(slug, title, type_, scope, stage='inbox', status=None,

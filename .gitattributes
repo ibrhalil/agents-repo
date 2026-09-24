@@ -1,5 +1,9 @@
+# Genel metin normalizasyonu önce gelir; şifreli dosyalarda -text üstün olmalıdır.
+* text=auto eol=lf
+
 # git-crypt: kişisel veri yolları git geçmişinde ve remote'ta şifreli kalır
-# Public dizinlere kişisel veri yazılmaz (AGENTS §Görünürlük)
+# index.md wiki başlıklarını ve Summary metinlerini içerir: kilit açıldıktan sonra okunur.
+index.md            filter=git-crypt diff=git-crypt -text
 raw/**               filter=git-crypt diff=git-crypt -text
 wiki/**              filter=git-crypt diff=git-crypt -text
 agent/prompts/**     filter=git-crypt diff=git-crypt -text
@@ -9,6 +13,3 @@ log/**               filter=git-crypt diff=git-crypt -text
 
 # Yer tutucular plaintext kalsın (unlock öncesi dizin yapısı görünebilsin)
 *.gitkeep !filter !diff
-
-# Genel metin normalizasyonu
-* text=auto eol=lf

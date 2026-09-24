@@ -2,7 +2,7 @@
 ZORUNLU: Makine okuması için optimize edilmiştir. Detay/gerekçe için [[agent-policy]] notuna bak. Çelişkide SCHEMA.md > AGENTS.md geçerlidir.
 ## 1. Zihinsel Model (Tree Protokolü)
 FORMAT: Wiki bir ağaçtır (Tree).
-KEŞİF: Araştırma daima [[index]] kökünden (Top-Down) başlar. Rastgele dosya ismi aramak YASAKTIR.
+KEŞİF: Kilitli klonda önce README'deki git-crypt unlock; araştırma daima [[index]] kökünden (Top-Down) başlar. Rastgele dosya ismi aramak YASAKTIR.
 GENİŞLETME: Yeni not (yaprak) üretildiğinde, `## Links` üzerinden KESİNLİKLE mevcut bir Hub'a (dala) bağlanmalıdır (Bottom-Up).
 BÖLME: Büyüyen notlar Hub'a dönüştürülüp alt yapraklara bölünerek ağaç organik genişletilir.
 ## 2. Operasyonlar
@@ -13,7 +13,7 @@ tend: Kullanıcı serbest girdilerini (eksik frontmatter, kırık link) normaliz
 lint: Kırık link, orphan, updated bump denetimi.
 YAZMA AKIŞI: PR darboğazı yoktur. Agent'lar serbestçe yazar, Git commit ve conflict çözümü periyodik cron job'a aittir.
 ## 3. Görünürlük ve Güvenlik
-ŞİFRELİ (Kişisel Veri): `raw/` `wiki/` `agent/prompts/` `agent/sessions/` `plans/` `log/`
+ŞİFRELİ (Kişisel Veri): `index.md` `raw/` `wiki/` `agent/prompts/` `agent/sessions/` `plans/` `log/`
 PUBLIC (Veri YAZILAMAZ): `agent/` `scripts/` `docs/`
 YEREL (Gitignore, şifrelenmez): `tmp/`
 SIRLAR: Sadece `.env` dosyasında tutulur. Public dizinlere secret yazmak YASAKTIR.

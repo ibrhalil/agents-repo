@@ -37,6 +37,10 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [ ] B5 Cron job'lar (consolidate, lint, sabah bülteni)
 - [ ] B6 Telegram (sonraya atıldı)
 - [ ] Güvenlik advisory: LUKS + Obsidian plugin denetimi
+- [x] `index.md` git-crypt kapsamına alındı; eski açık indeks geçmişinin
+      içerik incelemesi ayrı karar (otomatik history rewrite yok)
+- [x] Bulut Hermes mount'u public-only/read-only yapıldı; yerel özel erişim
+      için yerel provider düğümü henüz kurulacak
 - [x] ~~Branch protection aktifleştirme~~ (gerek kalmadı — PR darboğazı kaldırıldı,
       commit/conflict çözümü cron'a devredildi; bkz. `wiki/main-insana-aittir.md`)
 
@@ -58,7 +62,9 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
       `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması,
       döngüsel Links (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT) —
       CYCLE/STALE 2026-09-23'te, STRUCT 2026-09-24'te eklendi
-      (`llm-wiki-deseni` notundan adaptasyon)
+       (`llm-wiki-deseni` notundan adaptasyon)
+- [x] `raw/` append-only eşzamanlı ingest, mevcut notu koruyan smoke,
+      gizli log satırı basmayan linter ve şifreli indeksi doğrulayan smoke testi
 - [x] Filed-back query kuralı kabul edildi (2026-09-23): değerli sentez atomik not
       olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` kaydı
       (AGENTS §2, SCHEMA §2; [[llm-wiki-deseni]] adaptasyonu)
