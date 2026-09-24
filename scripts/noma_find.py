@@ -40,17 +40,14 @@ def main():
     if not (a.query or a.type_ or a.stage or a.scope or a.status or a.tag):
         ap.error('en az biri gerekli: query veya bir metadata filtresi')
 
-    idx = lib.load_wiki_index()
-    hits = set(idx)
-    for key, val in (('type', a.type_), ('stage', a.stage), ('scope', a.scope),
-                     ('status', a.status)):
-        if val:
-            hits &= {s for s in hits if idx[s]['fm'].get(key) == val}
-    if a.tag:
-        hits &= {s for s in hits if a.tag in idx[s]['tags']}
+    idx = lib.load_wiki_index(with_body=bool(a.query))
+    hits = lib.filter_wiki(idx, list(idx), {'type': a.type_, 'stage': a.stage,
+                                           'scope': a.scope, 'status': a.status},
+                           tag=a.tag)
     if a.query:
-        hits &= matches_fulltext(a.query)
-    hits = sorted(hits)
+        found = matches_fulltext(a.query)
+        hits = [s for s in hits if s in found]
+    hits = lib.rank_wiki(idx, hits, pattern=a.query)
     if not hits:
         print('eşleşme yok', file=sys.stderr)
         sys.exit(1)
@@ -61,7 +58,7 @@ def main():
             incoming.setdefault(t, set()).add(s)
 
     shown = hits[:a.limit]
-    for s in shown:
+    for _, s in shown:
         fm = idx[s]['fm']
         title = fm.get('title', '?').strip('"')
         line = f"wiki/{s}.md · {title} · {fm.get('type', '?')}/{fm.get('scope', '?')}"

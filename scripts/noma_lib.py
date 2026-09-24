@@ -106,6 +106,75 @@ def fold_tr(text):
     return text.translate(TR).lower()
 
 
+SEARCH_WEIGHTS = (('slug', 12), ('title', 10), ('tags', 6),
+                  ('summary', 4), ('body', 1))
+SEARCH_STOPWORDS = {'acaba', 'benim', 'bir', 'bu', 'hangi', 'hakkinda', 'icin',
+                    'ile', 'mi', 'mu', 'ne', 'neden', 'nedir', 'nasil', 've'}
+
+
+def search_terms(tokens):
+    """Sorguyu Türkçe katlayıp noktalama ve soru kelimelerinden arındır."""
+    words = (w for token in tokens for w in re.findall(r'[a-z0-9]+', fold_tr(token)))
+    return list(dict.fromkeys(w for w in words if w not in SEARCH_STOPWORDS))
+
+
+def filter_wiki(idx, slugs, filters=None, tag=None, hub=None):
+    """Hub yalnız doğrudan çocukları seçer; ilişkiler ## Links'ten türetilir."""
+    filters = filters or {}
+    for key, val in filters.items():
+        if val:
+            slugs = [s for s in slugs if idx[s]['fm'].get(key) == val]
+    if tag:
+        slugs = [s for s in slugs if tag in idx[s]['tags']]
+    if hub:
+        slugs = [s for s in slugs if hub in idx[s]['parents']]
+    return slugs
+
+
+def rank_wiki(idx, slugs, tokens=(), pattern=None):
+    """Başlık/özet odaklı adaylar; yalnız tam eşleşme yoksa kısmi fallback.
+
+    Regex için slugs önceden full-text ile filtrelenmiş adaylardır.
+    Dönen puanlar sıralama içindir, güven skoru değildir. Kısmi aday içerik
+    okunmadan cevap sayılmaz; eski kararlar/supersede gövdeden denetlenir.
+    """
+    terms = search_terms(tokens) if pattern is None else []
+    if tokens and not terms:
+        return []
+    regex = re.compile(fold_tr(pattern), re.I) if pattern is not None else None
+    hits = []
+    for s in slugs:
+        fields = idx[s].get('fields', {})
+        if regex is not None:
+            score = max((weight for name, weight in SEARCH_WEIGHTS
+                         if regex.search(fields.get(name, ''))), default=0)
+            matched = bool(score)
+        else:
+            matched = 0
+            score = 0
+            for term in terms:
+                best = max((weight for name, weight in SEARCH_WEIGHTS
+                            if term in fields.get(name, '')), default=0)
+                matched += bool(best)
+                score += best
+        if not terms or matched:
+            hits.append((score, s, matched))
+
+    if terms and hits:
+        complete = [h for h in hits if h[2] == len(terms)]
+        hits = complete or [h for h in hits if h[2] >= (len(terms) + 1) // 2]
+
+    # Topikal eşleşme önce; eşitlikte established, etkin stage ve en son tarih.
+    hits.sort(key=lambda h: h[1])
+    hits.sort(key=lambda h: idx[h[1]]['fm'].get('updated') or '', reverse=True)
+    hits.sort(key=lambda h: idx[h[1]]['fm'].get('stage') != 'archived', reverse=True)
+    hits.sort(key=lambda h: {'established': 2, 'unverified': 1, 'stub': 0}
+              .get(idx[h[1]]['fm'].get('status'), 1), reverse=True)
+    hits.sort(key=lambda h: h[0], reverse=True)
+    hits.sort(key=lambda h: h[2], reverse=True)
+    return [(score, s) for score, s, _ in hits]
+
+
 def load_wiki_index(with_body=False):
     """wiki/*.md → {slug: {fm, tags, out, parents[, fields]}}.
     out: koddan arındırılmış tüm [[link]] hedefleri;
@@ -130,7 +199,7 @@ def load_wiki_index(with_body=False):
                 'title': fold_tr(fm.get('title', '').strip('"')),
                 'tags': fold_tr(fm.get('tags', '')),
                 'summary': fold_tr(summary_m.group(1) if summary_m else ''),
-                'body': fold_tr(clean),
+                'body': fold_tr(clean[summary_m.end():] if summary_m else clean),
             }
         idx[p.stem] = entry
     return idx

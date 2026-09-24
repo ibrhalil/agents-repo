@@ -14,7 +14,7 @@ SCOPES = 'work personal learning systems creator media common'.split()
 STATUS = 'unverified established stub'.split()
 ORDER = 'title type stage scope status tags created updated locked'.split()
 ISO_DT = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)')
-ENCRYPTED = ['index.md', 'raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
+ENCRYPTED = ['index.md', 'index/', 'raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
 BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
 EMAIL = re.compile(r'[\w.+-]+@[\w-]+\.[A-Za-z]{2,}')
 PHONE = re.compile(r'\b0?5\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}\b')
@@ -184,8 +184,16 @@ for p in files:
 
 try:
     import noma_build_index as build_index
-    if (ROOT / 'index.md').read_text(encoding='utf-8') != build_index.generate():
+    expected_root, expected_pages = build_index.generate_all()
+    if (ROOT / 'index.md').read_text(encoding='utf-8') != expected_root:
         add('WRN', 'INDEX', 'index.md bayat — python3 scripts/noma_build_index.py ile yeniden üretilmeli')
+    actual_pages = {p.relative_to(ROOT).as_posix(): p for p in (ROOT / 'index/hubs').glob('*/*.md')}
+    missing = set(expected_pages) - set(actual_pages)
+    extra = set(actual_pages) - set(expected_pages)
+    stale = sum(actual_pages[rel].read_text(encoding='utf-8') != content
+                for rel, content in expected_pages.items() if rel in actual_pages)
+    if missing or extra or stale:
+        add('WRN', 'INDEX', f'hub haritaları bayat: eksik={len(missing)} fazla={len(extra)} farklı={stale}')
 except Exception:
     add('WRN', 'INDEX', 'index denetlenemedi (ayrıntı özel çıktıya taşınmaz)')
 

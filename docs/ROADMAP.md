@@ -73,8 +73,10 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
       SCHEMA §1; şablon `docs/templates/session_summary.md`
 - [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,
       `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §5)
+- [x] Kök indeks küçük girişe, hub haritaları şifreli/sayfalı türeve ayrıldı
+      (`wiki/sayfali-turetilmis-indeks.md`); `root`/`hub` yalnız ilgili sayfayı okur.
 - [ ] Kararlaştırılmayı bekleyen mimariler (wiki/yeni-agent-yapisi.md §45):
-      Master DB view'ları, graph/index, search/embedding — gerçek ihtiyaç
+      Master DB view'ları, graph, indekslenmiş arama/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır
 
 ---

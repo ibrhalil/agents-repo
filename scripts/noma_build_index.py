@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-"""index.md üretici (cron): wiki ## Links (özelden genele) yönünden ağacı kurar.
-generate() içerik döndürür (lint bayatlık denetimi için); build_index() yazar."""
+"""Küçük index.md kökü + şifreli sayfalı hub haritaları üretir.
+
+Kanonik notlar wiki'dedir; index.md tek giriş, index/hubs/ silinebilir türevdir.
+generate_all() linter'ın bayatlık denetimine de hizmet eder.
+"""
 import os
 import re
 from collections import defaultdict
@@ -9,6 +12,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 WIKI_DIR = ROOT / "wiki"
 INDEX_FILE = ROOT / "index.md"
+HUB_DIR = ROOT / "index" / "hubs"
+PAGE_SIZE = 32
+ROOT_MAX_BYTES = 8192
+HUB_PAGE_MAX_BYTES = 16384
 
 
 def _strip_code(text):
@@ -25,7 +32,7 @@ def _latest_log_stem():
     return sorted(names)[-1][:-3] if names else None
 
 
-def generate():
+def generate_all():
     hubs = defaultdict(list)
     uncategorized = []
 
@@ -73,11 +80,11 @@ def generate():
             uncategorized.append((slug, title, desc))
 
     root_hubs = [u for u in uncategorized if u[0] in hubs]
-    uncategorized = [u for u in uncategorized if u[0] not in hubs]
+    uncategorized = sorted(u for u in uncategorized if u[0] not in hubs)
 
     parts = []
     parts.append("# index — Vault Kökü")
-    parts.append("> Bu dosya `scripts/noma_build_index.py` (cron) tarafından wiki notlarındaki `## Links` (özelden genele) yönünden otomatik üretilir.\n")
+    parts.append("> Wiki `## Links` yönünden üretilir; yalnız kök giriş burada, hub sayfaları `index/hubs/` altındadır.\n")
     parts.append("## Sözleşmeler ve Kök Dizinler")
     parts.append("- [[AGENTS]] · [[SCHEMA]] · [[README]]")
     log_stem = _latest_log_stem()
@@ -94,33 +101,72 @@ def generate():
             parts.append(line)
         parts.append("")
 
-    parts.append("## Ağaç (Tree) — Hub'lar ve Yapraklar\n")
-
+    pages = {}
     for hub_slug in sorted(hubs.keys()):
-        parts.append(f"### [[{hub_slug}]]")
-        for leaf_slug, leaf_title, leaf_desc in sorted(hubs[hub_slug]):
-            line = f"- [[{leaf_slug}|{leaf_title}]]"
-            if leaf_desc:
-                line += f" — {leaf_desc}"
-            parts.append(line)
-        parts.append("")
+        if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', hub_slug):
+            raise ValueError('geçersiz hub slug; önce wiki lint çalıştırılmalı')
+        leaves = sorted(hubs[hub_slug])
+        for offset in range(0, len(leaves), PAGE_SIZE):
+            page = offset // PAGE_SIZE + 1
+            lines = [f"# [[{hub_slug}]] — Sayfa {page}",
+                     "> `scripts/noma_build_index.py` tarafından üretilen hub haritası.\n"]
+            for leaf_slug, leaf_title, leaf_desc in leaves[offset:offset + PAGE_SIZE]:
+                line = f"- [[{leaf_slug}|{leaf_title}]]"
+                if leaf_desc:
+                    line += f" — {leaf_desc}"
+                lines.append(line)
+            content = '\n'.join(lines) + '\n'
+            if len(content.encode('utf-8')) > HUB_PAGE_MAX_BYTES:
+                raise ValueError('hub sayfası sınırı aşıldı; başlık/slug kısaltılmalı')
+            pages[f'index/hubs/{hub_slug}/{page:06d}.md'] = content
 
     if uncategorized:
         parts.append("## Kategorize Edilmemiş (Tend Adayları)")
-        for leaf_slug, leaf_title, leaf_desc in sorted(uncategorized):
-            line = f"- [[{leaf_slug}|{leaf_title}]]"
-            if leaf_desc:
-                line += f" — {leaf_desc}"
-            parts.append(line)
+        parts.append(f"- {len(uncategorized)} not: `index/hubs/_uncategorized/` (tend kuyruğu)")
         parts.append("")
+        for offset in range(0, len(uncategorized), PAGE_SIZE):
+            page = offset // PAGE_SIZE + 1
+            lines = [f"# Kategorize Edilmemiş — Sayfa {page}",
+                     "> `scripts/noma_build_index.py` tarafından üretilen tend kuyruğu.\n"]
+            for leaf_slug, leaf_title, leaf_desc in uncategorized[offset:offset + PAGE_SIZE]:
+                line = f"- [[{leaf_slug}|{leaf_title}]]"
+                if leaf_desc:
+                    line += f" — {leaf_desc}"
+                lines.append(line)
+            content = '\n'.join(lines) + '\n'
+            if len(content.encode('utf-8')) > HUB_PAGE_MAX_BYTES:
+                raise ValueError('tend sayfası sınırı aşıldı; başlık/slug kısaltılmalı')
+            pages[f'index/hubs/_uncategorized/{page:06d}.md'] = content
 
-    return "\n".join(parts)
+    root = "\n".join(parts)
+    if len(root.encode('utf-8')) > ROOT_MAX_BYTES:
+        raise ValueError('kök hub haritası sınırı aşıldı; üst hub yapısı düzenlenmeli')
+    return root, pages
+
+
+def generate():
+    """Geriye dönük uyumluluk: yalnız kök haritasını döndür."""
+    return generate_all()[0]
 
 
 def build_index():
-    INDEX_FILE.write_text(generate(), encoding="utf-8")
+    root, pages = generate_all()
+    for relative, content in pages.items():
+        path = ROOT / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.is_file() or path.read_text(encoding='utf-8') != content:
+            path.write_text(content, encoding='utf-8')
+    if HUB_DIR.is_dir():
+        for path in HUB_DIR.glob('*/*.md'):
+            if re.fullmatch(r'[0-9]{6,}\.md', path.name) and path.relative_to(ROOT).as_posix() not in pages:
+                path.unlink()
+        for directory in HUB_DIR.iterdir():
+            if directory.is_dir() and not any(directory.iterdir()):
+                directory.rmdir()
+    if not INDEX_FILE.is_file() or INDEX_FILE.read_text(encoding='utf-8') != root:
+        INDEX_FILE.write_text(root, encoding='utf-8')
 
 
 if __name__ == "__main__":
     build_index()
-    print("index.md başarıyla üretildi.")
+    print("Kök indeks ve hub sayfaları üretildi (içerik gizlendi).")

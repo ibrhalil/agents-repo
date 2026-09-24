@@ -21,11 +21,23 @@ genel bakışı tutar.
 Sorgu tarafı motor-bağımsızdır:
 
 ```text
-metadata filtre (type/stage/scope/tags)
-  → full-text (ripgrep)
-  → gerektiğinde [[wikilink]] traversal (1-2 hop)
-  → yalnız gerekli context'i modele getir
+index.md kök hub yolları (root --json) → şifreli index/hubs/ sayfaları (hub --json)
+  → belirsizse metadata filtre + sıralı sözcüksel arama (tam yoksa kısmi aday)
+  → seçilen notun frontmatter/Links/Summary'si → gereken gövde bölümü
+  → gerektiğinde [[wikilink]] traversal (1-2 hop) → kaynaklı cevap
 ```
+
+Sabit agent bağlamında yalnız rota bulunur; notlar ihtiyaç anında okunur. Zayıf
+aramada hub içinde kısa terimlerle bir kez daha denenir; kısmi eşleşme kanıt
+sayılmaz. Kararda `status`, `updated` ve açık supersede bilgisi denetlenir;
+oturum/plan özeti yalnız ilgili devam görevine eklenir.
+
+`index.md` yalnız kök hub'ları tutar; `index/hubs/<slug>/<sayfa>.md` dosyaları
+wiki `## Links` yönünden yeniden üretilen, şifreli ve sınırlı boyutlu sayfalardır.
+Agent `hub --json` ile yalnız istenen sayfayı görür (`next_page` varsa devam eder);
+sayfalar en çok 32 yol/16 KiB, kök en çok 8 KiB'dir; dosyalar kanonik değildir.
+Serbest metin araması/lint hâlen tüm wiki'yi
+tarar; daha büyük ölçekte yerel indeks gereksinimi ayrı ölçülecektir.
 
 Graph/search/embedding mimarisi henüz kararlaşmadı (§45-8/9) — belirli motor
 varsayılmaz. Epistemik hijyen: her cevap kaynak path'iyle atıflı (`wiki/slug.md`,
@@ -34,7 +46,7 @@ insan onayı ister.
 
 ## Görünürlük ve güvenlik
 Repo bilinçli public (ADR-7): kod/mimari/dokümantasyon açık; kişisel knowledge
-git-crypt ile şifreli (`index.md`, `raw/ wiki/ agent/prompts/ agent/sessions/ plans/
+git-crypt ile şifreli (`index.md`, `index/ raw/ wiki/ agent/prompts/ agent/sessions/ plans/
 log/`; `tmp/` yerel/gitignore — şifrelenmez). Kabul edilen sızıntı şifreli blob metadata'sıdır; fact-düzeyi kişisel
 veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 (ADR-8); prompt injection savunması katmanlı (ADR-9).
@@ -70,7 +82,9 @@ Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
   (§45-11) — ihtiyaç yokken katman eklenmez.
 - **git-crypt:** kişisel veri için; retrofit git history yeniden yazma gerektirdiğinden
   günden bir kuruldu.
-- **graph/index üretimi:** `index.md`, cron tarafından (`scripts/noma_build_index.py` aracılığıyla) wiki notlarının `## Links` bölümündeki "özelden genele" yönleri taranarak deterministik olarak üretilir.
+- **graph/index üretimi:** küçük `index.md` kökü ve sayfalı `index/hubs/` haritaları
+  `scripts/noma_build_index.py` ile wiki `## Links` yönünden deterministik üretilir;
+  graph ile genel/semantik arama motoru hâlâ ayrı tasarım konusudur.
 - **Kanonik profil wiki'de:** Hermes yerleşik hafızası düğüm-lokal olduğundan çok
   düğümlü senaryoda kanonik profil repoda taşınır; `memories/` dizini 2026-09-23'te
   kaldırıldı — profil `wiki/kullanici-profili.md` olarak yaşar, tüm düğümlere

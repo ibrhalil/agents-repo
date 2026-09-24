@@ -13,7 +13,7 @@ import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 COMPOSE = ROOT / 'scripts/docker-compose.hermes.yml'
-PRIVATE = {'/workspace/index.md', '/workspace/wiki', '/workspace/raw',
+PRIVATE = {'/workspace/index.md', '/workspace/index', '/workspace/wiki', '/workspace/raw',
            '/workspace/log', '/workspace/plans', '/workspace/.env', '/workspace/.git'}
 PUBLIC = {'/workspace/AGENTS.md', '/workspace/SCHEMA.md', '/workspace/README.md',
           '/workspace/docs', '/workspace/scripts'}
@@ -47,6 +47,29 @@ def t_hook_contract():
           and 'index.md' in a and 'yerel düğüm gerekli' in b
           and '## Summary' not in a + b and len(a) < 600 and len(b) < 600)
     return ('PASS' if ok else 'FAIL', 'statik context + kısıtlı düğüm fail-closed')
+
+
+def t_hub_map():
+    """Sayfalı harita ve git-crypt sınırını içerik basmadan doğrula."""
+    cli = str(ROOT / 'scripts/noma_wiki.py')
+    root = run([sys.executable, '-B', cli, 'root', '--json'])
+    try:
+        paths = json.loads(root.stdout)
+        slug = pathlib.Path(paths[0]).stem
+        hub = run([sys.executable, '-B', cli, 'hub', slug, '--json'])
+        page = json.loads(hub.stdout)
+        attr = run(['git', 'check-attr', 'filter', '--',
+                    f'index/hubs/{slug}/000001.md'])
+        ok = (root.returncode == hub.returncode == attr.returncode == 0
+              and (ROOT / 'index.md').stat().st_size <= 8192
+              and attr.stdout.endswith('filter: git-crypt\n')
+              and isinstance(page['paths'], list) and len(page['paths']) <= 32
+              and all(p.startswith('wiki/') and p.endswith('.md') for p in page['paths'])
+              and (page['next_page'] is None or isinstance(page['next_page'], int)))
+    except (IndexError, KeyError, OSError, TypeError, ValueError):
+        ok = False
+    return ('PASS' if ok else 'FAIL', 'kısa kök + şifreli sayfalı hub haritası'
+            if ok else 'hub haritası/sınırı geçersiz')
 
 
 def t_compose():
@@ -95,7 +118,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--no-llm', action='store_true', help='geriye dönük uyumluluk; test zaten LLM kullanmaz')
     ap.parse_args()
-    checks = [('index_crypt', t_index_crypt), ('hook', t_hook_contract),
+    checks = [('index_crypt', t_index_crypt), ('hub_map', t_hub_map), ('hook', t_hook_contract),
               ('compose_cloud', t_compose), ('lint', t_lint), ('dashboard', t_dashboard)]
     failed = False
     for name, check in checks:

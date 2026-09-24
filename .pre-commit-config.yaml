@@ -3,16 +3,16 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: '^(raw|wiki|log|plans|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
       - id: end-of-file-fixer
-        exclude: '^(raw|wiki|log|plans|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
       - id: check-yaml
-        exclude: '^(raw|wiki|log|plans|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
       - id: check-merge-conflict
-        exclude: '^(raw|wiki|log|plans|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
       - id: mixed-line-ending
         args: ['--fix=no']
-        exclude: '^(raw|wiki|log|plans|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.42.0
@@ -28,4 +28,4 @@ repos:
     hooks:
       - id: yamllint
         args: ['-d', '{extends: relaxed, rules: {line-length: {max: 120}}}']
-        exclude: '^(raw|wiki|log|plans|agent/(prompts|sessions))/|^index\.md$|^\.github/'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$|^\.github/'

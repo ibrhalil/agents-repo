@@ -6,6 +6,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri (`YYYY-MM-DD-<kısa-slug>.md`).
 `plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).
+`index/` (Şifreli): `index.md` kökünden ulaşılan, yeniden üretilebilir sayfalı hub haritaları; kanonik veri değildir.
 `tmp/` (Yerel/Gitignore): Geçici (scratch) işlem dizini; git'e girmez, şifrelenmez. Kalıcı çöp bırakılmaz.
 `agent/` (Public): Agent root altyapısı.
 `scripts/` (Public): Çalıştırılabilir kodlar.
@@ -14,7 +15,8 @@ ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzer
 ## 2. Bilgi Hattı ve Keşif
 Üretim: `raw/` -> `wiki/` (2 katman).
 Geri besleme: Değerli query sentezleri atomik wiki notu olarak geri dosyalanır (`-> filed: wiki/slug.md` log kaydıyla; AGENTS §2 query).
-Harita: Tek kanonik giriş şifreli `index.md`'dir; kilit açıldıktan sonra okunur. Cron, wiki'deki `## Links` yönünden (özelden genele) üretir; wiki başlık/özetleri public yüzeye kopyalanmaz.
+Harita: Tek kanonik giriş şifreli `index.md`'dir; kök hub'ları gösterir. Cron, wiki'deki `## Links` yönünden (özelden genele) şifreli `index/hubs/` sayfalarını üretir; özel başlık/özetler public yüzeye kopyalanmaz.
+SAYFA: `index/hubs/<hub-slug>/000001.md` (ve devamı); en çok 32 yaprak ve 16 KiB. Kök `index.md` en çok 8 KiB; `hub --json` yalnız istenen sayfanın yollarını ve `next_page` işaretçisini verir.
 ## 3. Wiki Not Formatı (Frontmatter)
 ZORUNLU ŞABLON: `docs/templates/wiki_note.md`
 ```yaml

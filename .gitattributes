@@ -4,6 +4,7 @@
 # git-crypt: kişisel veri yolları git geçmişinde ve remote'ta şifreli kalır
 # index.md wiki başlıklarını ve Summary metinlerini içerir: kilit açıldıktan sonra okunur.
 index.md            filter=git-crypt diff=git-crypt -text
+index/**            filter=git-crypt diff=git-crypt -text
 raw/**               filter=git-crypt diff=git-crypt -text
 wiki/**              filter=git-crypt diff=git-crypt -text
 agent/prompts/**     filter=git-crypt diff=git-crypt -text

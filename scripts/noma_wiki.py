@@ -1,16 +1,37 @@
 #!/usr/bin/env python3
-"""wiki arama CLI (insan yüzü): search/pick/hub/recent/links/stats.
-Türkçe karakter katlamalı skorlı arama; çıktı yalnız yol + başlık + metadata
-— gövde/Summary stdout'a çıkmaz (AGENTS R4)."""
+"""wiki arama CLI: root/search/pick/hub/recent/links/stats.
+Agent JSON çıktısı yalnız yol/puan döndürür; not metni dosyadan seçilerek okunur.
+İnsan çıktısında yol+başlık+metadata vardır, gövde/Summary basılmaz."""
 import argparse
 import json
+import re
 import sys
-from datetime import date
 
 import noma_lib as lib
+from noma_build_index import HUB_PAGE_MAX_BYTES, PAGE_SIZE, ROOT_MAX_BYTES
 
-WEIGHTS = (('slug', 8), ('title', 6), ('tags', 4), ('summary', 2), ('body', 1))
 FILTERS = ('type', 'stage', 'scope', 'status')
+
+
+def cmd_root(a):
+    """Üretilmiş index.md'nin yalnız kök hub bölümünü döndür."""
+    try:
+        path = lib.ROOT / 'index.md'
+        if path.stat().st_size > ROOT_MAX_BYTES:
+            print('kök indeks boyut sınırını aşıyor', file=sys.stderr)
+            return 1
+        text = path.read_text(encoding='utf-8')
+    except (OSError, UnicodeError):
+        print('index okunamadı (özel içerik gizlendi)', file=sys.stderr)
+        return 1
+    m = re.search(r"^## Kök Hub'lar\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    slugs = re.findall(r'^- \[\[([a-z0-9-]+)(?:\|[^\]]+)?\]\]', m.group(1), re.M) if m else []
+    if not slugs:
+        print('kök hub bulunamadı', file=sys.stderr)
+        return 1
+    paths = [f'wiki/{s}.md' for s in slugs]
+    print(json.dumps(paths, ensure_ascii=False) if a.json else '\n'.join(paths))
+    return 0
 
 
 def up_key(idx, s):
@@ -18,51 +39,25 @@ def up_key(idx, s):
     return fm.get('updated') or fm.get('created') or ''
 
 
-def recency_bonus(fm):
-    try:
-        d = date.fromisoformat((fm.get('updated') or fm.get('created') or '')[:10])
-    except ValueError:
-        return 0
-    return 2 if (date.today() - d).days <= 14 else 0
-
-
-def score_entry(entry, tokens):
-    fields = entry['fields']
-    total = 0
-    for t in tokens:
-        best = max((w for name, w in WEIGHTS if t in fields[name]), default=0)
-        if not best:
-            return 0
-        total += best
-    return total + recency_bonus(entry['fm'])
-
-
 def has_filter(a):
-    return any(getattr(a, k, None) for k in FILTERS) or getattr(a, 'tag', None)
+    return (any(getattr(a, k, None) for k in FILTERS)
+            or getattr(a, 'tag', None) or getattr(a, 'hub', None))
 
 
 def apply_filters(idx, slugs, a):
-    for key in FILTERS:
-        val = getattr(a, key, None)
-        if val:
-            slugs = [s for s in slugs if idx[s]['fm'].get(key) == val]
-    if getattr(a, 'tag', None):
-        slugs = [s for s in slugs if a.tag in idx[s]['tags']]
-    return slugs
+    return lib.filter_wiki(idx, slugs, {k: getattr(a, k, None) for k in FILTERS},
+                           tag=getattr(a, 'tag', None), hub=getattr(a, 'hub', None))
 
 
 def ranked(idx, slugs, tokens):
-    if tokens:
-        toks = [lib.fold_tr(t) for t in tokens]
-        hits = [(score_entry(idx[s], toks), s) for s in slugs]
-        hits = [h for h in hits if h[0] > 0]
-    else:
-        hits = [(0, s) for s in slugs]
-    hits.sort(key=lambda h: h[1])
-    hits.sort(key=lambda h: up_key(idx, h[1]), reverse=True)
-    if tokens:
-        hits.sort(key=lambda h: -h[0])
-    return hits
+    return lib.rank_wiki(idx, slugs, tokens)
+
+
+def partial_match(entry, tokens):
+    terms = lib.search_terms(tokens)
+    return bool(terms) and any(not any(term in entry['fields'][field]
+                                       for field, _ in lib.SEARCH_WEIGHTS)
+                               for term in terms)
 
 
 def incoming(idx):
@@ -117,17 +112,16 @@ def cmd_search(idx, a):
         return 1
     shown = hits[:a.limit]
     if a.json:
-        rows = [{'path': f'wiki/{s}.md', 'slug': s,
-                 'title': idx[s]['fm'].get('title', '').strip('"'),
-                 'type': idx[s]['fm'].get('type'), 'stage': idx[s]['fm'].get('stage'),
-                 'scope': idx[s]['fm'].get('scope'), 'status': idx[s]['fm'].get('status'),
-                 'tags': idx[s]['tags'], 'score': sc,
-                 'created': idx[s]['fm'].get('created'), 'updated': idx[s]['fm'].get('updated')}
+        rows = [{'path': f'wiki/{s}.md', 'score': sc,
+                 'match': 'partial' if partial_match(idx[s], a.tokens) else 'full'}
                 for sc, s in shown]
-        print(json.dumps(rows, ensure_ascii=False, indent=2))
+        print(json.dumps(rows, ensure_ascii=False))
         return 0
     for sc, s in shown:
-        print(line_for(idx, s, f'skor {sc}' if a.tokens else ''))
+        extra = f'skor {sc}' if a.tokens else ''
+        if a.tokens and partial_match(idx[s], a.tokens):
+            extra += ' · kısmi'
+        print(line_for(idx, s, extra))
     rest = len(hits) - len(shown)
     print(f"== {len(hits)} eşleşme{' (ilk %d)' % len(shown) if rest else ''} ==")
     return 0
@@ -157,19 +151,35 @@ def cmd_pick(idx, a):
     return 0
 
 
-def cmd_hub(idx, a):
+def cmd_hub(a):
+    """Yalnız istenen hub sayfasını oku; wiki külliyatını tarama."""
     slug = a.slug
-    leaves = sorted(s for s in idx if s != slug and slug in idx[s]['parents'])
-    if slug not in idx and not leaves:
-        print('hub bulunamadı', file=sys.stderr)
+    if (slug != '_uncategorized' and not lib.SLUG_RE.fullmatch(slug)) or a.page < 1:
+        print('geçersiz hub veya sayfa', file=sys.stderr)
         return 1
-    if slug in idx:
-        print(line_for(idx, slug, 'HUB'))
+    directory = lib.ROOT / 'index' / 'hubs' / slug
+    page = directory / f'{a.page:06d}.md'
+    try:
+        if page.stat().st_size > HUB_PAGE_MAX_BYTES:
+            print('hub sayfası boyut sınırını aşıyor', file=sys.stderr)
+            return 1
+        text = page.read_text(encoding='utf-8')
+    except (OSError, UnicodeError):
+        print('hub sayfası bulunamadı; indeks yeniden üretilmeli', file=sys.stderr)
+        return 1
+    leaves = re.findall(r'^- \[\[([a-z0-9]+(?:-[a-z0-9]+)*)(?:\|[^\]]+)?\]\]', text, re.M)
+    if not 0 < len(leaves) <= PAGE_SIZE:
+        print('hub sayfası biçimi geçersiz', file=sys.stderr)
+        return 1
+    next_page = a.page + 1 if (directory / f'{a.page + 1:06d}.md').is_file() else None
+    if a.json:
+        print(json.dumps({'paths': [f'wiki/{s}.md' for s in leaves],
+                          'next_page': next_page}, ensure_ascii=False))
+        return 0
     for s in leaves:
-        stage = idx[s]['fm'].get('stage', '')
-        extra = f'[{stage}]' if stage and stage != 'done' else ''
-        print('  ' + line_for(idx, s, extra))
-    print(f'== {len(leaves)} yaprak ==')
+        print(f'wiki/{s}.md')
+    if next_page:
+        print(f'sonraki sayfa: {next_page}')
     return 0
 
 
@@ -178,7 +188,7 @@ def cmd_recent(idx, a):
     if not slugs:
         print('not yok', file=sys.stderr)
         return 1
-    shown = [s for _, s in ranked(idx, slugs, [])[:a.limit]]
+    shown = sorted(slugs, key=lambda s: up_key(idx, s), reverse=True)[:a.limit]
     for s in shown:
         print(line_for(idx, s, up_key(idx, s)[:10] or '?'))
     print(f'== {len(shown)} not ==')
@@ -213,6 +223,9 @@ def build_parser():
     ap = argparse.ArgumentParser(prog='noma_wiki.py', description=__doc__)
     sub = ap.add_subparsers(dest='cmd', required=True)
 
+    root = sub.add_parser('root', help='index.md kök hub yolları')
+    root.add_argument('--json', action='store_true', help='agent için yol listesi')
+
     def filtered(p, limit):
         for f in FILTERS:
             p.add_argument(f'--{f}')
@@ -221,16 +234,21 @@ def build_parser():
         return p
 
     s = filtered(sub.add_parser('search', aliases=['s'],
-                                help='skorlı full-text arama (AND token)'), 10)
+                                help='skorlı arama (tam yoksa kısmi adaylar)'), 10)
     s.add_argument('tokens', nargs='*', help='arama tokenları (Türkçe katlamalı)')
+    s.add_argument('--hub', help='yalnız bu hub\'ın doğrudan çocukları')
     s.add_argument('--json', action='store_true', help='makine okunur çıktı')
 
     p = filtered(sub.add_parser('pick', aliases=['p'],
                                 help='numaralı liste → seçim → detay kartı'), 20)
     p.add_argument('tokens', nargs='*')
+    p.add_argument('--hub', help='yalnız bu hub\'ın doğrudan çocukları')
     p.add_argument('--hop', type=int, choices=[1, 2], default=1)
 
-    sub.add_parser('hub', help='hub yaprakları').add_argument('slug')
+    hub = sub.add_parser('hub', help='hub yaprakları')
+    hub.add_argument('slug')
+    hub.add_argument('--page', type=int, default=1, help='sayfa numarası (1’den başlar)')
+    hub.add_argument('--json', action='store_true', help='agent için yalnız yaprak yolları')
 
     lk = sub.add_parser('links', help='out/in komşular')
     lk.add_argument('slug')
@@ -244,12 +262,16 @@ def build_parser():
 
 def main():
     a = build_parser().parse_args()
+    if a.cmd == 'root':
+        sys.exit(cmd_root(a))
+    if a.cmd == 'hub':
+        sys.exit(cmd_hub(a))
     for key, ok in (('type', lib.TYPES), ('stage', lib.STAGES),
                     ('scope', lib.SCOPES), ('status', lib.STATUS)):
         lib.check_choice(key, getattr(a, key, None), ok)
-    idx = lib.load_wiki_index(with_body=True)
+    idx = lib.load_wiki_index(with_body=a.cmd in ('search', 's', 'pick', 'p'))
     cmds = {'search': cmd_search, 's': cmd_search, 'pick': cmd_pick, 'p': cmd_pick,
-            'hub': cmd_hub, 'links': cmd_links, 'recent': cmd_recent, 'r': cmd_recent,
+            'links': cmd_links, 'recent': cmd_recent, 'r': cmd_recent,
             'stats': cmd_stats}
     sys.exit(cmds[a.cmd](idx, a))
 

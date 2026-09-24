@@ -11,8 +11,9 @@ Yeni bir düğüm (agent, bilgisayar, VPS) bağlarken şifreli dosyaları açmak
 git-crypt unlock /guvenli/yer/noma.key
 ```
 
-`index.md`, wiki başlık ve özetlerini içerdiğinden şifrelidir; gezinmeye kilit
-açıldıktan sonra bu dosyadan başlayın. Kilitli bir klonda içerik okunmaz.
+`index.md` kök hub haritasını, şifreli `index/hubs/` türetilmiş hub sayfalarını
+taşır; gezinmeye kilit açıldıktan sonra `index.md` kökünden başlayın. Kilitli
+bir klonda içerik okunmaz.
 
 Anahtar yedeğini GitHub dışında, şifreli ve birbirinden bağımsız iki çevrimdışı
 konumda saklayın. Yedeklerden birini yılda bir ayrı bir klonda `git-crypt unlock`

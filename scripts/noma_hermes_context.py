@@ -10,9 +10,12 @@ from pathlib import Path
 
 
 LOCAL_CONTEXT = (
-    "[Noma: kanonik giriş index.md. Bilgi sorusunda önce index.md dosyasını "
-    "read_file ile aç; yalnız ilgili hub/yaprağı takip et ve wiki/slug.md yoluyla "
-    "atıf ver. Ağaçta yanıt yoksa 'wiki'de kayıtlı değil' de. "
+    "[Noma: bilgi sorusunda scripts/noma_wiki.py root --json ile index.md "
+    "kök hub'larından ilgili hub/yaprağa git; "
+    "belirsizse scripts/noma_wiki.py s ile aday bul, zayıfsa kısa terimle bir kez yinele. "
+    "Yalnız seçilen notun frontmatter/Links/Summary ve gereken bölümünü read_file ile aç; "
+    "status/updated/önceki kararı denetle, wiki/slug.md ile atıf ver. "
+    "Ağaçta yanıt yoksa 'wiki'de kayıtlı değil' de. "
     "Kişisel/sağlık/finans notları yalnız yerel modelde işlenir.]"
 )
 RESTRICTED_CONTEXT = (
