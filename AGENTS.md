@@ -6,7 +6,7 @@ KEŞİF: Araştırma daima [[index]] kökünden (Top-Down) başlar. Rastgele dos
 GENİŞLETME: Yeni not (yaprak) üretildiğinde, `## Links` üzerinden KESİNLİKLE mevcut bir Hub'a (dala) bağlanmalıdır (Bottom-Up).
 BÖLME: Büyüyen notlar Hub'a dönüştürülüp alt yapraklara bölünerek ağaç organik genişletilir.
 ## 2. Operasyonlar
-ingest: Kaynağı `raw/` altına verbatim yaz. Anla, wiki ile merge et, `log/` kaydı düş.
+ingest: Kaynağı `raw/` altına yaz (inbox/clippings: verbatim; conversations: kısa `K:/<model>:` diyalog özeti — model adı gerçek session modeli). Anla, wiki ile merge et, `log/` kaydı düş.
 ÖNCELİK KURALI: Her bilgi sorusu — kategori fark etmez (kimlik, tercih, proje, karar, teknik) — ÖNCE wiki'ye sorulur. Düğüm-lokal hafıza (örn. Hermes Memory/USER.md) ve genel model bilgisi kanonik DEĞİLDİR; ancak wiki'de cevap yoksa, açıkça etiketlenerek (kaynak: hafıza/genel bilgi) kullanılır.
 query: [[index]] -> Hub -> Yaprak rotasını izle (hızlandırıcı: `python3 scripts/wiki.py s <terim> --json` ya da `python3 scripts/find.py <filtre>`). Cevaplar KESİNLİKLE path atıflıdır. UYDURMAK YASAKTIR. Wiki'de yoksa "wiki'de kayıtlı değil" denir. Kullanıcı profilinin kanonik yeri [[kullanici-profili]] yaprağıdır. Değerli sentez (karşılaştırma, analiz, yeni bağlantı) atomik not olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` yazılır.
 tend: Kullanıcı serbest girdilerini (eksik frontmatter, kırık link) normalize et, stub genişlet, duplicate birleştir.

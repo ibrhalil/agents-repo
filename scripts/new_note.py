@@ -17,6 +17,8 @@ def main():
     ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
     ap.add_argument('--log-op', choices=lib.LOG_OPS,
                     help='verilirse log satırı da yazar')
+    ap.add_argument('--actor', default='cron',
+                    help='log aktörü: gerçek session modeli adı (agent çağrısı) | K | cron')
     a = ap.parse_args()
     lib.check_slug(a.slug)
     lib.check_choice('type', a.type_, lib.TYPES)
@@ -33,9 +35,9 @@ def main():
     print(f'wiki/{a.slug}.md üretildi (stage: {a.stage})')
     msg = f'not üretildi: wiki/{a.slug}.md'
     if a.log_op:
-        lib.append_log(a.log_op, msg)
+        lib.append_log(a.log_op, msg, actor=a.actor)
     else:
-        print(f'log önerisi: {lib.now_hhmm()} tend @{lib.node_id()} | {msg}')
+        print(f'log önerisi: {lib.now_hhmm()} tend @{lib.node_id()} <aktör> | {msg}')
 
 
 if __name__ == '__main__':

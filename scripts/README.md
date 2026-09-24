@@ -10,7 +10,7 @@ cron job'a aittir.
 | `run_lint.sh` | lint() tam set: sözleşme linter + pre-commit |
 | `lib_repo.py` | paylaşılan yardımcılar (frontmatter, slugify, log) — doğrudan çalıştırılmaz |
 | `new_note.py` | şablondan yeni wiki notu iskeleti üretir (AGENTS R5) |
-| `ingest.py` | kaynağı `raw/`'a verbatim kopyalar + wiki notu üretir + log yazar |
+| `ingest.py` | kaynağı `raw/`'a kopyalar (inbox/clippings: verbatim; conversations: elle diyalog özeti) + wiki notu üretir + log yazar |
 | `find.py` | retrieval: metadata filtre → full-text (rg) → wikilink traversal |
 | `wiki.py` | insan yüzü arama CLI: `search/pick/hub/recent/links/stats` — skorlı, Türkçe katlamalı; yalnız yol+başlık+metadata basar (R4) |
 | `bootstrap_node.sh` | düğüm kurulum desteği: git-crypt denetimi ve `.env` hazırlığı |

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""ingest() mekanik adımları: kaynağı raw/'a verbatim kopyala + şablondan wiki
-notu üret + log satırı yaz (AGENTS ingest; SCHEMA §1, §5). Git işlemi yapmaz."""
+"""ingest() mekanik adımları: kaynağı raw/'a kopyala (inbox/clippings: verbatim;
+conversations: elle diyalog özeti — script kopyalamaz) + şablondan wiki notu üret
++ log satırı yaz (AGENTS ingest; SCHEMA §1, §5). Git işlemi yapmaz."""
 import argparse
 import re
 import sys
@@ -18,8 +19,6 @@ INJECTION = re.compile(
 
 
 def raw_target(kind, name_hint):
-    if kind == 'conversations':
-        return lib.ROOT / 'raw' / 'conversations' / f'{lib.now_stamp()}.md'
     if kind == 'clippings':
         n = 0
         for f in (lib.ROOT / 'raw' / 'clippings').glob('c-*.md'):
@@ -48,7 +47,12 @@ def main():
     ap.add_argument('--status')
     ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
     ap.add_argument('--no-note', action='store_true', help='yalnız raw kopyası')
+    ap.add_argument('--actor', default='cron',
+                    help='log aktörü: gerçek session modeli adı (agent çağrısı) | K | cron')
     a = ap.parse_args()
+    if a.kind == 'conversations':
+        raise SystemExit('conversations/: verbatim kopya yok — kısa K:/<model>: diyalog özeti '
+                         'elle yazılır (SCHEMA §1)')
     lib.check_choice('type', a.type_, lib.TYPES)
     lib.check_choice('scope', a.scope, lib.SCOPES)
     lib.check_choice('stage', a.stage, lib.STAGES)
@@ -72,7 +76,7 @@ def main():
     suffix = ' [flag]' if flag else ''
     if a.no_note:
         print(f'{rel} yazıldı')
-        lib.append_log('ingest', f'raw-only: {rel}{suffix}')
+        lib.append_log('ingest', f'raw-only: {rel}{suffix}', actor=a.actor)
         return
 
     title = a.title or (Path(a.source).stem if is_file else 'Kaynak')
@@ -81,14 +85,14 @@ def main():
     if note.exists():
         print(f'wiki/{slug}.md zaten var — raw kopyası yapıldı, not atlandı '
               '(mevcut notla merge edin, AGENTS R2)', file=sys.stderr)
-        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}')
+        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=a.actor)
         return
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
     note.write_text(lib.render_note(slug, title, a.type_, a.scope, a.stage,
                                     a.status, tags or None,
                                     source_path=rel), encoding='utf-8')
     print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
-    lib.append_log('ingest', f'{slug} <- {rel}{suffix}')
+    lib.append_log('ingest', f'{slug} <- {rel}{suffix}', actor=a.actor)
 
 
 if __name__ == '__main__':

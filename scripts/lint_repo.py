@@ -102,7 +102,7 @@ for p in ROOT.rglob('*_v[0-9]*.md'):
 for p in ROOT.rglob('*_yeni*.md'):
     if '.git' not in p.parts: add('ERR', 'SUFFIX', str(p.relative_to(ROOT)))
 
-LOG_LINE = re.compile(r'\d{2}:\d{2} (ingest|query|tend|lint|sync) @[\w-]+ \| (.+)')
+LOG_LINE = re.compile(r'\d{2}:\d{2} (ingest|query|tend|lint|sync) @[\w-]+(?: [\w.-]+)? \| (.+)')
 for p in sorted((ROOT / 'log').glob('*.md')):
     if p.name == 'log.md': continue
     if not re.fullmatch(r'\d{4}-\d{2}-\d{2}\.md', p.name):

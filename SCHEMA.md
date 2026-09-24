@@ -1,7 +1,7 @@
 # SCHEMA.md — Veri Sözleşmesi
 ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için wiki'ye (örn: [[agent-policy]]) bakınız. Çelişkide SCHEMA kazanır.
 ## 1. Dizinler ve Rolleri
-`raw/` (Şifreli): Ham kaynaklar (inbox, conversations). APPEND-ONLY.
+`raw/` (Şifreli): Ham kaynaklar. `inbox/`+`clippings/` verbatim; `conversations/` kısa `K:/<model>:` diyalog ÖZETİ (model = gerçek session modeli). APPEND-ONLY.
 `wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR. Kullanıcı profili dahil tüm kanonik içerik burada yaşar (örn: [[kullanici-profili]]).
 `agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri (`YYYY-MM-DD-<kısa-slug>.md`).
 `plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
@@ -37,7 +37,8 @@ LİNK: `## Links` altında virgülle ayrılmış düz liste kullanılır. Yön Z
 KARARLAR: Yeni kararlar numarasız `type: decision` notudur. Eski kararı supersede eden açıkça belirtir.
 ## 5. Log Formatı
 DOSYA: `log/YYYY-MM-DD.md`
-SATIR FORMATI: `HH:mm <op> @<node> | mesaj ≤120 karakter` (op: ingest, query, tend, lint, sync).
+SATIR FORMATI: `HH:mm <op> @<node> <aktör> | mesaj ≤120 karakter` (op: ingest, query, tend, lint, sync; aktör: gerçek session modeli | K | cron; neden opsiyonel: `(neden: ...)`).
+LEGACY: aktörsüz satır (≤2026-09-24) geçerli sayılır.
 ## 6. Dil ve Optimizasyon
 DİL: Gövde TÜRKÇE. Tag/slug/filename KISA ASCII.
 TOKEN: Frontmatter'a gereksiz alan eklemek YASAKTIR. Dosyalar satır bütçelidir. Kök terimler İngilizce kalabilir.

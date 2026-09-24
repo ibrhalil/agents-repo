@@ -66,6 +66,7 @@
 - [[main-insana-aittir|ADR-10 (Güncellendi): PR Darboğazı Kaldırıldı, Conflict Çözümü Cron'da]] — Agent'ların sürekli PR açıp insan onayı beklemesi eş zamanlı çalışmada darboğaz yarattığı için eski "Agent…
 - [[noma|Noma (agents-repo)]] — Kişisel asistan / koç / ikinci beyin projesi: insan + çoklu-agent ortak bahçesi; her düğüm (herhangi bir ag… [in_progress]
 - [[not-alma-rehberi|Not Alma Rehberi]] — Agent olmayan biri için not formatının pratik özeti: hızlı başlangıç, frontmatter alan seçimi, sık hatalar.
+- [[pratik-araclar|Pratik Araçlar]] — Günlük araç kullanımına dair pratik referansların hub'ı — her araç notu somutlaştıkça kendi yaprağına bağla… [inbox]
 - [[prompt-injection-savunmasi|ADR-9: Beş katmanlı savunma; çekirdek yetki sınırlamasında]] — Prompt injection LLM'de tam çözülemez (veri/talimat ayrımı yok; OWASP LLM01:2025) — gerçek savunma yetki ka…
 - [[public-repo-durusu|ADR-7: Repo bilinçli olarak public; sızıntı sınırı şifreli blob metadata'sı]] — Repo herkese açık kalır; gizlilik modeli git-crypt anahtarına dayanır.
 - [[scope-bazli-llm-veri-politikasi|ADR-8: Hassas kapsam yalnız yerel modelde; bulut LLM kapsamı bilinçli sınırlanır]] — Ne nereye gider: hassas kapsam yalnız yerel model.
@@ -104,6 +105,9 @@
 
 ### [[otomasyon-ve-paralellik]]
 - [[agent-desenleri|Agent Desenleri: Workflow'dan Otonom Agent'a]] — Anthropic'in sınıflandırmasıyla agentic sistemler ikiye ayrılır: workflow (kontrol akışı kodda önceden tanı…
+
+### [[pratik-araclar]]
+- [[nano-kisayollari|Nano Kısayolları — Hızlı Referans]] — nano editörünün temel kısayolları (`^` = Ctrl, `M-` = Alt) ve macOS/Windows/Linux terminal farkları için hı…
 
 ### [[public-repo-durusu]]
 - [[guvenlik-ve-anahtar|Güvenlik ve Anahtar Politikası]] — Sırlar plaintext'te yaşamaz, public yüzey kişisel veriden arındırılır; git-crypt anahtarının yedeği güvenli…

@@ -127,17 +127,20 @@ def load_wiki_index(with_body=False):
     return idx
 
 
-def append_log(op, msg):
+def append_log(op, msg, actor=None):
     if op not in LOG_OPS:
         raise SystemExit(f'hata: op={op} (geçerli: {"|".join(LOG_OPS)})')
+    if actor is not None and not re.fullmatch(r'[\w.-]+', actor):
+        raise SystemExit(f'hata: aktör={actor} (format: harf/rakam/nokta/tire)')
     msg = ' '.join(msg.split())
     if len(msg) > MSG_LIMIT:
         raise SystemExit(f'hata: log mesajı {len(msg)} karakter (> {MSG_LIMIT})')
     p = ROOT / 'log' / f'{today()}.md'
     if not p.exists():
         p.write_text(f'# {today()}\n', encoding='utf-8')
+    who = f' {actor}' if actor else ''
     with p.open('a', encoding='utf-8') as f:
-        f.write(f'{now_hhmm()} {op} @{node_id()} | {msg}\n')
+        f.write(f'{now_hhmm()} {op} @{node_id()}{who} | {msg}\n')
     return p
 
 
