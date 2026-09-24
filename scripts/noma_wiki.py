@@ -7,7 +7,7 @@ import json
 import sys
 from datetime import date
 
-import lib_repo as lib
+import noma_lib as lib
 
 WEIGHTS = (('slug', 8), ('title', 6), ('tags', 4), ('summary', 2), ('body', 1))
 FILTERS = ('type', 'stage', 'scope', 'status')
@@ -210,7 +210,7 @@ def cmd_stats(idx, a):
 
 
 def build_parser():
-    ap = argparse.ArgumentParser(prog='wiki.py', description=__doc__)
+    ap = argparse.ArgumentParser(prog='noma_wiki.py', description=__doc__)
     sub = ap.add_subparsers(dest='cmd', required=True)
 
     def filtered(p, limit):

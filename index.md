@@ -1,5 +1,5 @@
 # index — Vault Kökü
-> Bu dosya `scripts/build_index.py` (cron) tarafından wiki notlarındaki `## Links` (özelden genele) yönünden otomatik üretilir.
+> Bu dosya `scripts/noma_build_index.py` (cron) tarafından wiki notlarındaki `## Links` (özelden genele) yönünden otomatik üretilir.
 
 ## Sözleşmeler ve Kök Dizinler
 - [[AGENTS]] · [[SCHEMA]] · [[README]]

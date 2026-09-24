@@ -1,5 +1,5 @@
 """Agent scriptlerinin paylaşılan yardımcıları (stdlib only).
-Sabitler SCHEMA.md'den alınmıştır; lint_repo.py ile tutarlı tutulur."""
+Sabitler SCHEMA.md'den alınmıştır; noma_lint.py ile tutarlı tutulur."""
 import os
 import re
 from datetime import date, datetime

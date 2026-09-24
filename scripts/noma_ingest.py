@@ -7,7 +7,7 @@ import re
 import sys
 from pathlib import Path
 
-import lib_repo as lib
+import noma_lib as lib
 
 # ADR-9: untrusted kaynakta bilinen injection desenleri — uyarı + [flag], bloklamaz
 INJECTION = re.compile(

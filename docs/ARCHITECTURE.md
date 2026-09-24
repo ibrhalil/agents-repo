@@ -62,7 +62,7 @@ Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
   (§45-11) — ihtiyaç yokken katman eklenmez.
 - **git-crypt:** kişisel veri için; retrofit git history yeniden yazma gerektirdiğinden
   günden bir kuruldu.
-- **graph/index üretimi:** `index.md`, cron tarafından (`scripts/build_index.py` aracılığıyla) wiki notlarının `## Links` bölümündeki "özelden genele" yönleri taranarak deterministik olarak üretilir.
+- **graph/index üretimi:** `index.md`, cron tarafından (`scripts/noma_build_index.py` aracılığıyla) wiki notlarının `## Links` bölümündeki "özelden genele" yönleri taranarak deterministik olarak üretilir.
 - **Kanonik profil wiki'de:** Hermes yerleşik hafızası düğüm-lokal olduğundan çok
   düğümlü senaryoda kanonik profil repoda taşınır; `memories/` dizini 2026-09-23'te
   kaldırıldı — profil `wiki/kullanici-profili.md` olarak yaşar, tüm düğümlere

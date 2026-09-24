@@ -2,7 +2,7 @@
 """Hermes düğüm smoke testi: altyapı (LLM'siz) + agent (LLM'li) testleri.
 
 Kullanım:
-  python3 scripts/test_hermes_node.py [--no-llm] [--keep-note]
+  python3 scripts/noma_test_node.py [--no-llm] [--keep-note]
 Çıkış: 0 = core testlerin hepsi PASS, 1 = en az bir core FAIL (WARN hariç).
 Ortam: CONTAINER (varsayılan hermes-dashboard), MODELLER: zai glm-5.3 / glm-5.3-flash.
 """
@@ -21,7 +21,7 @@ CONTAINER = "hermes-dashboard"
 FLASH = "glm-5.3-flash"
 MAIN = "glm-5.3"
 LLM_TIMEOUT = 300
-HOOK = "scripts/hermes_wiki_context.py"
+HOOK = "scripts/noma_hermes_context.py"
 TEST_NOTE = "test-hermes-smoke"
 
 
@@ -87,19 +87,19 @@ def t_hook_contract():
 
 
 def t_script_search():
-    rc, out = dexec(["python3", "/workspace/scripts/wiki.py", "s", "hafiza", "--json"])
+    rc, out = dexec(["python3", "/workspace/scripts/noma_wiki.py", "s", "hafiza", "--json"])
     ok = rc == 0 and out.strip().startswith(("[", "{"))
-    return ("PASS", "wiki.py s --json çalıştı") if ok else ("FAIL", out.strip()[:160])
+    return ("PASS", "noma_wiki.py s --json çalıştı") if ok else ("FAIL", out.strip()[:160])
 
 
 def t_script_find():
-    rc, out = dexec(["python3", "/workspace/scripts/find.py", "hafiza", "--limit", "3"])
-    return ("PASS", "find.py çalıştı") if rc == 0 else ("FAIL", out.strip()[:160])
+    rc, out = dexec(["python3", "/workspace/scripts/noma_find.py", "hafiza", "--limit", "3"])
+    return ("PASS", "noma_find.py çalıştı") if rc == 0 else ("FAIL", out.strip()[:160])
 
 
 def t_script_lint():
-    rc, out = dexec(["python3", "/workspace/scripts/lint_repo.py"])
-    return ("PASS", "lint_repo.py ERR=0") if rc == 0 else ("FAIL", out.strip()[-200:])
+    rc, out = dexec(["python3", "/workspace/scripts/noma_lint.py"])
+    return ("PASS", "noma_lint.py ERR=0") if rc == 0 else ("FAIL", out.strip()[-200:])
 
 
 def t_query_flash():
@@ -118,7 +118,7 @@ def t_query_main():
 
 def t_script_call():
     rc, out, dt = llm(
-        "Terminal aracıyla şunu çalıştır: python3 /workspace/scripts/wiki.py s hafiza --json "
+        "Terminal aracıyla şunu çalıştır: python3 /workspace/scripts/noma_wiki.py s hafiza --json "
         "— çıktıdaki ilk 3 sonucun slug'unu listele. Başka işlem yapma.",
         FLASH,
     )
@@ -129,7 +129,7 @@ def t_script_call():
 
 def t_note_create(keep):
     q = (
-        f"Bu repoda yeni wiki notu oluştur: `python3 scripts/new_note.py {TEST_NOTE} "
+        f"Bu repoda yeni wiki notu oluştur: `python3 scripts/noma_new_note.py {TEST_NOTE} "
         "--title 'Hermes Smoke Test' --type resource --tags test` çalıştır "
         "(--log-op VERME). Sonra wiki/" + TEST_NOTE + ".md dosyasında ## Links bölümüne "
         "[[noma]] bağlantısını ekle. Dosyanın son halini kontrol et ve bitince 'NOT_HAZIR' yaz."
@@ -197,16 +197,22 @@ def main():
     tests = infra if a.no_llm else infra + agent
 
     counts = {"PASS": 0, "FAIL": 0, "WARN": 0}
+    core_fail = noncore_fail = 0
     for name, core, fn in tests:
         try:
             status, detail = fn()
         except Exception as e:
             status, detail = "FAIL", f"istisna: {e}"
         counts[status] += 1
-        print(f"{status:4} {name:24} {detail}")
+        suffix = "" if core else " (non-core)"
+        if status == "FAIL" and core:
+            core_fail += 1
+        elif status == "FAIL":
+            noncore_fail += 1
+        print(f"{status:4} {name:24} {detail}{suffix}")
 
-    core_fail = counts["FAIL"]
-    print(f"\n== {counts['PASS']} PASS · {counts['WARN']} WARN · {counts['FAIL']} FAIL ==")
+    print(f"\n== {counts['PASS']} PASS · {counts['WARN']} WARN · {counts['FAIL']} FAIL "
+          f"({core_fail} core · {noncore_fail} non-core) ==")
     sys.exit(1 if core_fail else 0)
 
 

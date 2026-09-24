@@ -56,7 +56,8 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 
 - [ ] `lint()` tam set: kırık link, orphan, enum, updated-bump, satır bütçeleri,
       `.gitattributes` ↔ şifreli dizin tutarlılığı, public dizin kişisel veri taraması,
-      döngüsel Links (CYCLE), bayat stage (STALE) — son ikisi 2026-09-23'te eklendi
+      döngüsel Links (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT) —
+      CYCLE/STALE 2026-09-23'te, STRUCT 2026-09-24'te eklendi
       (`llm-wiki-deseni` notundan adaptasyon)
 - [x] Filed-back query kuralı kabul edildi (2026-09-23): değerli sentez atomik not
       olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` kaydı

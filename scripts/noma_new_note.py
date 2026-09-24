@@ -3,7 +3,7 @@
 Git işlemi yapmaz — commit ve conflict çözümü periyodik cron'a aittir."""
 import argparse
 
-import lib_repo as lib
+import noma_lib as lib
 
 
 def main():

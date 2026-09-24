@@ -8,24 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import lib_repo as lib
-
-LINK_RE = re.compile(r'\[\[([^\]|#]+)')
-
-
-def strip_code(text):
-    text = re.sub(r'```.*?```', '', text, flags=re.S)
-    return re.sub(r'`[^`\n]*`', '', text)
-
-
-def load_index():
-    idx = {}
-    for p in sorted((lib.ROOT / 'wiki').glob('*.md')):
-        text = p.read_text(encoding='utf-8')
-        fm = lib.parse_fm(text) or {}
-        idx[p.stem] = {'fm': fm,
-                       'out': {s.strip() for s in LINK_RE.findall(strip_code(text))}}
-    return idx
+import noma_lib as lib
 
 
 def matches_fulltext(query):
@@ -37,12 +20,7 @@ def matches_fulltext(query):
         return {Path(l).stem for l in r.stdout.splitlines() if l.strip()}
     pat = re.compile(query, re.I)
     return {p.stem for p in (lib.ROOT / 'wiki').glob('*.md')
-            if pat.search(strip_code(p.read_text(encoding='utf-8')))}
-
-
-def fm_tags(fm):
-    raw = fm.get('tags', '').strip('[]').replace('"', '')
-    return [t.strip() for t in raw.split(',') if t.strip()]
+            if pat.search(lib.strip_code(p.read_text(encoding='utf-8')))}
 
 
 def main():
@@ -62,14 +40,14 @@ def main():
     if not (a.query or a.type_ or a.stage or a.scope or a.status or a.tag):
         ap.error('en az biri gerekli: query veya bir metadata filtresi')
 
-    idx = load_index()
+    idx = lib.load_wiki_index()
     hits = set(idx)
     for key, val in (('type', a.type_), ('stage', a.stage), ('scope', a.scope),
                      ('status', a.status)):
         if val:
             hits &= {s for s in hits if idx[s]['fm'].get(key) == val}
     if a.tag:
-        hits &= {s for s in hits if a.tag in fm_tags(idx[s]['fm'])}
+        hits &= {s for s in hits if a.tag in idx[s]['tags']}
     if a.query:
         hits &= matches_fulltext(a.query)
     hits = sorted(hits)
@@ -87,7 +65,7 @@ def main():
         fm = idx[s]['fm']
         title = fm.get('title', '?').strip('"')
         line = f"wiki/{s}.md · {title} · {fm.get('type', '?')}/{fm.get('scope', '?')}"
-        tags = ' '.join(fm_tags(fm))
+        tags = ' '.join(idx[s]['tags'])
         if tags:
             line += f' [{tags}]'
         print(line)

@@ -8,10 +8,10 @@ id=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --id) [[ $# -ge 2 ]] || { echo "eksik değer: $1" >&2; exit 1; }; id="$2"; shift 2 ;;
-    *) echo "kullanım: bootstrap_node.sh --id <kimlik>" >&2; exit 1 ;;
+    *) echo "kullanım: noma-bootstrap.sh --id <kimlik>" >&2; exit 1 ;;
   esac
 done
-[[ -n "$id" ]] || { echo "kullanım: bootstrap_node.sh --id <kimlik>" >&2; exit 1; }
+[[ -n "$id" ]] || { echo "kullanım: noma-bootstrap.sh --id <kimlik>" >&2; exit 1; }
 [[ "$id" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || { echo "hata: --id ASCII kebab-case olmalı" >&2; exit 1; }
 [[ -d "$ROOT/.git" ]] || { echo "hata: $ROOT bir git repo değil" >&2; exit 1; }
 

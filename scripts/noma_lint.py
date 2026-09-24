@@ -68,8 +68,16 @@ for p in wiki:
     body = strip_code(text)
     links_out[rel] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', body)}
     for s in links_out[rel]: links_in.setdefault(s.lower(), set()).add(rel)
-    sec = re.search(r'## Links\n(.*?)(?=\n## )', text, re.S)
-    if sec: tree_out[p.stem] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', sec.group(1))}
+    links_m = re.search(r'^## Links[ \t]*$', body, re.M)
+    if not links_m:
+        add('ERR', 'STRUCT', f'{rel}: ## Links bölümü yok (SCHEMA §4)')
+    else:
+        nxt = re.search(r'^## ([^\n]+)', body[links_m.end():], re.M)
+        if not nxt or nxt.group(1).strip() != 'Summary':
+            got = nxt.group(1).strip() if nxt else '(son)'
+            add('ERR', 'STRUCT', f'{rel}: ## Links sonrası {got} — ## Summary beklenir (SCHEMA §4)')
+        sec_text = body[links_m.end():nxt.start()] if nxt else body[links_m.end():]
+        tree_out[p.stem] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', sec_text)}
     st = fm.get('stage', '')
     upd = (fm.get('updated') or '')[:10]
     if st in ('inbox', 'next', 'in_progress', 'waiting'):
@@ -83,8 +91,9 @@ for p in wiki:
     if last and fm.get('updated', '') < last:
         add('ERR', 'BUMP', f'{rel}: updated={fm.get("updated")} < son commit {last}')
 
+existing = {p.stem for p in wiki}
 for p in wiki:
-    if not links_out.get(f'wiki/{p.name}') and not links_in.get(p.stem):
+    if not (links_out.get(f'wiki/{p.name}', set()) & existing) and not links_in.get(p.stem):
         add('INFO', 'ORPHAN', f'wiki/{p.name} (bilgi: bağlantısız not)')
 
 for rel, slugs in links_out.items():
@@ -142,9 +151,9 @@ for p in files:
         add('WRN', 'PRIV', f'{p.relative_to(ROOT)}: telefon benzeri {m.group()}')
 
 try:
-    import build_index
+    import noma_build_index as build_index
     if (ROOT / 'index.md').read_text(encoding='utf-8') != build_index.generate():
-        add('WRN', 'INDEX', 'index.md bayat — python3 scripts/build_index.py ile yeniden üretilmeli')
+        add('WRN', 'INDEX', 'index.md bayat — python3 scripts/noma_build_index.py ile yeniden üretilmeli')
 except Exception as e:
     add('WRN', 'INDEX', f'denetlenemedi: {e}')
 

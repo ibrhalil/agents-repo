@@ -11,6 +11,12 @@ WIKI_DIR = ROOT / "wiki"
 INDEX_FILE = ROOT / "index.md"
 
 
+def _strip_code(text):
+    """Kod bloğu/satır içi kodu kaldır — şablon yer tutucu linkleri hub olmasın."""
+    text = re.sub(r"```.*?```", "", text, flags=re.S)
+    return re.sub(r"`[^`\n]*`", "", text)
+
+
 def _latest_log_stem():
     if not (ROOT / "log").is_dir():
         return None
@@ -34,8 +40,11 @@ def generate():
             if title_match:
                 title = title_match.group(1).strip('"')
 
-        stage_match = re.search(r"^stage:\s*(\S+)", content, re.MULTILINE)
-        stage = stage_match.group(1) if stage_match else ""
+        stage = ""
+        if fm_match:
+            stage_match = re.search(r"^stage:\s*(\S+)", fm_match.group(1), re.M)
+            if stage_match:
+                stage = stage_match.group(1).strip('"')
         summary_match = re.search(r"## Summary\n(.*?)(?=\n## |\Z)", content, re.DOTALL)
         desc = ""
         if summary_match:
@@ -47,10 +56,11 @@ def generate():
         if stage and stage != "done":
             desc = f"{desc} [{stage}]" if desc else f"[{stage}]"
 
-        # ## Links bölümünü bul
+        # ## Links bölümünü bul (yapı sözleşmesi: Links'i ## Summary takip eder;
+        # uymayan not "Kategorize Edilmemiş" kuyruğuna düşer — tend adayı)
         links_match = re.search(r"## Links\n(.*?)(?=\n## Summary)", content, re.DOTALL)
         if links_match:
-            links_text = links_match.group(1).strip()
+            links_text = _strip_code(links_match.group(1).strip())
             # [[hedef]] veya [[hedef|Alias]] yakala
             extracted_links = re.findall(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]", links_text)
 
@@ -67,7 +77,7 @@ def generate():
 
     parts = []
     parts.append("# index — Vault Kökü")
-    parts.append("> Bu dosya `scripts/build_index.py` (cron) tarafından wiki notlarındaki `## Links` (özelden genele) yönünden otomatik üretilir.\n")
+    parts.append("> Bu dosya `scripts/noma_build_index.py` (cron) tarafından wiki notlarındaki `## Links` (özelden genele) yönünden otomatik üretilir.\n")
     parts.append("## Sözleşmeler ve Kök Dizinler")
     parts.append("- [[AGENTS]] · [[SCHEMA]] · [[README]]")
     log_stem = _latest_log_stem()
