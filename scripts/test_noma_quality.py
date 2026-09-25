@@ -58,6 +58,17 @@ class QualityToolTests(unittest.TestCase):
         self.assertEqual('ilgisiz-atıf', findings[0]['rule'])
         self.assertTrue(negative)
 
+    def test_citation_verifier_rejects_unrelated_citation(self):
+        make_note(self.root / 'wiki' / 'ag.md', 'Ağ Güvenliği',
+                  summary='Portlar ve güvenlik duvarı ayarları.')
+        output = io.StringIO()
+        with mock.patch.object(lib, 'ROOT', self.root), \
+                mock.patch('sys.argv', ['noma_verify_citations.py', '--json']), \
+                mock.patch('sys.stdin', io.StringIO('Turşu tarifi wiki/ag.md.')), \
+                contextlib.redirect_stdout(output):
+            self.assertEqual(1, verify.main())
+        self.assertEqual(1, json.loads(output.getvalue())['warned'])
+
     def test_tend_report_hub_inbox_nohub_stale(self):
         for i in range(35):
             make_note(self.root / 'wiki' / f'yaprak-{i:02d}.md', f'Yaprak {i}',

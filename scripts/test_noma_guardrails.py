@@ -56,6 +56,33 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual([('LOGF', 2), ('LOGB', 4)], issues)
         self.assertNotIn('SENTINEL_PRIVATE_VALUE', str(issues))
 
+    def test_concurrent_log_creates_one_header_and_keeps_every_entry(self):
+        (self.root / 'log').mkdir()
+        barrier = threading.Barrier(12)
+
+        def record(i):
+            barrier.wait(timeout=10)
+            lib.append_log('tend', f'sentetik-{i}', actor='cron')
+
+        with mock.patch.object(lib, 'ROOT', self.root):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=12) as pool:
+                list(pool.map(record, range(12)))
+        path = self.root / 'log' / f'{lib.today()}.md'
+        lines = path.read_text(encoding='utf-8').splitlines()
+        self.assertEqual(1, lines.count(f'# {lib.today()}'))
+        self.assertEqual({f'sentetik-{i}' for i in range(12)},
+                         {line.split(' | ', 1)[1] for line in lines[1:]})
+        self.assertEqual([], list(lib.log_issues(path)))
+
+    def test_actor_required_on_new_logs_only(self):
+        old = self.root / '2026-09-24.md'
+        new = self.root / '2026-09-26.md'
+        line = '12:00 query @local | eski satır\n'
+        old.write_text(line, encoding='utf-8')
+        new.write_text(line, encoding='utf-8')
+        self.assertEqual([], list(lib.log_issues(old)))
+        self.assertEqual([('LOGF', 1)], list(lib.log_issues(new)))
+
     def test_same_day_edit_requires_updated_bump(self):
         original = ('---\ntitle: "fixture"\nupdated: 2026-09-24T08:00:00+03:00\n'
                     '---\n# fixture\n')
@@ -107,6 +134,7 @@ class GuardrailTests(unittest.TestCase):
             index.write_text('# synthetic index', encoding='utf-8')
             self.assertTrue(context.unlocked_index({'cwd': str(self.root)}))
         self.assertNotIn('## Summary', context.LOCAL_CONTEXT + context.RESTRICTED_CONTEXT)
+        self.assertIn('s <kavramlar> --json', context.LOCAL_CONTEXT)
 
 
 if __name__ == '__main__':

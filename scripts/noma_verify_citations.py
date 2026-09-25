@@ -3,7 +3,7 @@
 
 Kural tabanlıdır, LLM yargısı yoktur (üretici-doğrulayıcı ayrımı). Not içeriği
 çıktıya asla taşınmaz (AGENTS R4); yalnız yol + kural adı + toplam sayı basılır.
-Kırık atıf exit 1; ilgisiz-atıf uyarısı ve negatif iddia hatırlatması exit 0.
+Kırık/ilgisiz atıf exit 1; negatif iddia hatırlatması exit 0.
 """
 import argparse
 import json
@@ -91,7 +91,7 @@ def main():
         if negative:
             print('BİLGİ: negatif iddia var — "kayıtlı değil" ancak kanıt okunarak söylenir')
         print(f'== {len(findings)} atıf · {broken} kırık · {warned} uyarı ==')
-    return 1 if broken else 0
+    return 1 if broken or warned else 0
 
 
 if __name__ == '__main__':

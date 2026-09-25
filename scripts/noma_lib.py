@@ -1,5 +1,6 @@
 """Agent scriptlerinin paylaşılan yardımcıları (stdlib only).
 Sabitler SCHEMA.md'den alınmıştır; noma_lint.py ile tutarlı tutulur."""
+import fcntl
 import os
 import re
 from datetime import date, datetime
@@ -12,7 +13,8 @@ SCOPES = 'work personal learning systems creator media common'.split()
 STATUS = 'unverified established stub'.split()
 LOG_OPS = 'ingest query tend lint sync'.split()
 MSG_LIMIT = 120
-LOG_LINE = re.compile(r'\d{2}:\d{2} (ingest|query|tend|lint|sync) @[\w-]+(?: [\w./-]+)? \| (.+)')
+LOG_LINE = re.compile(r'\d{2}:\d{2} (ingest|query|tend|lint|sync) @[\w-]+'
+                      r'(?: (?P<actor>[\w./-]+))? \| (?P<message>.+)')
 SLUG_RE = re.compile(r'[a-z0-9]+(-[a-z0-9]+)*')
 TR = str.maketrans({'ı': 'i', 'İ': 'I', 'ş': 's', 'Ş': 'S', 'ğ': 'g', 'Ğ': 'G',
                     'ü': 'u', 'Ü': 'U', 'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C'})
@@ -207,20 +209,25 @@ def load_wiki_index(with_body=False):
     return idx
 
 
-def append_log(op, msg, actor=None):
+def append_log(op, msg, actor):
     if op not in LOG_OPS:
         raise SystemExit(f'hata: op={op} (geçerli: {"|".join(LOG_OPS)})')
-    if actor is not None and not re.fullmatch(r'[\w./-]+', actor):
+    if not actor or not re.fullmatch(r'[\w./-]+', actor):
         raise SystemExit('hata: aktör biçimi geçersiz (harf/rakam/nokta/tire/slash)')
     msg = ' '.join(msg.split())
     if len(msg) > MSG_LIMIT:
         raise SystemExit(f'hata: log mesajı {len(msg)} karakter (> {MSG_LIMIT})')
     p = ROOT / 'log' / f'{today()}.md'
-    if not p.exists():
-        p.write_text(f'# {today()}\n', encoding='utf-8')
-    who = f' {actor}' if actor else ''
-    with p.open('a', encoding='utf-8') as f:
-        f.write(f'{now_hhmm()} {op} @{node_id()}{who} | {msg}\n')
+    with p.open('a+', encoding='utf-8') as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            f.seek(0, os.SEEK_END)
+            if f.tell() == 0:
+                f.write(f'# {today()}\n')
+            f.write(f'{now_hhmm()} {op} @{node_id()} {actor} | {msg}\n')
+            f.flush()
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
     return p
 
 
@@ -240,7 +247,10 @@ def log_issues(path):
         match = LOG_LINE.fullmatch(s)
         if not match:
             yield ('LOGF', number)
-        elif len(match.group(2)) > MSG_LIMIT:
+        elif (re.fullmatch(r'\d{4}-\d{2}-\d{2}', path.stem)
+              and path.stem > '2026-09-24' and not match.group('actor')):
+            yield ('LOGF', number)
+        elif len(match.group('message')) > MSG_LIMIT:
             yield ('LOGB', number)
 
 

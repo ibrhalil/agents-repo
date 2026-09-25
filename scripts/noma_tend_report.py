@@ -48,6 +48,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--json', action='store_true', help='makine okunur çıktı')
     ap.add_argument('--no-log', action='store_true', help='log satırı yazma')
+    ap.add_argument('--actor', default='cron',
+                    help='gerçek oturum modeli | K | cron (zamanlanmış iş)')
     a = ap.parse_args()
     idx = lib.load_wiki_index()
     findings, summary = collect(idx)
@@ -61,7 +63,7 @@ def main():
         print('== ' + ' · '.join(f'{k}={v}' for k, v in summary.items()) + ' ==')
     if not a.no_log:
         lib.append_log('tend', 'bakım raporu: ' +
-                       ' '.join(f'{k}={v}' for k, v in summary.items()))
+                       ' '.join(f'{k}={v}' for k, v in summary.items()), actor=a.actor)
     return 0
 
 

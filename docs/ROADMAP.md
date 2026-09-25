@@ -79,7 +79,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [x] `agent/sessions/` adlandırma kuralı + özet şablonu (2026-09-23): adlandırma
       SCHEMA §1; şablon `docs/templates/session_summary.md`
 - [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,
-      `HH:mm <op> @<node> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §5)
+      `HH:mm <op> @<node> <aktör> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §5)
 - [x] Kök indeks küçük girişe, hub haritaları şifreli/sayfalı türeve ayrıldı
       (`wiki/sayfali-turetilmis-indeks.md`); `root`/`hub` yalnız ilgili sayfayı okur.
 - [ ] Kararlaştırılmayı bekleyen mimariler (wiki/yeni-agent-yapisi.md §45):
