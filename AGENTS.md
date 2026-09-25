@@ -11,7 +11,7 @@ BÖLME: Büyüyen notlar Hub'a dönüştürülüp alt yapraklara bölünerek ağ
 ## 2. Operasyonlar
 ingest: Kaynağı `raw/` altına yaz (inbox/clippings: verbatim; conversations: kısa `K:/<model>:` diyalog özeti — model adı gerçek session modeli). Anla, wiki ile merge et, `log/` kaydı düş.
 ÖNCELİK KURALI: Her bilgi sorusu — kategori fark etmez (kimlik, tercih, proje, karar, teknik) — ÖNCE wiki'ye sorulur. Düğüm-lokal hafıza (örn. Hermes Memory/USER.md) ve genel model bilgisi kanonik DEĞİLDİR; ancak wiki'de cevap yoksa, açıkça etiketlenerek (kaynak: hafıza/genel bilgi) kullanılır.
-query: Yukarıdaki rotayla yalnız ilgili kanıtı oku; cevaplar KESİNLİKLE path atıflıdır. UYDURMAK YASAKTIR. Wiki'de yoksa "wiki'de kayıtlı değil" denir. Kullanıcı profilinin kanonik yeri [[kullanici-profili]] yaprağıdır. Değerli sentez (karşılaştırma, analiz, yeni bağlantı) atomik not olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` yazılır.
+query: Yukarıdaki rotayla yalnız ilgili kanıtı oku; cevaplar KESİNLİKLE path atıflıdır. Çok kaynaklı/önemli yanıtlarda atıfları `python3 scripts/noma_verify_citations.py` ile mekanik doğrula (kırık/ilgisiz atıf düzeltilmeden yanıt verilmez). UYDURMAK YASAKTIR. Wiki'de yoksa "wiki'de kayıtlı değil" denir. Kullanıcı profilinin kanonik yeri [[kullanici-profili]] yaprağıdır. Değerli sentez (karşılaştırma, analiz, yeni bağlantı) atomik not olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` yazılır.
 tend: Kullanıcı serbest girdilerini (eksik frontmatter, kırık link) normalize et, stub genişlet, duplicate birleştir.
 lint: Kırık link, orphan, updated bump denetimi.
 YAZMA AKIŞI: PR darboğazı yoktur. Agent'lar serbestçe yazar, Git commit ve conflict çözümü periyodik cron job'a aittir.

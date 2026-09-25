@@ -73,7 +73,9 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [x] Filed-back query kuralı kabul edildi (2026-09-23): değerli sentez atomik not
       olarak wiki'ye geri dosyalanır; log'a `-> filed: wiki/slug.md` kaydı
       (AGENTS §2, SCHEMA §2; [[llm-wiki-deseni]] adaptasyonu)
-- [ ] `tend()` + `consolidate()` cron'da canlı
+- [ ] `tend()` + `consolidate()` cron'da canlı — mekanik rapor yerelde hazır
+      (2026-09-25, `scripts/noma_tend_report.py`: HUB-FULL/INBOX/NO-HUB/STALE);
+      cron koşusu VPS'e (B5) bağlı
 - [x] `agent/sessions/` adlandırma kuralı + özet şablonu (2026-09-23): adlandırma
       SCHEMA §1; şablon `docs/templates/session_summary.md`
 - [x] `log/` logging tasarımı kararlaştı (2026-09-23): günlük `YYYY-MM-DD.md` dosyaları,

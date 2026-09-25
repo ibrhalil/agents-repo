@@ -26,6 +26,8 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `test_noma_retrieval.py` | Sentetik Türkçe sorgu, hub filtresi, sıralama ve çıktı regresyonları |
 | `test_noma_context.py` | Üst hub seçimi ile gerekçeli gövde çağrışımının sentetik regresyonları |
 | `noma_eval_retrieval.py` | Şifreli plandaki temsilî sorguların toplu ilk-3/ikinci-rota isabetini ölçer (içerik basmaz) |
+| `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz-atıf WARN, negatif iddia hatırlatması; `--json` |
+| `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar |
 | `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
 
 ## Örnekler
@@ -49,6 +51,8 @@ w stats
 bash scripts/noma-bootstrap.sh --id hermes-vps
 python3 -B -m unittest discover -s scripts -p 'test_*.py'
 python3 -B scripts/noma_eval_retrieval.py
+printf 'yanıt ... (wiki/slug.md)' | python3 scripts/noma_verify_citations.py
+python3 scripts/noma_tend_report.py
 python3 -B scripts/noma_eval_context.py
 python3 -B scripts/noma_eval_context.py --fresh
 python3 -B scripts/noma_bench_index.py 1000 10000
