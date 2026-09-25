@@ -9,13 +9,18 @@ from pathlib import Path
 
 import noma_lib as lib
 
-# ADR-9: untrusted kaynakta bilinen injection desenleri — uyarı + [flag], bloklamaz
+# ADR-9 K3: untrusted kaynakta bilinen injection desenleri (EN+TR) — uyarı + [flag], bloklamaz
 INJECTION = re.compile(
     r'ignore (?:all )?(?:previous|prior|above) instructions'
     r'|disregard (?:all )?(?:previous|prior|above)'
     r'|system prompt'
     r'|<\|im_start\|>'
-    r'|reveal (?:your )?(?:instructions|prompt)', re.I)
+    r'|reveal (?:your )?(?:instructions|prompt)'
+    r'|(?:önceki|eski) (?:talimatları|komutları) (?:yoksay|yok say|görmezden|dikkate alma)'
+    r'|(?:tüm|butun) talimatları (?:yoksay|yok say|görmezden)'
+    r'|sistem (?:istemi|istemini (?:göster|aç))'
+    r'|token[ıi]n?[ıi]? (?:yaz|göster|açığa çıkar)'
+    r'|[A-Za-z0-9+/]{160,}={0,2}', re.I)
 
 
 def raw_target(kind, name_hint, attempt=0):
@@ -46,6 +51,46 @@ def write_raw(kind, name_hint, data):
             return p
         except FileExistsError:
             attempt += 1
+
+
+def verify_note(path):
+    """Yeni üretilen not için mekanik post-ingest doğrulaması (AGENTS R2/R5).
+
+    Not içeriği hiçbir koşulda döndürülmez/basılmaz; yalnız kural adları.
+    Dönen: (hatalar, uyarılar) — hata giderilemezse not stage: inbox kalır ve
+    log'a [verify-fail] bayrağı yazılır; uyarı yorum gerektirir (insan/agent).
+    """
+    errors, warnings = [], []
+    text = path.read_text(encoding='utf-8')
+    fm = lib.parse_fm(text)
+    if fm is None:
+        return ['FM'], []
+    for key in ('title', 'type', 'stage', 'scope', 'created', 'updated'):
+        if not fm.get(key):
+            errors.append(f'FM:{key}')
+    for name, allowed in (('type', lib.TYPES), ('stage', lib.STAGES),
+                          ('scope', lib.SCOPES), ('status', lib.STATUS)):
+        value = fm.get(name)
+        if value and value not in allowed:
+            errors.append(f'ENUM:{name}')
+    if not lib.SLUG_RE.fullmatch(path.stem):
+        errors.append('SLUG')
+    clean = lib.strip_code(text)
+    links_m = re.search(r'^## Links[ \t]*$', clean, re.M)
+    if not links_m:
+        errors.append('STRUCT:Links')
+    else:
+        nxt = re.search(r'^## ([^\n]+)', clean[links_m.end():], re.M)
+        if not nxt or nxt.group(1).strip() != 'Summary':
+            errors.append('STRUCT:Summary')
+        sec = re.search(r'^## Links[ \t]*$\n(.*?)(?=^## |\Z)', clean, re.M | re.S)
+        targets = {s.strip() for s in re.findall(r'\[\[([^\]|#]+)', sec.group(1))} if sec else set()
+        for target in sorted(t for t in targets
+                             if not (lib.ROOT / 'wiki' / f'{t}.md').exists()):
+            errors.append(f'LINK:{target}')
+        if not targets and not errors:
+            warnings.append('NO-HUB')
+    return errors, warnings
 
 
 def main():
@@ -108,6 +153,15 @@ def main():
         lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=a.actor)
         return
     print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
+    errors, warnings = verify_note(note)
+    if warnings:
+        print(f'UYARI: {slug}: {", ".join(warnings)} — hub bağlantısı bekleniyor', file=sys.stderr)
+    if errors:
+        summary = ', '.join(errors[:3]) + (f' (+{len(errors) - 3})' if len(errors) > 3 else '')
+        print(f'DOĞRULAMA HATASI: {slug}: {summary} — not stage: inbox kalır', file=sys.stderr)
+        lib.append_log('ingest', f'{slug} <- {rel}{suffix} [verify-fail] {summary}',
+                       actor=a.actor)
+        return
     lib.append_log('ingest', f'{slug} <- {rel}{suffix}', actor=a.actor)
 
 

@@ -47,6 +47,27 @@ class RetrievalTests(unittest.TestCase):
                 self.assertEqual(1, wiki.cmd_root(SimpleNamespace(json=True)))
         self.assertNotIn('PRIVATE_', error.getvalue())
 
+    def test_index_build_produces_title_lexicon_pages(self):
+        with tempfile.TemporaryDirectory(prefix='noma-titles-', dir=lib.ROOT / 'tmp') as tmp:
+            root = Path(tmp)
+            source = root / 'wiki'
+            source.mkdir()
+            (source / 'root.md').write_text('---\ntitle: "Kök Hub"\nstage: done\n---\n'
+                                            '# Kök\n## Links\n## Summary\nKök.\n', encoding='utf-8')
+            (source / 'leaf.md').write_text('---\ntitle: "Özel Başlık"\nstage: done\n---\n'
+                                            '# Yaprak\n## Links\n[[root]]\n## Summary\nBilgi.\n', encoding='utf-8')
+            with mock.patch.object(build_index, 'ROOT', root), \
+                    mock.patch.object(build_index, 'WIKI_DIR', source), \
+                    mock.patch.object(build_index, 'INDEX_FILE', root / 'index.md'), \
+                    mock.patch.object(build_index, 'HUB_DIR', root / 'index/hubs'):
+                build_index.build_index()
+                lexicon = root / 'index/hubs/_basliklar/000001.md'
+                self.assertTrue(lexicon.is_file())
+                text = lexicon.read_text(encoding='utf-8')
+                self.assertIn('[[leaf|Özel Başlık]]', text)
+                self.assertIn('[[root|Kök Hub]]', text)
+                self.assertIn('kanonik değildir', text)
+
     def test_natural_turkish_question_finds_title(self):
         idx = {'hafiza': note('hafiza', 'Hafıza yönetimi', body='kararlar')}
         self.assertEqual('hafiza', wiki.ranked(idx, list(idx),

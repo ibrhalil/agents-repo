@@ -48,9 +48,14 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 
 ## Faz 2 — Ingest Hattı
 
-- [ ] `raw/inbox/` akışı canlı: inbox → anlama → wiki (serbest yazma)
-- [ ] Post-ingest verification — ingest sonrası otomatik format/link denetimi
-- [ ] Ingest regex ön-taraması (injection flag; ADR-9 K3)
+- [x] `raw/inbox/` akışı **yerel uçtan uca** doğrulandı (2026-09-25): gerçek kaynak
+      (system-one-karar-modelleri) inbox → ingest → verify → doldurma → hub bağlama →
+      build/lint turu tam çalıştı; cron canlılığı VPS'e (B5) bağlı
+- [x] Post-ingest verification (2026-09-25): `noma_ingest.py` yeni notu mekanik doğrular
+      (enum/slug/STRUCT/link hedefi); hata → `[verify-fail]` log + not `stage: inbox` kalır;
+      bağlantısız not `NO-HUB` uyarısı verir — içerik hiçbir çıktıya taşınmaz
+- [x] Ingest regex ön-taraması (ADR-9 K3): EN+TR injection desenleri + uzun base64 bloğu —
+      yalnız `[flag]` uyarır, bloklamaz (yetki sınırı ADR-9'un kendisi)
 - [ ] FreshRSS kurulumu (Docker) + saatlik keyword push (regex, LLM'siz)
 - [ ] Sabah gündem digest'i; değerli içerik yolu: digest → `raw/clippings/` → wiki (serbest yazma)
 

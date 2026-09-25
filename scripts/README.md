@@ -13,11 +13,11 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit |
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log) — doğrudan çalıştırılmaz |
 | `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (AGENTS R5) |
-| `noma_ingest.py` | kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (inbox/clippings: verbatim; conversations: elle özet) + wiki notu + log |
+| `noma_ingest.py` | kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması) + şablondan not üretir + mekanik post-ingest doğrulama (`[verify-fail]`/`NO-HUB`; içerik basılmaz) + log |
 | `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal |
 | `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur; arama Türkçe katlamalıdır; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
 | `noma-bootstrap.sh` | düğüm kurulum desteği: git-crypt denetimi ve `.env` hazırlığı |
-| `noma_build_index.py` | `index.md` küçük kök + `index/hubs/` altında 32 yapraklık şifreli sayfa üreticisi |
+| `noma_build_index.py` | `index.md` küçük kök + `index/hubs/` altında 32 yapraklık şifreli sayfalar + `_basliklar/` damıtma sözlüğü |
 | `noma_bench_index.py` | gerçek wiki okumayan sentetik 1K/10K/100K indeks maliyeti ölçümü; yalnız sayısal çıktı |
 | `docker-compose.hermes.yml` | Hermes Agent runtime compose (yerel doğrulandı; VPS Faz 1 B2-B4 notları dosyada) |
 | `noma_hermes_context.py` | Hermes `pre_llm_call`: yalnız sabit gezinme talimatı; özel wiki gövdesini stdout'a vermez |

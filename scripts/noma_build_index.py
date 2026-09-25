@@ -102,6 +102,21 @@ def generate_all():
         parts.append("")
 
     pages = {}
+    titles = sorted((slug, title) for slug, title, _ in
+                    list(uncategorized) + [u for u in root_hubs]
+                    + [leaf for leaves in hubs.values() for leaf in leaves])
+    titles = list(dict.fromkeys(titles))
+    for offset in range(0, len(titles), PAGE_SIZE):
+        page = offset // PAGE_SIZE + 1
+        lines = [f"# Wiki Not Başlıkları — Sayfa {page}",
+                 "> Damıtma sözlüğü: kavramlar bu başlıklarla hizalanır. Üretilmiştir, kanonik değildir.\n"]
+        lines += [f"- [[{slug}|{title}]]" for slug, title in
+                  titles[offset:offset + PAGE_SIZE]]
+        content = '\n'.join(lines) + '\n'
+        if len(content.encode('utf-8')) > HUB_PAGE_MAX_BYTES:
+            raise ValueError('başlık sözlüğü sayfası sınırı aşıldı')
+        pages[f'index/hubs/_basliklar/{page:06d}.md'] = content
+
     for hub_slug in sorted(hubs.keys()):
         if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', hub_slug):
             raise ValueError('geçersiz hub slug; önce wiki lint çalıştırılmalı')

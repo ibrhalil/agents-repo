@@ -137,6 +137,8 @@ def rank_wiki(idx, slugs, tokens=(), pattern=None):
     Regex için slugs önceden full-text ile filtrelenmiş adaylardır.
     Dönen puanlar sıralama içindir, güven skoru değildir. Kısmi aday içerik
     okunmadan cevap sayılmaz; eski kararlar/supersede gövdeden denetlenir.
+    Not: 'soft' kolu (kök toleransı + idf) 2026-09-25 A/B'de 1/14 ilk-3 ile
+    reddedildi — plans/2026-09-25-damitma-ab.md.
     """
     terms = search_terms(tokens) if pattern is None else []
     if tokens and not terms:
