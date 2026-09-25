@@ -3,9 +3,9 @@
 > İki araştırmanın (proje analizi + benzer projeler) sentezinden doğdu; yeni yapı
 > migrasyonuyla (2026-09-21) güncellendi. Karar kayıtları `wiki/` (decision),
 > mimari `docs/ARCHITECTURE.md`, kararlaştırılmamış konular
-> `wiki/yeni-agent-yapisi.md` §45.
+> `wiki/agent-yapisi.md` §45.
 
-Bağ: [[index]] · [[wiki/yeni-agent-yapisi|Yeni Agent Yapısı]]
+Bağ: [[index]] · [[wiki/agent-yapisi|Agent Yapısı]]
 
 ---
 
@@ -19,7 +19,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 | Faz | Kapsam | Tarih |
 |---|---|---|
 | 0 — İskelet | Sözleşmeler, bilgi hattı, git-crypt, 10 ADR, dil+token+plan protokolü | 2026-09-20 |
-| 0.7 — Yeni yapı migrasyonu | atoms kaldırıldı; düz wiki + kebab-case; 12-alan şema; agent/workspace/tools/config/log/web dizinleri; public/şifreli split; yeni-agent-yapisi kararı | 2026-09-21 |
+| 0.7 — Yeni yapı migrasyonu | atoms kaldırıldı; düz wiki + kebab-case; 12-alan şema; agent/workspace/tools/config/log/web dizinleri; public/şifreli split; agent-yapisi kararı | 2026-09-21 |
 
 ---
 
@@ -42,7 +42,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
 - [x] Bulut Hermes mount'u public-only/read-only yapıldı; yerel özel erişim
       için yerel provider düğümü henüz kurulacak
 - [x] ~~Branch protection aktifleştirme~~ (gerek kalmadı — PR darboğazı kaldırıldı,
-      commit/conflict çözümü cron'a devredildi; bkz. `wiki/main-insana-aittir.md`)
+      commit/conflict çözümü cron'a devredildi; bkz. `wiki/git-akisi-ve-conflict.md`)
 
 ---
 
@@ -82,7 +82,7 @@ kısmen başladı (A0-A4 tamam, VPS erişimi bekleniyor).
       `HH:mm <op> @<node> <aktör> | mesaj ≤120`; runtime loglar commit edilmez (SCHEMA §5)
 - [x] Kök indeks küçük girişe, hub haritaları şifreli/sayfalı türeve ayrıldı
       (`wiki/sayfali-turetilmis-indeks.md`); `root`/`hub` yalnız ilgili sayfayı okur.
-- [ ] Kararlaştırılmayı bekleyen mimariler (wiki/yeni-agent-yapisi.md §45):
+- [ ] Kararlaştırılmayı bekleyen mimariler (wiki/agent-yapisi.md §45):
       Master DB view'ları, graph, indekslenmiş arama/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır
 

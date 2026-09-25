@@ -14,10 +14,10 @@ genel bakışı tutar.
 4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj. Sözleşmeler LLM-optimize edilmiştir.
 5. **Local-first dostu, bulut esnek** — direkt çoklu provider + Ollama düğümü (ADR-8).
 6. **Gereksiz complexity yok** — yeni katman/alan/dizin gerçek ihtiyaç ister
-   (wiki/yeni-agent-yapisi.md §44).
+   (wiki/agent-yapisi.md §44).
 
 ## Bilgi hattı ve retrieval
-Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[wiki/yeni-agent-yapisi]]).
+Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[wiki/agent-yapisi]]).
 Sorgu tarafı motor-bağımsızdır:
 
 ```text
@@ -62,7 +62,7 @@ Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model (kayıt dizin
 - **Ev (planlı local):** Ollama provider, aynı repo klonu, aynı SCHEMA.
 - **İnsan düğümü:** Obsidian ile `wiki/` doğrudan düzenleme.
 - **Senkron:** git; yetkili yerel düğümler serbest yazar, commit ve conflict çözümü
-  periyodik cron job'a aittir ([[wiki/main-insana-aittir]] kararı, 2026-09-23);
+  periyodik cron job'a aittir ([[wiki/git-akisi-ve-conflict]] kararı, 2026-09-23);
   append-only tasarım çoklu yazıcıda çatışmaları seyrekleştirir.
 
 Bulut Hermes home'u `~/.hermes-cloud` ile eskisinden ayrıdır;
