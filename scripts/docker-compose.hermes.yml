@@ -18,6 +18,14 @@
 #
 # Provider anahtarı çalışma alanındaki .env dosyasından değil yalnız runtime ortamından gelir.
 # Sır içermeyen dosyadır — PUBLIC yüzeye değer gömülmez (AGENTS §3).
+# İlk kurulumda ~/.hermes-cloud/config.yaml'a ekle:
+#   hooks:
+#     pre_llm_call:
+#       - command: "python3 /workspace/scripts/noma_hermes_context.py"
+# ~/.hermes-cloud/shell-hooks-allowlist.json approvals listesine (varsa koruyarak) ekle:
+#   {"event":"pre_llm_call","command":"python3 /workspace/scripts/noma_hermes_context.py"}
+# `docker exec hermes-dashboard hermes hooks doctor` ile doğrula.
+# Otomatik hook onayını tüm komutlara açma: yalnız bu bilinen komutu onayla.
 
 services:
   hermes:
@@ -55,6 +63,7 @@ services:
     environment:
       - HERMES_UID=${HERMES_UID:-501}
       - HERMES_GID=${HERMES_GID:-20}
+      - GLM_API_KEY=${GLM_API_KEY:-}
     command: ["dashboard", "--host", "127.0.0.1", "--no-open"]
 
   # Gateway B6 bekliyor: ayrı güvenilir mount, erişim ve token sınırı tasarlanacak.

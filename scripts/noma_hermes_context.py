@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hermes pre_llm_call: yalnız statik gezinme talimatı döndürür.
+"""Hermes pre_llm_call: yerel gezinme veya kısıtlı düğüm talimatı döndürür.
 
 Wiki başlığı, özeti veya indeks gövdesi hook stdout'una ve her model çağrısına
 taşınmaz. Yerel düğüm ihtiyaç duyduğu hub'ı read_file ile açar.
@@ -19,9 +19,11 @@ LOCAL_CONTEXT = (
     "Kişisel/sağlık/finans notları yalnız yerel modelde işlenir.]"
 )
 RESTRICTED_CONTEXT = (
-    "[Noma: bu düğümde şifreli wiki erişimi yoktur. Kişisel veya wiki kaynaklı "
-    "bilgi sorusunu yanıtlama; 'wiki erişimi için yerel düğüm gerekli' de. "
-    "Burada yalnız public sözleşmeler ve araç kodu mevcuttur.]"
+    "[Noma: bu düğümde şifreli index/wiki/raw erişimi yok; çalışma alanı yalnız "
+    "public ve salt okunurdur. Kişisel/wiki soruları ile wiki notu oluşturma veya "
+    "güncelleme isteklerinde 'wiki erişimi için yerel düğüm gerekli' de. "
+    "Git-crypt anahtarı, özel klon veya şifreli mount isteme/önerme. "
+    "Geçici taslağı kanonik wiki kaydı olarak sunma; public sözleşme ve kodla çalış.]"
 )
 
 

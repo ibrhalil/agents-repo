@@ -17,6 +17,7 @@ PRIVATE = {'/workspace/index.md', '/workspace/index', '/workspace/wiki', '/works
            '/workspace/log', '/workspace/plans', '/workspace/.env', '/workspace/.git'}
 PUBLIC = {'/workspace/AGENTS.md', '/workspace/SCHEMA.md', '/workspace/README.md',
           '/workspace/docs', '/workspace/scripts'}
+HOOK_COMMAND = 'python3 /workspace/scripts/noma_hermes_context.py'
 
 
 def run(args, cwd=ROOT, data=None):
@@ -46,7 +47,26 @@ def t_hook_contract():
     ok = (local.returncode == restricted.returncode == 0
           and 'index.md' in a and 'yerel düğüm gerekli' in b
           and '## Summary' not in a + b and len(a) < 600 and len(b) < 600)
-    return ('PASS' if ok else 'FAIL', 'statik context + kısıtlı düğüm fail-closed')
+    return ('PASS' if ok else 'FAIL', 'statik context + kısıtlı düğüm yanıtı')
+
+
+def t_hook_registration():
+    """Script testi yetmez: çalışan Hermes hook'u ayrıca onaylamış olmalı."""
+    try:
+        active = run(['docker', 'ps', '--filter', 'name=^/hermes-dashboard$',
+                      '--format', '{{.Names}}'])
+        if active.returncode or active.stdout.strip() != 'hermes-dashboard':
+            return 'WARN', 'dashboard çalışmıyor; hook kaydı denetlenemedi'
+        p = run(['docker', 'exec', 'hermes-dashboard', 'hermes', 'hooks', 'list'])
+    except FileNotFoundError:
+        return 'WARN', 'Docker kurulu değil; hook kaydı denetlenemedi'
+    if p.returncode:
+        return 'FAIL', 'Hermes hook listesi okunamadı (özel çıktı gizlendi)'
+    block = p.stdout.partition('[pre_llm_call]')[2].split('\n  [', 1)[0]
+    ok = any(f'- {HOOK_COMMAND} (' in line and '✓ allowed' in line
+             for line in block.splitlines())
+    return ('PASS' if ok else 'FAIL', 'Hermes kısıtlı context hook onaylı' if ok
+            else 'Hermes context hook eksik veya onaysız')
 
 
 def t_hub_map():
@@ -118,7 +138,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--no-llm', action='store_true', help='geriye dönük uyumluluk; test zaten LLM kullanmaz')
     ap.parse_args()
-    checks = [('index_crypt', t_index_crypt), ('hub_map', t_hub_map), ('hook', t_hook_contract),
+    checks = [('index_crypt', t_index_crypt), ('hub_map', t_hub_map),
+              ('hook', t_hook_contract), ('hook_runtime', t_hook_registration),
               ('compose_cloud', t_compose), ('lint', t_lint), ('dashboard', t_dashboard)]
     failed = False
     for name, check in checks:
