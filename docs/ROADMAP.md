@@ -24,6 +24,7 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
 | 0 — İskelet | Sözleşmeler, bilgi hattı, git-crypt, 10 ADR, dil+token+plan protokolü | 2026-09-20 |
 | 0.7 — Yeni yapı migrasyonu | atoms kaldırıldı; düz wiki + kebab-case; 12-alan şema; `agent/prompts/` + `agent/sessions/` + `log/` dizinleri; public/şifreli split; agent-yapisi kararı | 2026-09-21 |
 | 0.8 — Güvenlik/eşzamanlılık sertleştirme | `raw/` append-only koruması, gizli log sızdırmayan çıktı, şifreli indeks smoke; `noma_eval_context.py` çıkış kodu düzeltildi; 101 test (`python3 -B -m unittest discover -s scripts -p 'test_*.py'`), lint 0 ERR/0 WRN | 2026-09-26 |
+| 0.9 — Commit kapısı ve doğrulama sertleştirme | lint: tüm özel staged blob şifreme denetimi, staged silme/append denetimi, okunamayan HEAD/index ayrımı, genel CYCLE, tz-bilinçli updated-bump, metadata sızdırmayan tanılar; ingest/new_note: yazım öncesi doğrulama + atomik not; atıf doğrulayıcıda okunamayan-atıf WARN; hook kısmi-kasa düzeltmesi; `noma_lint` pre-commit kancası; 119 test yeşil, lint 0 ERR/0 WRN | 2026-09-26 |
 
 ---
 
@@ -73,7 +74,9 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
       orphan, enum, updated-bump, satır bütçeleri, `.gitattributes` ↔ şifreli
       dizin tutarlılığı, public dizin kişisel veri taraması, döngüsel Links
       (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT) — CYCLE/STALE
-      2026-09-23'te, STRUCT 2026-09-24'te eklendi; 101 test yeşil
+      2026-09-23'te, STRUCT 2026-09-24'te eklendi; 0.9'da CYCLE genel döngüye
+      genişletildi, updated-bump tz-bilinçli oldu ve staged blob/silme denetimi
+      eklendi (119 test yeşil)
 - [ ] `lint()` kalan: ORPHAN şiddeti yalnız INFO; satır bütçesi kapsamı 2
       dosyada — genişletme gerekçe ister
 - [x] `raw/` append-only eşzamanlı ingest, mevcut notu koruyan smoke,

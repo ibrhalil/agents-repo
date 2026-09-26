@@ -1,32 +1,32 @@
 # scripts/
 
 Noma sözleşme linter'ı ve agent destek scriptleri. Hepsi stdlib-only'dir ve **git
-mutation yapmaz** — yazma akışı serbesttir; commit ve conflict çözümü periyodik
-cron job'a aittir.
+mutation yapmaz** — yazma akışı serbesttir; commit ve conflict çözümü bugün
+**elle** yapılır, zamanlanmış cron işi ROADMAP B5'e bağlıdır (henüz yok).
 
 Adlandırma: Python `noma_` (snake), shell `noma-` (kebab) ön eklidir; compose
 dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 
 | Script | İş |
 |---|---|
-| `noma_lint.py` | lint() mekanik kontrolleri: append-only, şifreli kök/sayfalar, güncel metadata; özel satır içerikleri basılmaz |
-| `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit |
-| `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log) — doğrudan çalıştırılmaz |
-| `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (AGENTS R5) |
-| `noma_ingest.py` | kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması) + şablondan not üretir + mekanik post-ingest doğrulama (`[verify-fail]`/`NO-HUB`; içerik basılmaz) + log |
+| `noma_lint.py` | lint() mekanik kontrolleri: append-only (HEAD + staged silme/değişim), tüm özel staged blob'ların gerçekten şifreli olması, kırık link, orphan, enum, tz-bilinçli updated-bump, satır bütçeleri, `.gitattributes` tutarlılığı, genel döngü (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT); özel satır içerikleri ve metadata değerleri basılmaz |
+| `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit (linter aynı zamanda pre-commit kancasıdır) |
+| `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log, ISO zaman) — doğrudan çalıştırılmaz |
+| `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (AGENTS R5); içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
+| `noma_ingest.py` | girdileri kalıcı yazmadan ÖNCE doğrular (slug/aktör/stage); kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması); not bellede üretilip doğrulanır ve atomik yayınlanır — doğrulama hatasında not inbox'a iner (`[verify-fail]`/`NO-HUB`; içerik basılmaz) |
 | `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal; varsayılan çıktı yalnız yol, başlık/metadata `--human` ile |
 | `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur (`_basliklar`/`_uncategorized` dâhil); arama Türkçe katlamalıdır; tüm modlarda varsayılan çıktı yalnız yol, başlık/metadata `--human` ile; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
-| `noma-bootstrap.sh` | düğüm kurulum desteği: git-crypt denetimi ve `.env` hazırlığı |
+| `noma-bootstrap.sh` | düğüm kurulum desteği: git-crypt kilit denetimi (tüm özel dizinlerden örnek, yollar tek tek) ve `.env` hazırlığı |
 | `noma_build_index.py` | `index.md` küçük kök + `index/hubs/` altında 32 yapraklık şifreli sayfalar + `_basliklar/` damıtma sözlüğü |
 | `noma_bench_index.py` | gerçek wiki okumayan sentetik 1K/10K/100K indeks maliyeti ölçümü; yalnız sayısal çıktı |
 | `docker-compose.hermes.yml` | Hermes Agent runtime compose (yerel doğrulandı; VPS Faz 1 B2-B4 notları dosyada) |
-| `noma_hermes_context.py` | Hermes `pre_llm_call`: yalnız sabit gezinme talimatı; özel wiki gövdesini stdout'a vermez |
-| `noma_test_node.py` | Salt-okunur, LLM'siz indeks/compose/hook/lint smoke testi; dashboard yoksa WARN |
+| `noma_hermes_context.py` | Hermes `pre_llm_call`: yalnız sabit gezinme talimatı; kilit kararında TÜM wiki notları denetlenir (kısmi kasa kısıtlı sayılır); özel wiki gövdesini stdout'a vermez |
+| `noma_test_node.py` | LLM'siz indeks/compose/hook/lint smoke testi; `tmp/` altına sentetik fixture yazar (tam salt-okunur değildir), Docker/dashboard yoksa WARN |
 | `test_noma_guardrails.py` | Sentetik, model çağrısız raw yarış / mevcut not / log gizliliği regresyonları |
 | `test_noma_retrieval.py` | Sentetik Türkçe sorgu, hub filtresi, sıralama ve çıktı regresyonları |
 | `test_noma_context.py` | Üst hub seçimi ile gerekçeli gövde çağrışımının sentetik regresyonları |
 | `noma_eval_retrieval.py` | Şifreli plandaki temsilî sorguların toplu ilk-3/ikinci-rota isabetini ölçer (içerik basmaz) |
-| `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz-atıf WARN, negatif iddia hatırlatması; `--json` |
+| `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz/okunamayan-atıf WARN, negatif iddia hatırlatması; `--json` |
 | `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar |
 | `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
 
@@ -63,6 +63,9 @@ python3 -B scripts/noma_test_node.py --no-llm
 
 Notlar:
 
+- `noma_lint.py` aynı zamanda pre-commit kancasıdır (`.pre-commit-config.yaml`,
+  `local/noma-lint`): normal commit akışında sözleşme denetimi otomatik koşar.
+  Kilitli düğümde bilinçli olarak ERR CRYPT ile durur (sahte yeşil yok).
 - `noma_ingest.py` olası injection desenlerinde uyarır ve log'da `[flag]` işaretler
   (ADR-9); `raw/` üzerine asla yazmaz (eşzamanlı çağrıda da append-only).
 - Bulut Hermes compose'u yalnız public read-only dosyaları mount eder; içinde

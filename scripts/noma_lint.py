@@ -22,6 +22,8 @@ BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
 EMAIL = re.compile(r'[\w.+-]+@[\w-]+\.[A-Za-z]{2,}')
 PHONE = re.compile(r'\b0?5\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}\b')
 GITCRYPT_MAGIC = b'\x00GITCRYPT\x00'
+# HEAD/index okuma hatası sentinel'i: "yok" (None) ile "var ama okunamadı" ayrımı.
+UNREADABLE = object()
 SKIP_DIRS = {'.git', 'node_modules', 'tmp'}
 err = wrn = 0
 out = []
@@ -60,10 +62,48 @@ def _unverifiable(data):
     return False
 
 def _head_payload(rel):
-    """HEAD:<rel> sürümünü bayt olarak döndürür; HEAD'de yoksa None."""
+    """HEAD:<rel> sürümünü bayt olarak döndürür. HEAD'de yoksa None;
+    VAR ama okunamıyorsa UNREADABLE (yok saymak sahte yeşildir)."""
+    probe = subprocess.run(['git', 'cat-file', '-e', f'HEAD:{rel}'],
+                           cwd=ROOT, capture_output=True)
+    if probe.returncode != 0:
+        return None
     r = subprocess.run(['git', 'cat-file', '--filters', f'HEAD:{rel}'],
                        cwd=ROOT, capture_output=True)
-    return r.stdout if r.returncode == 0 else None
+    return r.stdout if r.returncode == 0 else UNREADABLE
+
+
+def _staged_exists(rel):
+    return subprocess.run(['git', 'cat-file', '-e', f':{rel}'],
+                          cwd=ROOT, capture_output=True).returncode == 0
+
+
+def _staged_payload(rel):
+    """Index'teki (commit edilecek) sürüm süzülmüş içerik; index'te yoksa None,
+    VAR ama okunamıyorsa UNREADABLE."""
+    if not _staged_exists(rel):
+        return None
+    r = subprocess.run(['git', 'cat-file', '--filters', f'--path={rel}', f':{rel}'],
+                       cwd=ROOT, capture_output=True)
+    return r.stdout if r.returncode == 0 else UNREADABLE
+
+
+def _staged_blob(rel):
+    """Index'teki ham Git blob'u (süzgeçsiz) — şifreme denetimi için."""
+    if not _staged_exists(rel):
+        return None
+    r = subprocess.run(['git', 'cat-file', 'blob', f':{rel}'],
+                       cwd=ROOT, capture_output=True)
+    return r.stdout if r.returncode == 0 else UNREADABLE
+
+
+def _head_paths():
+    """HEAD ağacındaki yollar; okunamıyorsa None (sessiz boş küme yok)."""
+    r = subprocess.run(['git', 'ls-tree', '-r', '-z', '--name-only', 'HEAD'],
+                       cwd=ROOT, capture_output=True)
+    if r.returncode != 0:
+        return None
+    return {p for p in r.stdout.decode('utf-8', errors='replace').split('\0') if p}
 
 def check_budgets():
     for f, n in BUDGETS.items():
@@ -71,11 +111,38 @@ def check_budgets():
         sev = 'ERR' if c > n else 'INFO'
         add(sev, 'BUDGET', f'{f}: {c}/{n} satır')
 
+def _history_checks(rel, cur_text, previous_payload, label=''):
+    """BUMP/LOCKED denetimi; önceki notun içeriği tanıya asla taşınmaz."""
+    if previous_payload is UNREADABLE:
+        add('ERR', 'CRYPT', f'{rel}: HEAD sürümü okunamadı; BUMP/LOCKED doğrulanamadı')
+        return
+    if previous_payload is None:
+        return
+    if _unverifiable(previous_payload):
+        # smudge kapalı düğümde blob şifreli gelir; sahte yeşil yerine ERR CRYPT
+        # (aynı sertlikte: "git-crypt filtresi etkin değil").
+        add('ERR', 'CRYPT', f'{rel}: HEAD sürümü çözülemedi; BUMP/LOCKED doğrulanamadı')
+        return
+    previous_text = previous_payload.decode('utf-8')
+    if previous_text == cur_text:
+        return
+    if lib.needs_updated_bump(cur_text, previous_text):
+        add('ERR', 'BUMP', f'{rel}{label}: değişiklik var, updated artırılmadı')
+    previous, _ = parse_fm(previous_text)
+    if previous and previous.get('locked') == 'true':
+        add('WRN', 'LOCKED', f'{rel}{label}: locked not değişmiş; insan değişikliği doğrulansın')
+
+
 def check_wiki(wiki):
     links_in, links_out, tree_out = {}, {}, {}
     for p in wiki:
         rel = f'wiki/{p.name}'
-        text = p.read_text(encoding='utf-8')
+        data = p.read_bytes()
+        if _unverifiable(data):
+            # Kilitli/bozuk dosya: sessiz atlamak sahte yeşildir; kontrollü tanı.
+            add('ERR', 'CRYPT', f'{rel}: dosya okunamadı (kilitli/bozuk) — denetlenemedi')
+            continue
+        text = data.decode('utf-8')
         fm, order = parse_fm(text)
         if fm is None:
             add('ERR', 'FM', f'{rel}: frontmatter yok'); continue
@@ -94,8 +161,11 @@ def check_wiki(wiki):
                     datetime.fromisoformat(fm[k].replace('Z', '+00:00'))
                 except ValueError:
                     add('ERR', 'DATE', f'{rel}: {k} geçerli ISO 8601 zaman damgası değil')
-        if fm.get('created') and fm.get('updated') and fm['updated'] < fm['created']:
-            add('ERR', 'DATE', f'{rel}: updated created öncesinde')
+        if fm.get('created') and fm.get('updated'):
+            c, u = lib.parse_iso_dt(fm['created']), lib.parse_iso_dt(fm['updated'])
+            if (c and u and u < c) or ((not c or not u)
+                                       and fm['updated'] < fm['created']):
+                add('ERR', 'DATE', f'{rel}: updated created öncesinde')
         if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*\.md', p.name):
             add('ERR', 'SLUG', f'{rel}: ASCII kebab-case değil')
         body = strip_code(text)
@@ -108,8 +178,9 @@ def check_wiki(wiki):
             tail = body[links_m.end():]
             nxt = re.search(r'^## ([^\n]+)', tail, re.M)
             if not nxt or nxt.group(1).strip() != 'Summary':
-                got = nxt.group(1).strip() if nxt else '(son)'
-                add('ERR', 'STRUCT', f'{rel}: ## Links sonrası {got} — ## Summary beklenir (SCHEMA §4)')
+                # Gerçek bölüm adı tanıya taşınmaz (AGENTS R4: metadata gizli).
+                add('ERR', 'STRUCT', f'{rel}: ## Links sonrası beklenmeyen bölüm — '
+                                     '## Summary beklenir (SCHEMA §4)')
             sec_text = tail[:nxt.start()] if nxt else tail
             tree_out[p.stem] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', sec_text)}
         st = fm.get('stage', '')
@@ -117,23 +188,59 @@ def check_wiki(wiki):
         if st in ('inbox', 'next', 'in_progress', 'waiting'):
             try:
                 if date.fromisoformat(upd) < date.today() - timedelta(days=30):
-                    add('WRN', 'STALE', f'{rel}: stage={st} ama updated={upd} (30+ gün, tend adayı)')
+                    # Sahne/gün değeri basılmaz; yalnız yol + kural.
+                    add('WRN', 'STALE', f'{rel}: aktif stage 30+ gün güncellenmedi (tend adayı)')
             except ValueError: pass
         # Git'in şifre çözme filtresi üzerinden önceki notu içeride karşılaştır;
         # eski notun hiçbir satırını stdout/stderr'e yansıtma.
         payload = _head_payload(rel)
-        if payload is not None and _unverifiable(payload):
-            # smudge kapalı düğümde blob şifreli gelir; sahte yeşil yerine ERR CRYPT
-            # (aynı sertlikte: "git-crypt filtresi etkin değil").
-            add('ERR', 'CRYPT', f'{rel}: HEAD sürümü çözülemedi; BUMP/LOCKED doğrulanamadı')
-        elif payload is not None and payload.decode('utf-8') != text:
-            previous_text = payload.decode('utf-8')
-            previous, _ = parse_fm(previous_text)
-            if lib.needs_updated_bump(text, previous_text):
-                add('ERR', 'BUMP', f'{rel}: değişiklik var, updated artırılmadı')
-            if previous and previous.get('locked') == 'true':
-                add('WRN', 'LOCKED', f'{rel}: locked not değişmiş; insan değişikliği doğrulansın')
+        _history_checks(rel, text, payload)
+        # Commit edilecek (staged) sürüm worktree'den ayrışıyorsa onu da denetle:
+        # ihlal stage edilip dosya HEAD'e döndürülse bile kaçmasın.
+        staged = _staged_payload(rel)
+        if staged is UNREADABLE:
+            add('ERR', 'CRYPT', f'{rel}: staged sürüm okunamadı; BUMP/LOCKED doğrulanamadı')
+        elif staged is not None and not _unverifiable(staged):
+            staged_text = staged.decode('utf-8')
+            if staged_text != text:
+                _history_checks(rel, staged_text, payload, ' (staged)')
     return links_in, links_out, tree_out
+
+def _safe_target(slug):
+    """LINK tanısında yalnız slug-biçimli hedef göster; serbest metin sızmaz."""
+    return slug if lib.SLUG_RE.fullmatch(slug) else 'geçersiz-biçimli-hedef'
+
+
+def _find_cycles(tree_out):
+    """Links-yönü grafında tüm döngüleri bul (yalnız 2'lü karşılıklı olanlar değil).
+    Deterministik: düğümler ve komşular sıralı; her döngü bir kez raporlanır."""
+    graph = {a: sorted(b for b in outs if b in tree_out)
+             for a, outs in tree_out.items()}
+    color = {}  # 0=bilinmiyor, 1=yığında, 2=tamam
+    cycles = []
+    for start in sorted(graph):
+        if color.get(start):
+            continue
+        path, stack = [start], [(start, iter(graph[start]))]
+        color[start] = 1
+        while stack:
+            node, it = stack[-1]
+            nxt = next(it, None)
+            if nxt is None:
+                color[node] = 2
+                path.pop()
+                stack.pop()
+                continue
+            state = color.get(nxt, 0)
+            if state == 1:
+                cycles.append(path[path.index(nxt):] + [nxt])
+            elif state == 0:
+                color[nxt] = 1
+                path.append(nxt)
+                stack.append((nxt, iter(graph[nxt])))
+        # state 2 (tamamlanmış) düğümlere in yok: cross-edge döngü değildir
+    return cycles
+
 
 def check_graph(wiki, links_in, links_out, tree_out):
     existing = {p.stem for p in wiki}
@@ -143,11 +250,10 @@ def check_graph(wiki, links_in, links_out, tree_out):
     for rel, slugs in links_out.items():
         for s in slugs:
             if not (ROOT / 'wiki' / f'{s}.md').exists():
-                add('ERR', 'LINK', f'{rel}: [[{s}]] hedefi yok')
-    for a, outs in tree_out.items():
-        for b in outs:
-            if b in tree_out and a in tree_out[b] and a < b:
-                add('WRN', 'CYCLE', f'wiki/{a}.md <-> wiki/{b}.md karşılıklı Links (Tree ihlali)')
+                add('ERR', 'LINK', f'{rel}: [[{_safe_target(s)}]] hedefi yok')
+    for cycle in _find_cycles(tree_out):
+        chain = ' -> '.join(f'wiki/{s}.md' for s in cycle)
+        add('WRN', 'CYCLE', f'{chain} (Tree ihlali)')
 
 def walk_md(root):
     """node_modules/.git/tmp ve nokta dizinlerine inmeden md dosyalarını verir."""
@@ -187,6 +293,7 @@ def check_tracked():
     tracked = [rel for rel in subprocess.run(['git', 'ls-files', '-z'], cwd=ROOT,
                                              capture_output=True).stdout.decode('utf-8').split('\0')
                if rel and not rel.endswith('.gitkeep')]
+    tracked_set = set(tracked)
     crypted = [rel for rel in tracked
                if rel == 'index.md' or any(rel.startswith(d) for d in ENCRYPTED if d.endswith('/'))]
     if crypted:
@@ -197,10 +304,28 @@ def check_tracked():
         for rel in crypted:
             if filters.get(rel) != 'git-crypt':
                 add('ERR', 'CRYPT', f'{rel}: git-crypt filtresi etkin değil')
+    # Commit kapısı 1 — şifreleme: index'teki HAM blob'un kendisi doğrulanır;
+    # yalnız index.md değil, tüm özel yollar (attribute doğru görünse bile).
+    for rel in crypted:
+        blob = _staged_blob(rel)
+        if blob is not None and blob and not _gitcrypt_blob(blob):
+            add('ERR', 'CRYPT', f'{rel}: staged Git blob şifreli değil; '
+                                f'git add --renormalize {rel}')
+    # Commit kapısı 2 — append-only: silme stage edildiyse ls-files'tan düşer;
+    # HEAD ağacıyla fark alarak yakala (raw/ ve log/ için).
+    head_paths = _head_paths()
+    if head_paths is not None:
+        for rel in sorted(p for p in head_paths
+                          if p.startswith(('raw/', 'log/')) and not p.endswith('.gitkeep')):
+            if rel not in tracked_set:
+                add('ERR', 'APPEND', f'{rel}: HEAD\'de vardı, stage\'den silinmiş (append-only)')
     for rel in tracked:
         if not rel.startswith(('raw/', 'log/')):
             continue
         previous = _head_payload(rel)
+        if previous is UNREADABLE:
+            add('ERR', 'CRYPT', f'{rel}: HEAD sürümü okunamadı; APPEND doğrulanamadı')
+            continue
         if previous is None:
             continue
         if _unverifiable(previous):
@@ -216,10 +341,15 @@ def check_tracked():
             add('ERR', 'APPEND', f'{rel}: raw dosyası değiştirilmiş')
         if rel.startswith('log/') and not data.startswith(previous):
             add('ERR', 'APPEND', f'{rel}: günlük log kısaltılmış/değiştirilmiş')
-    staged_index = subprocess.run(['git', 'cat-file', 'blob', ':index.md'],
-                                  cwd=ROOT, capture_output=True).stdout
-    if staged_index and not _gitcrypt_blob(staged_index):
-        add('ERR', 'CRYPT', 'index.md: staged Git blob şifreli değil; git add --renormalize index.md')
+        # Staged sürüm worktree'den ayrışıyorsa commit edilecek içeriği de denetle.
+        staged = _staged_payload(rel)
+        if staged is UNREADABLE:
+            add('ERR', 'CRYPT', f'{rel}: staged sürüm okunamadı; APPEND doğrulanamadı')
+        elif staged is not None and not _unverifiable(staged):
+            if rel.startswith('raw/') and staged != previous:
+                add('ERR', 'APPEND', f'{rel} (staged): raw dosyası değiştirilmiş')
+            if rel.startswith('log/') and not staged.startswith(previous):
+                add('ERR', 'APPEND', f'{rel} (staged): günlük log kısaltılmış/değiştirilmiş')
 
 def check_privacy():
     files = [ROOT / f for f in ('README.md', 'AGENTS.md', 'SCHEMA.md', '.env.example')]

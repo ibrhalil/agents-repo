@@ -1,4 +1,15 @@
 repos:
+  # Sözleşme linter'ı normal commit akışında da koşar (staged blob/silme/append
+  # denetimleri commit kapısıdır; kilitli düğümde ERR CRYPT bilinçli durumdur).
+  - repo: local
+    hooks:
+      - id: noma-lint
+        name: noma sözleşme linter
+        entry: python3 scripts/noma_lint.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:

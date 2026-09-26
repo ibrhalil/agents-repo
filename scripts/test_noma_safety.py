@@ -131,7 +131,7 @@ class IngestExitCodeTests(SyntheticNode):
         return (self.root / 'log' / f'{lib.today()}.md').read_text(encoding='utf-8')
 
     def test_verify_failure_exits_nonzero(self):
-        with mock.patch.object(ingest, 'verify_note', return_value=(['FM:title'], [])):
+        with mock.patch.object(ingest, 'verify_text', return_value=(['FM:title'], [])):
             code, _ = self.run_ingest('--slug', 'kotu-not', '--actor', 'K')
         self.assertEqual(1, code)
         self.assertIn('[verify-fail]', self.logged())
@@ -143,9 +143,63 @@ class IngestExitCodeTests(SyntheticNode):
         self.assertEqual([], list(lib.log_issues(self.root / 'log' / f'{lib.today()}.md')))
 
     def test_warning_only_run_exits_zero(self):
-        with mock.patch.object(ingest, 'verify_note', return_value=([], ['NO-HUB'])):
+        with mock.patch.object(ingest, 'verify_text', return_value=([], ['NO-HUB'])):
             code, _ = self.run_ingest('--slug', 'uyari-not', '--actor', 'K')
         self.assertEqual(0, code)
+
+    def test_completed_stage_skeleton_is_refused_upfront(self):
+        for stage in ('done', 'archived'):
+            with self.subTest(stage=stage):
+                with self.assertRaises(SystemExit) as err:
+                    self.run_ingest('--slug', 'bitmis-not', '--stage', stage, '--actor', 'K')
+                self.assertIn('done/archived olamaz', str(err.exception))
+        self.assertEqual([], self.raw_files())
+        self.assertFalse((self.root / 'wiki' / 'bitmis-not.md').exists())
+
+    def test_invalid_slug_fails_before_any_raw_write(self):
+        """Kırmızı kanıt: slug ham kopyadan SONRA doğrulanırdı; artık önce."""
+        with mock.patch.object(ingest, 'write_raw',
+                               side_effect=AssertionError('write_raw erken çağrıldı')):
+            with self.assertRaises(SystemExit):
+                self.run_ingest('--slug', 'Geçersiz Slug', '--actor', 'K')
+        self.assertEqual([], self.raw_files())
+
+    def test_render_failure_leaves_no_partial_note(self):
+        with mock.patch.object(lib, 'render_note', side_effect=OSError('şablon okunamadı')):
+            with self.assertRaises(OSError):
+                self.run_ingest('--slug', 'bos-not', '--actor', 'K')
+        self.assertFalse((self.root / 'wiki' / 'bos-not.md').exists())
+
+    def test_verify_failed_note_is_written_as_inbox(self):
+        # Şablon Links bölümü kod aralığında: hedef yok → hata değil NO-HUB uyarısı;
+        # hata yolunu sentetik kırık hedefle zorla.
+        broken = SENTINEL_TEMPLATE.replace('`[[ust-not]]`', '[[yok-hedef]]')
+        (self.root / 'docs' / 'templates' / 'wiki_note.md').write_text(broken,
+                                                                       encoding='utf-8')
+        code, _ = self.run_ingest('--slug', 'kirik-not', '--stage', 'next', '--actor', 'K')
+        self.assertEqual(1, code)
+        note = self.root / 'wiki' / 'kirik-not.md'
+        self.assertTrue(note.exists())
+        self.assertIn('stage: inbox', note.read_text(encoding='utf-8'))
+        self.assertIn('[verify-fail]', self.logged())
+
+    def test_new_note_refuses_completed_stage(self):
+        with mock.patch.object(lib, 'ROOT', self.root), \
+                mock.patch('sys.argv', ['noma_new_note.py', 'bitmis',
+                                        '--stage', 'done']):
+            with self.assertRaises(SystemExit) as err:
+                new_note.main()
+        self.assertIn('done/archived olamaz', str(err.exception))
+        self.assertFalse((self.root / 'wiki' / 'bitmis.md').exists())
+
+    def test_render_note_escapes_title_for_yaml(self):
+        content = lib.render_note('kacis-not', 'C:\\q "tırnak" ve\nyeni satır',
+                                  'concept', 'systems')
+        fm = content.split('\n---', 1)[0]
+        title_line = next(l for l in fm.splitlines() if l.startswith('title:'))
+        raw = title_line[len('title: '):]
+        self.assertEqual('C:\\q "tırnak" ve yeni satır', json.loads(raw))
+        self.assertNotIn('\n', raw)
 
 
 class ActorProvenanceTests(SyntheticNode):
@@ -335,6 +389,14 @@ class HermesHookTests(SyntheticNode):
 
     def test_plain_index_with_encrypted_wiki_is_restricted(self):
         (self.root / 'wiki' / 'not.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
+        code, text = self.hook({'cwd': str(self.root)})
+        self.assertEqual(0, code)
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
+    def test_partially_locked_wiki_is_restricted(self):
+        """Kırmızı kanıt: ilk dosya düz olsa bile tek şifreli not LOCAL açmaz."""
+        (self.root / 'wiki' / 'aaa-duz.md').write_text('# duz\n', encoding='utf-8')
+        (self.root / 'wiki' / 'zzz-sifreli.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
         code, text = self.hook({'cwd': str(self.root)})
         self.assertEqual(0, code)
         self.assertEqual(context.RESTRICTED_CONTEXT, text)

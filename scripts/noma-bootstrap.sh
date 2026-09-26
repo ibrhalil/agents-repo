@@ -18,10 +18,23 @@ done
 command -v git-crypt >/dev/null || echo "UYARI: git-crypt kurulu değil — şifreli dizinler okunamaz." >&2
 # Kilit denetimi: gerçek sihir '\x00GITCRYPT\x00' (tire yok). Her özel dizinden
 # birer örnek yoksa denetlenmez; parola yazdırılmaz, yalnız sürüm/yol denetlenir.
+# Yollar tek tek işlenir (bulgu listesi tek değişkende birleşmez) ve tüm özel
+# dizinler taranır: index.md + raw/wiki/log/plans/agent-sessions/index örnekleri.
 locked=0
-for target in "$ROOT/index.md" "$(find "$ROOT/raw" "$ROOT/wiki" "$ROOT/log" -name '*.md' -type f 2>/dev/null | head -n 3)"; do
-  if [[ -f "$target" ]] && head -c 10 "$target" | LC_ALL=C grep -q 'GITCRYPT'; then
-    locked=1
+probe_locked() {
+  if [[ -f "$1" ]]; then
+    local head_bytes
+    head_bytes="$(head -c 10 "$1")"
+    if [[ "$head_bytes" == *GITCRYPT* ]]; then
+      locked=1
+    fi
+  fi
+}
+probe_locked "$ROOT/index.md"
+for d in raw wiki log plans agent/prompts agent/sessions index; do
+  sample="$(find "$ROOT/$d" -name '*.md' -type f 2>/dev/null | sort | head -n 1)" || true
+  if [[ -n "$sample" ]]; then
+    probe_locked "$sample"
   fi
 done
 if [[ "$locked" -eq 1 ]]; then

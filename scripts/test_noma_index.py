@@ -242,7 +242,9 @@ class CitationPathTests(unittest.TestCase):
         text = 'Bozuk kodlamalı not wiki/bozuk.md dosyasında.'
         with mock.patch.object(lib, 'ROOT', self.root):
             findings, negative = verify.verify(text, idx={'bozuk': {'fm': {}}})
-        self.assertEqual('OK', findings[0]['status'])
+        # Okunamayan hedef doğrulanmış sayılmaz: traceback yok, WARN var.
+        self.assertEqual(('WARN', 'okunamayan-atıf'),
+                         (findings[0]['status'], findings[0]['rule']))
         self.assertFalse(negative)
 
     def test_non_utf8_response_file_exits_two_without_traceback(self):

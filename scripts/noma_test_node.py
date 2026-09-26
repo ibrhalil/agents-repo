@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Hermes düğümünün salt-okunur, LLM'siz güvenlik smoke testi.
+"""Hermes düğümünün LLM'siz güvenlik smoke testi.
 
-Not oluşturmaz/silmez, bulut modeli çağırmaz ve hata halinde özel çıktı basmaz.
+Tam salt-okunur DEĞİLDİR: tmp/ altına sentetik indeks/not fixture'ları yazar
+ve sonunda temizler; Docker/localhost mevcutsa compose çözümleme ve dashboard
+HTTP denetimi yapar (--no-llm bunları kapatmaz, yalnız geriye dönük uyumluluk).
+Gerçek wiki/raw/log içeriğine yazmaz; hata halinde özel çıktı basmaz.
 Docker yoksa Docker'a bağlı kontroller WARN olur; çekirdek testler çalışır.
 """
 import argparse

@@ -71,7 +71,9 @@ Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model (kayıt dizin
   çözümü bugün elle yapılır — periyodik job **yok**; hedef `docs/ROADMAP.md` B5
   (karar: `wiki/git-akisi-ve-conflict.md`, 2026-09-23). Append-only tasarım
   çoklu yazıcıda çatışmaları seyrekleştirir; lint `log/` append-only kuralını
-  HEAD'e karşı diff ile zorlar.
+  HEAD'e ve **staged içeriğe** karşı denetler, silinmesi stage edilen yolları
+  yakalar ve commit edilecek tüm özel blob'ların gerçekten şifreli olduğunu
+  doğrular (linter aynı zamanda pre-commit kancasıdır).
 
 Bulut Hermes home'u `~/.hermes-cloud` ile eskisinden ayrıdır;
 eski `~/.hermes` hafızası/cron'u otomatik olarak taşınmaz. `pre_llm_call` hook'u

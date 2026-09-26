@@ -63,6 +63,17 @@ class QualityToolTests(unittest.TestCase):
         self.assertEqual('FAIL', by_path['wiki/yok-not.md']['status'])
         self.assertFalse(negative)
 
+    def test_citation_verifier_flags_unreadable_target(self):
+        """Hedef VAR ama okunamıyorsa sessiz OK üretilmez (yanlış güven)."""
+        target = mock.Mock()
+        target.is_file.return_value = True
+        target.read_text.side_effect = PermissionError('erişim yok')
+        text = 'Hafıza karar altyapısıdır (wiki/hafiza.md).'
+        with mock.patch.object(verify, '_resolve', return_value=(target, False)):
+            findings, _ = verify.verify(text, idx={})
+        self.assertEqual(('WARN', 'okunamayan-atıf'),
+                         (findings[0]['status'], findings[0]['rule']))
+
     def test_citation_verifier_flags_unrelated_and_negative(self):
         make_note(self.root / 'wiki' / 'ag.md', 'Ağ Güvenliği',
                   summary='Portlar ve güvenlik duvarı ayarları.')

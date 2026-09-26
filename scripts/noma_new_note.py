@@ -26,6 +26,9 @@ def main():
     lib.check_choice('stage', a.stage, lib.STAGES)
     lib.check_choice('scope', a.scope, lib.SCOPES)
     lib.check_choice('status', a.status, lib.STATUS)
+    if a.stage in ('done', 'archived'):
+        raise SystemExit("hata: bağlantısız şablon iskeleti done/archived olamaz — "
+                         'önce inbox ile üret, doldurup hub\'a bağla (AGENTS GENİŞLETME)')
     # Not yazılmadan önce aktörü çöz: yarım kalırsa not log'suz kalmaz.
     actor = lib.resolve_actor(a.actor) if a.log_op else None
     title = a.title or a.slug.replace('-', ' ').title()
@@ -33,12 +36,17 @@ def main():
     out = lib.ROOT / 'wiki' / f'{a.slug}.md'
     if out.exists():
         raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
+    # İçerik önce bellede üretilir; şablon okunamazsa boş dosya kalmasın.
+    content = lib.render_note(a.slug, title, a.type_, a.scope, a.stage,
+                              a.status, tags or None)
     try:
         with out.open('x', encoding='utf-8') as stream:
-            stream.write(lib.render_note(a.slug, title, a.type_, a.scope, a.stage,
-                                         a.status, tags or None))
+            stream.write(content)
     except FileExistsError:
         raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
+    except BaseException:
+        out.unlink(missing_ok=True)  # yarım not bırakma
+        raise
     print(f'wiki/{a.slug}.md üretildi (stage: {a.stage})')
     msg = f'not üretildi: wiki/{a.slug}.md'
     if a.log_op:

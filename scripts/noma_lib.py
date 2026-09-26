@@ -1,9 +1,10 @@
 """Agent scriptlerinin paylaşılan yardımcıları (stdlib only).
 Sabitler SCHEMA.md'den alınmıştır; noma_lint.py ile tutarlı tutulur."""
 import fcntl
+import json
 import os
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -59,20 +60,23 @@ def node_id():
         for line in env.read_text(encoding='utf-8').splitlines():
             m = re.match(r'\s*(?:export\s+)?NODE_ID\s*=\s*(\S+)', line)
             if m:
-                return m.group(1)
+                return m.group(1).strip('"').strip("'")
     return os.environ.get('NODE_ID', 'local')
 
 
 def resolve_actor(value):
     """SCHEMA §5: aktör gerçek session modeli | K | cron. Varsayılan 'cron' DEĞİLDİR
-    — provenance sahteciliğini önle; cron yalnız bilinçli/zamanlanmış seçimdir."""
-    if value:
-        return value
-    env = (os.environ.get('NOMA_ACTOR') or '').strip()
-    if env:
-        return env
-    raise SystemExit('hata: log aktörü belirtilmedi — --actor <gerçek session modeli> '
-                     'ver ya da NOMA_ACTOR=<model> dışa aktar (SCHEMA §5)')
+    — provenance sahteciliğini önle; cron yalnız bilinçli/zamanlanmış seçimdir.
+    Biçim burada doğrulanır: kalıcı yazım yapılmadan önce sert hata."""
+    if value is None or not value:
+        env = (os.environ.get('NOMA_ACTOR') or '').strip()
+        if not env:
+            raise SystemExit('hata: log aktörü belirtilmedi — --actor <gerçek session modeli> '
+                             'ver ya da NOMA_ACTOR=<model> dışa aktar (SCHEMA §5)')
+        value = env
+    if not re.fullmatch(r'[\w./-]+', value):
+        raise SystemExit('hata: aktör biçimi geçersiz (harf/rakam/nokta/tire/slash)')
+    return value
 
 
 def is_crypt_blob(f):
@@ -100,12 +104,32 @@ def parse_fm(text):
     return d
 
 
+def parse_iso_dt(value):
+    """ISO 8601 zamanı timezone-aware datetime olarak döndür; ayrıştırılamazsa None.
+    Saat dilimi offset'leri metin değil zaman ekseni üzerinde karşılaştırılır."""
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value.strip().strip('"').replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def needs_updated_bump(current, previous):
     """Gövde aynı gün değişse bile eski updated damgasını kabul etme."""
     old = parse_fm(previous)
     new = parse_fm(current)
-    return bool(old and new and current != previous
-                and new.get('updated', '') <= old.get('updated', ''))
+    if not (old and new) or current == previous:
+        return False
+    a = parse_iso_dt(old.get('updated', ''))
+    b = parse_iso_dt(new.get('updated', ''))
+    if a and b:
+        return b <= a
+    # Ayrıştırılamayan damgalar DATE lint'inde ayrıca hatalı; metin karşılaştırımda kal
+    return new.get('updated', '') <= old.get('updated', '')
 
 
 def parse_tags(raw):
@@ -238,6 +262,10 @@ def append_log(op, msg, actor):
         raise SystemExit(f'hata: op={op} (geçerli: {"|".join(LOG_OPS)})')
     if not actor or not re.fullmatch(r'[\w./-]+', actor):
         raise SystemExit('hata: aktör biçimi geçersiz (harf/rakam/nokta/tire/slash)')
+    node = node_id()
+    if not re.fullmatch(r'[\w-]+', node):
+        raise SystemExit('hata: NODE_ID biçimi geçersiz — .env içindeki NODE_ID değerini '
+                         'düzelt (tırnak/özel karakter kaldır)')
     msg = ' '.join(msg.split())
     if len(msg) > MSG_LIMIT:
         raise SystemExit(f'hata: log mesajı {len(msg)} karakter (> {MSG_LIMIT})')
@@ -288,14 +316,16 @@ def log_issues(path):
 def render_note(slug, title, type_, scope, stage='inbox', status=None,
                 tags=None, source_path=None):
     """docs/templates/wiki_note.md'den doldurulmuş not içeriği üretir (AGENTS R5).
-    Verilmeyen opsiyonel alanlar yazılmaz — yalnız anlamlı alan (SCHEMA §6)."""
-    title = title.replace('"', "'")
+    Verilmeyen opsiyonel alanlar yazılmaz — yalnız anlamlı alan (SCHEMA §6).
+    Başlık JSON/YAML uyumlu kaçışlı serileştirilir (ters bölü, tırnak, kontrol
+    karakterleri); görünen başlıkta satır sonları düzleştirilir."""
+    title = ' '.join(title.split())
     tpl = (ROOT / 'docs/templates/wiki_note.md').read_text(encoding='utf-8')
     body = tpl.split('---', 2)[2].lstrip('\n').replace('{{Görünen Başlık}}', title)
     if source_path:
         body = body.rstrip('\n') + f'\n\nKaynak: {source_path}\n'
-    fm = ['---', f'title: "{title}"', f'type: {type_}', f'stage: {stage}',
-          f'scope: {scope}']
+    fm = ['---', f'title: {json.dumps(title, ensure_ascii=False)}', f'type: {type_}',
+          f'stage: {stage}', f'scope: {scope}']
     if status:
         fm.append(f'status: {status}')
     if tags:

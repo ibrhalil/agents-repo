@@ -49,13 +49,12 @@ def repo_roots(payload):
 
 
 def unlocked_vault(base):
-    """index.md düz metin VE wiki/ düğümleri şifreli değilse yerel gezinme açılır.
-    index düz ama wiki şifreliyse LOCAL dal yanlış olur (read_file binary gürültü verir)."""
+    """index.md düz metin VE TÜM wiki/ notları şifreli değilse yerel gezinme açılır.
+    Kısmi kilitli kasada ilk dosya örneklemesi yanıltır; her not denetlenir
+    (index düz ama herhangi bir wiki şifreliyse LOCAL dal yanlış olur)."""
     if not is_plaintext(base / "index.md"):
         return False
-    for note in sorted((base / "wiki").glob("*.md")):
-        return is_plaintext(note)
-    return True
+    return all(is_plaintext(note) for note in (base / "wiki").glob("*.md"))
 
 
 def unlocked_index(payload):

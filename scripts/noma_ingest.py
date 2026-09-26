@@ -79,15 +79,19 @@ def write_raw(kind, name_hint, data):
         shutil.rmtree(staging, ignore_errors=True)
 
 
-def verify_note(path):
-    """Yeni üretilen not için mekanik post-ingest doğrulaması (AGENTS R2/R5).
+def _safe_rule_target(target):
+    """Kural adında yalnız slug-biçimli hedef göster; serbest metin sızmaz."""
+    return target if lib.SLUG_RE.fullmatch(target) else 'gecersiz-bicim'
+
+
+def verify_text(text, stem):
+    """Üretilen not İÇERİĞİ için mekanik doğrulama (AGENTS R2/R5) — saf fonksiyon.
 
     Not içeriği hiçbir koşulda döndürülmez/basılmaz; yalnız kural adları.
-    Dönen: (hatalar, uyarılar) — hata giderilemezse not stage: inbox kalır ve
+    Dönen: (hatalar, uyarılar) — hata giderilemezse not stage: inbox'a iner ve
     log'a [verify-fail] bayrağı yazılır; uyarı yorum gerektirir (insan/agent).
     """
     errors, warnings = [], []
-    text = path.read_text(encoding='utf-8')
     fm = lib.parse_fm(text)
     if fm is None:
         return ['FM'], []
@@ -99,7 +103,7 @@ def verify_note(path):
         value = fm.get(name)
         if value and value not in allowed:
             errors.append(f'ENUM:{name}')
-    if not lib.SLUG_RE.fullmatch(path.stem):
+    if not lib.SLUG_RE.fullmatch(stem):
         errors.append('SLUG')
     clean = lib.strip_code(text)
     links_m = re.search(r'^## Links[ \t]*$', clean, re.M)
@@ -113,10 +117,32 @@ def verify_note(path):
         targets = {s.strip() for s in re.findall(r'\[\[([^\]|#]+)', sec.group(1))} if sec else set()
         for target in sorted(t for t in targets
                              if not (lib.ROOT / 'wiki' / f'{t}.md').exists()):
-            errors.append(f'LINK:{target}')
+            errors.append(f'LINK:{_safe_rule_target(target)}')
         if not targets and not errors:
-            warnings.append('NO-HUB')
+            # Bağlantısız iskelet yalnız inbox olabilir (AGENTS GENİŞLETME).
+            if fm.get('stage') in ('done', 'archived'):
+                errors.append(f'NO-HUB:{fm.get("stage")}')
+            else:
+                warnings.append('NO-HUB')
     return errors, warnings
+
+
+def verify_note(path):
+    """verify_text'in dosya sarmalayıcısı (geriye dönük uyumluluk)."""
+    return verify_text(path.read_text(encoding='utf-8'), path.stem)
+
+
+def _clip(msg):
+    return msg if len(msg) <= lib.MSG_LIMIT else msg[:lib.MSG_LIMIT - 1] + '…'
+
+
+def _log_msg(prefix, rel, suffix='', extra=''):
+    """SCHEMA §5 sınırına uyan ingest mesajı; uzun kaynak adları kırpılır."""
+    msg = f'{prefix} <- {rel}{suffix}{extra}'
+    if len(msg) > lib.MSG_LIMIT:
+        keep = max(lib.MSG_LIMIT - len(f'{prefix} <- …{suffix}{extra}'), 8)
+        msg = f'{prefix} <- …{rel[-keep:]}{suffix}{extra}'
+    return _clip(msg)
 
 
 def main():
@@ -143,7 +169,13 @@ def main():
     lib.check_choice('scope', a.scope, lib.SCOPES)
     lib.check_choice('stage', a.stage, lib.STAGES)
     lib.check_choice('status', a.status, lib.STATUS)
+    # Kalıcı yazım YAPMAZDAN ÖNCE tüm girdi doğrulaması: yarım işlem kalmasın.
     actor = lib.resolve_actor(a.actor)
+    title = a.title or (Path(a.source).stem if a.source != '-' else 'Kaynak')
+    slug = lib.check_slug(a.slug or lib.slugify(title))
+    if a.stage in ('done', 'archived'):
+        raise SystemExit('hata: bağlantısız şablon iskeleti done/archived olamaz — '
+                         'önce inbox ile üret, doldurup hub\'a bağla (AGENTS GENİŞLETME)')
 
     is_file = a.source != '-'
     data = Path(a.source).read_bytes() if is_file else sys.stdin.buffer.read()
@@ -159,38 +191,47 @@ def main():
     suffix = ' [flag]' if flag else ''
     if a.no_note:
         print(f'{rel} yazıldı')
-        lib.append_log('ingest', f'raw-only: {rel}{suffix}', actor=actor)
+        lib.append_log('ingest', _clip(f'raw-only: {rel}{suffix}'), actor=actor)
         return 0
 
-    title = a.title or (Path(a.source).stem if is_file else 'Kaynak')
-    slug = lib.check_slug(a.slug or lib.slugify(title))
     note = lib.ROOT / 'wiki' / f'{slug}.md'
     if note.exists():
         print(f'wiki/{slug}.md zaten var — raw kopyası yapıldı, not atlandı '
               '(mevcut notla merge edin, AGENTS R2)', file=sys.stderr)
-        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=actor)
+        lib.append_log('ingest', _log_msg(f'{slug} (not var)', rel, suffix),
+                       actor=actor)
         return 0
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
+    # İçeriği önce bellede üret ve doğrula; dosya ancak tamam olduğunda yayınlanır.
+    content = lib.render_note(slug, title, a.type_, a.scope, a.stage,
+                              a.status, tags or None, source_path=rel)
+    errors, warnings = verify_text(content, slug)
+    if errors and a.stage != 'inbox':
+        # "[verify-fail] not stage: inbox kalır" sözü fiilen uygulanır.
+        content = lib.render_note(slug, title, a.type_, a.scope, 'inbox',
+                                  a.status, tags or None, source_path=rel)
     try:
         with note.open('x', encoding='utf-8') as stream:
-            stream.write(lib.render_note(slug, title, a.type_, a.scope, a.stage,
-                                         a.status, tags or None, source_path=rel))
+            stream.write(content)
     except FileExistsError:
         print(f'wiki/{slug}.md aynı anda üretildi — raw kopyası yapıldı, '
               'mevcut notla merge edin (AGENTS R2)', file=sys.stderr)
-        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=actor)
+        lib.append_log('ingest', _log_msg(f'{slug} (not var)', rel, suffix),
+                       actor=actor)
         return 0
+    except BaseException:
+        note.unlink(missing_ok=True)  # yarım not bırakma
+        raise
     print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
-    errors, warnings = verify_note(note)
     if warnings:
         print(f'UYARI: {slug}: {", ".join(warnings)} — hub bağlantısı bekleniyor', file=sys.stderr)
     if errors:
         summary = ', '.join(errors[:3]) + (f' (+{len(errors) - 3})' if len(errors) > 3 else '')
         print(f'DOĞRULAMA HATASI: {slug}: {summary} — not stage: inbox kalır', file=sys.stderr)
-        lib.append_log('ingest', f'{slug} <- {rel}{suffix} [verify-fail] {summary}',
+        lib.append_log('ingest', _log_msg(slug, rel, suffix, f' [verify-fail] {summary}'),
                        actor=actor)
         return 1
-    lib.append_log('ingest', f'{slug} <- {rel}{suffix}', actor=actor)
+    lib.append_log('ingest', _log_msg(slug, rel, suffix), actor=actor)
     return 0
 
 

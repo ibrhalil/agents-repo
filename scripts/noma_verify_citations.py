@@ -85,13 +85,18 @@ def verify(text, idx=None):
                     except (OSError, UnicodeError):
                         upper[path] = None
                 region = upper[path]
-                if region is not None:
-                    terms = _sentence_terms(sentence)
-                    related = any(_overlap(t, region) for t in terms) if terms else True
-                    if not related:
-                        findings.append({'path': path, 'status': 'WARN',
-                                         'rule': 'ilgisiz-atıf'})
-                        continue
+                if region is None:
+                    # Hedef VAR ama okunamıyor (izin/kilitli blob): doğrulanmış
+                    # sayılmaz — sessiz OK yanlış güven üretir.
+                    findings.append({'path': path, 'status': 'WARN',
+                                     'rule': 'okunamayan-atıf'})
+                    continue
+                terms = _sentence_terms(sentence)
+                related = any(_overlap(t, region) for t in terms) if terms else True
+                if not related:
+                    findings.append({'path': path, 'status': 'WARN',
+                                     'rule': 'ilgisiz-atıf'})
+                    continue
             findings.append({'path': path, 'status': 'OK', 'rule': ''})
     return findings, bool(NEGATIVE_CLAIM.search(lib.fold_tr(text)))
 

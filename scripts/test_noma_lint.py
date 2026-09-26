@@ -100,8 +100,21 @@ class LintTests(unittest.TestCase):
         self.write('not-b', note('not-b', title='Not B',
                                  links=[*FILLER, 'not-a']))
         code, out = self.run_lint()
-        self.assertEqual(['WRN CYCLE: wiki/not-a.md <-> wiki/not-b.md '
-                          'karşılıklı Links (Tree ihlali)'],
+        self.assertEqual(['WRN CYCLE: wiki/not-a.md -> wiki/not-b.md -> wiki/not-a.md '
+                          '(Tree ihlali)'],
+                         [o for o in out if 'CYCLE' in o])
+        self.assertEqual(0, code)
+
+    def test_longer_cycle_chain_fires_cycle(self):
+        """Kırmızı kanıt: eski yalnız-2'lü kural A→B→C→A döngüsünü göremiyordu."""
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('not-a', note('not-a', title='Not A', links=[*FILLER, 'not-b']))
+        self.write('not-b', note('not-b', title='Not B', links=[*FILLER, 'not-c']))
+        self.write('not-c', note('not-c', title='Not C', links=[*FILLER, 'not-a']))
+        code, out = self.run_lint()
+        self.assertEqual(['WRN CYCLE: wiki/not-a.md -> wiki/not-b.md -> wiki/not-c.md '
+                          '-> wiki/not-a.md (Tree ihlali)'],
                          [o for o in out if 'CYCLE' in o])
         self.assertEqual(0, code)
 
@@ -172,9 +185,32 @@ class LintTests(unittest.TestCase):
                                       links=['[[kok-not]]']).replace('## Summary',
                                                                      '## Özet'))
         code, out = self.run_lint()
-        self.assertIn('ERR STRUCT: wiki/yaprak-not.md: ## Links sonrası Özet — '
-                      '## Summary beklenir (SCHEMA §4)', out)
+        self.assertIn('ERR STRUCT: wiki/yaprak-not.md: ## Links sonrası beklenmeyen '
+                      'bölüm — ## Summary beklenir (SCHEMA §4)', out)
+        self.assertNotIn('Özet —', ' '.join(out))
         self.assertEqual(1, code)
+
+    def test_struct_diagnostic_hides_private_heading(self):
+        sentinel = note('gizli-not', title='Gizli',
+                        summary='SENTINEL_PRIVATE_VALUE.')
+        self.write('gizli-not', sentinel.replace('## Summary', '## Gizli Başlık'))
+        code, out = self.run_lint()
+        self.assertTrue(any(o.startswith('ERR STRUCT: wiki/gizli-not.md') for o in out))
+        self.assertNotIn('Gizli Başlık', ' '.join(out))
+        self.assertEqual(1, code)
+
+    def test_stale_diagnostic_hides_stage_and_date_values(self):
+        text = note('bayat-not', title='Bayat',
+                    updated='2026-08-01T00:00:00+03:00')
+        text = text.replace('stage: done', 'stage: in_progress').replace(
+            'created: 2026-09-19T09:00:00+03:00', 'created: 2026-07-01T09:00:00+03:00')
+        self.write('bayat-not', text)
+        code, out = self.run_lint()
+        stale = [o for o in out if o.startswith('WRN STALE')]
+        self.assertEqual(1, len(stale))
+        self.assertNotIn('stage=', stale[0])
+        self.assertNotIn('updated=', stale[0])
+        self.assertEqual(0, code)
 
     def test_note_without_links_section_reports_struct(self):
         text = note('bolum-siz', title='Bölümsüz Not').split('## Links')[0] + \
@@ -213,6 +249,54 @@ class LintTests(unittest.TestCase):
         code, out = self.run_lint()
         self.assertEqual(['ERR SUFFIX: wiki/not_v2.md'],
                          [o for o in out if 'SUFFIX' in o])
+        self.assertEqual(1, code)
+
+    # --- commit kapısı: staged silme / plaintext blob / okunamadan sürüm ---
+
+    def test_staged_deletion_of_raw_fires_append(self):
+        """Kırmızı kanıt: silinen yol ls-files'tan düşer, eski kural görmezdi."""
+        (self.root / 'raw').mkdir()
+        with mock.patch.object(lint, '_head_paths',
+                               return_value={'raw/kaynak-01.md'}), \
+                self.mock_git(tracked=()):
+            code, out = self.run_lint()
+        self.assertIn("ERR APPEND: raw/kaynak-01.md: HEAD'de vardı, stage'den "
+                      'silinmiş (append-only)', out)
+        self.assertEqual(1, code)
+
+    def test_plaintext_staged_blob_fires_crypt_beyond_index(self):
+        """Attribute doğru görünsün; index dışı özel blob plaintext ise ERR."""
+        self.write('kok-not', note('kok-not', title='Kök Not'))
+        with self.mock_git(tracked=['wiki/kok-not.md']), \
+                mock.patch.object(lint, '_staged_exists', return_value=True), \
+                mock.patch.object(lint, '_staged_blob',
+                                  return_value=b'plaintext icerik'), \
+                mock.patch.object(lint, '_staged_payload', mock.Mock(return_value=None)):
+            code, out = self.run_lint()
+        self.assertIn('ERR CRYPT: wiki/kok-not.md: staged Git blob şifreli değil',
+                      ' '.join(out))
+        self.assertEqual(1, code)
+
+    def test_unreadable_head_payload_is_not_treated_as_absent(self):
+        """Git okuma hatası 'HEAD\'de yok' sayılıp atlanamaz."""
+        self.write('kilitli-not', note('kilitli-not', title='Kilitli Not'))
+        self.head.return_value = lint.UNREADABLE
+        code, out = self.run_lint()
+        self.assertIn('ERR CRYPT: wiki/kilitli-not.md: HEAD sürümü okunamadı; '
+                      'BUMP/LOCKED doğrulanamadı', out)
+        self.assertEqual(1, code)
+
+    def test_staged_note_version_is_checked_for_bump(self):
+        """İhlal stage edilip worktree HEAD'e döndürülse bile BUMP yakalanır."""
+        old = note('guncel-not', title='Güncel Not')
+        new = note('guncel-not', title='Güncel Not', summary='Değişen özet cümlesi.')
+        self.write('guncel-not', old)  # worktree HEAD ile aynı
+        self.head.return_value = old.encode('utf-8')
+        with mock.patch.object(lint, '_staged_payload',
+                               mock.Mock(return_value=new.encode('utf-8'))):
+            code, out = self.run_lint()
+        self.assertIn('ERR BUMP: wiki/guncel-not.md (staged): değişiklik var, '
+                      'updated artırılmadı', out)
         self.assertEqual(1, code)
 
 
