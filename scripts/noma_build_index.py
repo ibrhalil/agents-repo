@@ -4,8 +4,10 @@
 Kanonik notlar wiki'dedir; index.md tek giriş, index/hubs/ silinebilir türevdir.
 generate_all() linter'ın bayatlık denetimine de hizmet eder.
 """
+import fcntl
 import os
 import re
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -16,6 +18,11 @@ HUB_DIR = ROOT / "index" / "hubs"
 PAGE_SIZE = 32
 ROOT_MAX_BYTES = 8192
 HUB_PAGE_MAX_BYTES = 16384
+LOCK_FILE = ".noma-index.lock"
+# Sabit mesajlar: ne not ne de dosya yolu sızar (R4).
+LIMIT_ERROR = ('hata: indeks üretilemedi — sayfa/kök sınırı aşıldı ya da hub slug '
+               'geçersiz; yapı düzenlenmeli')
+READ_ERROR = 'hata: indeks üretilemedi — wiki/şifreli içerik okunamadı'
 
 
 def _strip_code(text):
@@ -101,6 +108,16 @@ def generate_all():
             parts.append(line)
         parts.append("")
 
+    # Kök sınırı HER ŞEYDEN ÖNCE denetlenir: sayfa yazılmadan hata verilir,
+    # böylece index/ yarı güncellenmiş hâlde kalmaz.
+    if uncategorized:
+        parts.append("## Kategorize Edilmemiş (Tend Adayları)")
+        parts.append(f"- {len(uncategorized)} not: `index/hubs/_uncategorized/` (tend kuyruğu)")
+        parts.append("")
+    root = "\n".join(parts)
+    if len(root.encode('utf-8')) > ROOT_MAX_BYTES:
+        raise ValueError('kök hub haritası sınırı aşıldı; üst hub yapısı düzenlenmeli')
+
     pages = {}
     titles = sorted((slug, title) for slug, title, _ in
                     list(uncategorized) + [u for u in root_hubs]
@@ -136,9 +153,6 @@ def generate_all():
             pages[f'index/hubs/{hub_slug}/{page:06d}.md'] = content
 
     if uncategorized:
-        parts.append("## Kategorize Edilmemiş (Tend Adayları)")
-        parts.append(f"- {len(uncategorized)} not: `index/hubs/_uncategorized/` (tend kuyruğu)")
-        parts.append("")
         for offset in range(0, len(uncategorized), PAGE_SIZE):
             page = offset // PAGE_SIZE + 1
             lines = [f"# Kategorize Edilmemiş — Sayfa {page}",
@@ -153,9 +167,6 @@ def generate_all():
                 raise ValueError('tend sayfası sınırı aşıldı; başlık/slug kısaltılmalı')
             pages[f'index/hubs/_uncategorized/{page:06d}.md'] = content
 
-    root = "\n".join(parts)
-    if len(root.encode('utf-8')) > ROOT_MAX_BYTES:
-        raise ValueError('kök hub haritası sınırı aşıldı; üst hub yapısı düzenlenmeli')
     return root, pages
 
 
@@ -164,24 +175,87 @@ def generate():
     return generate_all()[0]
 
 
-def build_index():
-    root, pages = generate_all()
-    for relative, content in pages.items():
-        path = ROOT / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if not path.is_file() or path.read_text(encoding='utf-8') != content:
-            path.write_text(content, encoding='utf-8')
-    if HUB_DIR.is_dir():
-        for path in HUB_DIR.glob('*/*.md'):
-            if re.fullmatch(r'[0-9]{6,}\.md', path.name) and path.relative_to(ROOT).as_posix() not in pages:
-                path.unlink()
-        for directory in HUB_DIR.iterdir():
+class _BuildLock:
+    """Eşzamanlı iki üretimin iç içe geçmesini engeller.
+
+    Kilit dosyası gitignore'lu tmp/ altındadır; alt süreç çalıştırılmadığı için
+    kilit bekletmez ve hata hâlinde finally ile bırakılır.
+    """
+
+    def __init__(self, path):
+        self.path = path
+        self.handle = None
+
+    def __enter__(self):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.handle = self.path.open('a+')
+        fcntl.flock(self.handle.fileno(), fcntl.LOCK_EX)
+        return self
+
+    def __exit__(self, *exc):
+        try:
+            fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            self.handle.close()
+        return False
+
+
+def _atomic_write(path, content):
+    """Kardeş geçici dosyaya yaz + os.replace: okuyucu yarım sayfa görmez."""
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(content, encoding='utf-8')
+    os.replace(tmp, path)
+
+
+def _current(path):
+    """Mevcut içerik; okunamayan/şifreli sayfa None → yeniden yazılır."""
+    try:
+        return path.read_text(encoding='utf-8')
+    except (OSError, UnicodeError):
+        return None
+
+
+def _prune(hub_dir, pages):
+    """Eski sayfaları ve geçici dosya kalıntılarını temizle.
+    Paralel koşuda silinmiş dizin/dosya FileNotFoundError verir; yoksayılır."""
+    try:
+        for path in hub_dir.glob('*/*.md'):
+            if (re.fullmatch(r'[0-9]{6,}\.md', path.name)
+                    and path.relative_to(ROOT).as_posix() not in pages):
+                path.unlink(missing_ok=True)
+        for leftover in hub_dir.glob('*/*.tmp'):
+            leftover.unlink(missing_ok=True)
+        for directory in hub_dir.iterdir():
             if directory.is_dir() and not any(directory.iterdir()):
                 directory.rmdir()
-    if not INDEX_FILE.is_file() or INDEX_FILE.read_text(encoding='utf-8') != root:
-        INDEX_FILE.write_text(root, encoding='utf-8')
+    except (FileNotFoundError, NotADirectoryError):
+        return
+
+
+def build_index():
+    """Kök haritasını ve sayfaları atomik olarak üret → çıkış kodu."""
+    try:
+        root, pages = generate_all()
+    except ValueError:
+        print(LIMIT_ERROR, file=sys.stderr)
+        return 1
+    except (OSError, UnicodeError):
+        print(READ_ERROR, file=sys.stderr)
+        return 1
+    with _BuildLock(ROOT / 'tmp' / LOCK_FILE):
+        for relative, content in pages.items():
+            path = ROOT / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if _current(path) != content:
+                _atomic_write(path, content)
+        _prune(HUB_DIR, pages)
+        if _current(INDEX_FILE) != root:
+            _atomic_write(INDEX_FILE, root)
+    return 0
 
 
 if __name__ == "__main__":
-    build_index()
-    print("Kök indeks ve hub sayfaları üretildi (içerik gizlendi).")
+    code = build_index()
+    if code == 0:
+        print("Kök indeks ve hub sayfaları üretildi (içerik gizlendi).")
+    sys.exit(code)

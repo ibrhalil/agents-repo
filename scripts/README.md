@@ -14,8 +14,8 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log) — doğrudan çalıştırılmaz |
 | `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (AGENTS R5) |
 | `noma_ingest.py` | kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması) + şablondan not üretir + mekanik post-ingest doğrulama (`[verify-fail]`/`NO-HUB`; içerik basılmaz) + log |
-| `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal |
-| `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur; arama Türkçe katlamalıdır; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
+| `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal; varsayılan çıktı yalnız yol, başlık/metadata `--human` ile |
+| `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur (`_basliklar`/`_uncategorized` dâhil); arama Türkçe katlamalıdır; tüm modlarda varsayılan çıktı yalnız yol, başlık/metadata `--human` ile; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
 | `noma-bootstrap.sh` | düğüm kurulum desteği: git-crypt denetimi ve `.env` hazırlığı |
 | `noma_build_index.py` | `index.md` küçük kök + `index/hubs/` altında 32 yapraklık şifreli sayfalar + `_basliklar/` damıtma sözlüğü |
 | `noma_bench_index.py` | gerçek wiki okumayan sentetik 1K/10K/100K indeks maliyeti ölçümü; yalnız sayısal çıktı |
@@ -37,16 +37,17 @@ python3 scripts/noma_new_note.py kafka-temel-kavramlar --title "Kafka Temel Kavr
 printf 'not içeriği' | python3 scripts/noma_ingest.py - --kind inbox --slug yeni-fikir --title "Yeni Fikir"
 python3 scripts/noma_ingest.py ~/Downloads/makale.html --kind clippings --title "Makale"
 python3 scripts/noma_find.py --stage inbox --limit 10
-python3 scripts/noma_find.py 'kafka|rabbitmq' --hop 2
+python3 scripts/noma_find.py 'kafka|rabbitmq' --hop 2 --human   # --human olmadan yalnız yol
 alias w='python3 scripts/noma_wiki.py'
 w root --json
-w s context
+w s context                                # varsayılan: yalnız yol
+w s context --human
 w s agent --hub ai-agent-teknolojileri --json
-w p model
-w hub kisisel-bilgi-sistemi
+w p model                                 # seçim için stdin tty olmalı
+w hub _basliklar --json                    # terim sözlüğü (başlıklar)
 w hub kisisel-bilgi-sistemi --json
 w recent --limit 5
-w links llm-sistem-ilkeleri --hop 2
+w links llm-sistem-ilkeleri --hop 2 --human
 w stats
 bash scripts/noma-bootstrap.sh --id hermes-vps
 python3 -B -m unittest discover -s scripts -p 'test_*.py'
@@ -67,8 +68,10 @@ Notlar:
 - Bulut Hermes compose'u yalnız public read-only dosyaları mount eder; içinde
   `wiki/`, `index.md`, `index/`, `.env` veya `.git` yoktur. Bu CLI'ları gerçek wiki için
   kilidi açılmış yerel çalışma alanında çalıştırın.
-- `noma_find.py` yalnız yol/başlık/metadata basar — not gövdesi stdout'a çıkmaz
-  (AGENTS R4). `noma_wiki.py` aynı kuralı izler.
+- `noma_find.py` ve `noma_wiki.py` varsayılan olarak **yalnız yol** basar; başlık,
+  tag, tarih ve link hedefi yalnız `--human` ile basılır (AGENTS R4: metadata de
+  gizlidir). `--human` yalnız güvenilir yerel terminal içindir; agent/cron
+  stdout'una kullanılmaz. Not gövdesi hiçbir modda basılmaz.
 - Agent'ın kalıcı bağlamı yalnız rotayı tutar: `w root --json` (`index.md`'nin
   kök hub'ları) → `w hub <slug> --json` (en fazla 32 yol, varsa `next_page` için
   `--page N`) → seçilen notun üst bölgesi → ilgili başlık.

@@ -3,8 +3,11 @@
 conversations: elle diyalog özeti — script kopyalamaz) + şablondan wiki notu üret
 + log satırı yaz (AGENTS ingest; SCHEMA §1, §5). Git işlemi yapmaz."""
 import argparse
+import os
 import re
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import noma_lib as lib
@@ -39,18 +42,41 @@ def raw_target(kind, name_hint, attempt=0):
     return p
 
 
+def staging_dir():
+    """Ham kaynak hazırlığı için geçici dizin (varsayılan repo tmp/; yoksa sistem geçici)."""
+    base = lib.ROOT / 'tmp'
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return None
+    return base
+
+
 def write_raw(kind, name_hint, data):
-    """Eşzamanlı ingest'lerde bile var olan raw dosyasını asla açıp ezme."""
-    attempt = 0
-    while True:
-        p = raw_target(kind, name_hint, attempt)
-        p.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with p.open('xb') as stream:
-                stream.write(data)
-            return p
-        except FileExistsError:
-            attempt += 1
+    """Eşzamanlı ingest'lerde bile var olan raw dosyasını asla açıp ezme.
+
+    R1: raw/ append-only; önce tmp'ye yaz + fsync + bütünlük denetle, sonra
+    os.link ile ATOMİK yayınla (link, ad doluysa FileExistsError verir)."""
+    staging = tempfile.mkdtemp(prefix='noma-raw-', dir=staging_dir())
+    tmp = Path(staging) / 'payload'
+    try:
+        with tmp.open('xb') as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if tmp.stat().st_size != len(data):
+            raise OSError('kısa yazma: ham kaynak bütünlüğü doğrulanamadı')
+        attempt = 0
+        while True:
+            p = raw_target(kind, name_hint, attempt)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                os.link(tmp, p)
+                return p
+            except FileExistsError:
+                attempt += 1
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def verify_note(path):
@@ -106,8 +132,9 @@ def main():
     ap.add_argument('--status')
     ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
     ap.add_argument('--no-note', action='store_true', help='yalnız raw kopyası')
-    ap.add_argument('--actor', default='cron',
-                    help='log aktörü: gerçek session modeli adı (agent çağrısı) | K | cron')
+    ap.add_argument('--actor',
+                    help='log aktörü: gerçek session modeli adı (agent çağrısı) | K | '
+                         'cron (yalnız zamanlanmış iş); verilmezse NOMA_ACTOR')
     a = ap.parse_args()
     if a.kind == 'conversations':
         raise SystemExit('conversations/: verbatim kopya yok — kısa K:/<model>: diyalog özeti '
@@ -116,6 +143,7 @@ def main():
     lib.check_choice('scope', a.scope, lib.SCOPES)
     lib.check_choice('stage', a.stage, lib.STAGES)
     lib.check_choice('status', a.status, lib.STATUS)
+    actor = lib.resolve_actor(a.actor)
 
     is_file = a.source != '-'
     data = Path(a.source).read_bytes() if is_file else sys.stdin.buffer.read()
@@ -131,8 +159,8 @@ def main():
     suffix = ' [flag]' if flag else ''
     if a.no_note:
         print(f'{rel} yazıldı')
-        lib.append_log('ingest', f'raw-only: {rel}{suffix}', actor=a.actor)
-        return
+        lib.append_log('ingest', f'raw-only: {rel}{suffix}', actor=actor)
+        return 0
 
     title = a.title or (Path(a.source).stem if is_file else 'Kaynak')
     slug = lib.check_slug(a.slug or lib.slugify(title))
@@ -140,8 +168,8 @@ def main():
     if note.exists():
         print(f'wiki/{slug}.md zaten var — raw kopyası yapıldı, not atlandı '
               '(mevcut notla merge edin, AGENTS R2)', file=sys.stderr)
-        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=a.actor)
-        return
+        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=actor)
+        return 0
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
     try:
         with note.open('x', encoding='utf-8') as stream:
@@ -150,8 +178,8 @@ def main():
     except FileExistsError:
         print(f'wiki/{slug}.md aynı anda üretildi — raw kopyası yapıldı, '
               'mevcut notla merge edin (AGENTS R2)', file=sys.stderr)
-        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=a.actor)
-        return
+        lib.append_log('ingest', f'{rel} (not var: {slug}){suffix}', actor=actor)
+        return 0
     print(f'{rel} yazıldı\nwiki/{slug}.md üretildi')
     errors, warnings = verify_note(note)
     if warnings:
@@ -160,10 +188,11 @@ def main():
         summary = ', '.join(errors[:3]) + (f' (+{len(errors) - 3})' if len(errors) > 3 else '')
         print(f'DOĞRULAMA HATASI: {slug}: {summary} — not stage: inbox kalır', file=sys.stderr)
         lib.append_log('ingest', f'{slug} <- {rel}{suffix} [verify-fail] {summary}',
-                       actor=a.actor)
-        return
-    lib.append_log('ingest', f'{slug} <- {rel}{suffix}', actor=a.actor)
+                       actor=actor)
+        return 1
+    lib.append_log('ingest', f'{slug} <- {rel}{suffix}', actor=actor)
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

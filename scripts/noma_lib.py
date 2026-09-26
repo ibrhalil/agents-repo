@@ -7,6 +7,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+CRYPT_MAGIC = b'\x00GITCRYPT\x00'
 TYPES = 'concept project task issue resource person decision'.split()
 STAGES = 'inbox next in_progress waiting done archived'.split()
 SCOPES = 'work personal learning systems creator media common'.split()
@@ -60,6 +61,29 @@ def node_id():
             if m:
                 return m.group(1)
     return os.environ.get('NODE_ID', 'local')
+
+
+def resolve_actor(value):
+    """SCHEMA §5: aktör gerçek session modeli | K | cron. Varsayılan 'cron' DEĞİLDİR
+    — provenance sahteciliğini önle; cron yalnız bilinçli/zamanlanmış seçimdir."""
+    if value:
+        return value
+    env = (os.environ.get('NOMA_ACTOR') or '').strip()
+    if env:
+        return env
+    raise SystemExit('hata: log aktörü belirtilmedi — --actor <gerçek session modeli> '
+                     'ver ya da NOMA_ACTOR=<model> dışa aktar (SCHEMA §5)')
+
+
+def is_crypt_blob(f):
+    """Açık BINARY dosya git-crypt blob mu? Şifreli dosyaya plaintext yazmak
+    kalıcı bozulma yaratır; ayrıca blob UTF-8 değildir, metin kipinde okunamaz."""
+    pos = f.tell()
+    try:
+        f.seek(0)
+        return f.read(len(CRYPT_MAGIC)) == CRYPT_MAGIC
+    finally:
+        f.seek(pos)
 
 
 def parse_fm(text):
@@ -217,14 +241,21 @@ def append_log(op, msg, actor):
     msg = ' '.join(msg.split())
     if len(msg) > MSG_LIMIT:
         raise SystemExit(f'hata: log mesajı {len(msg)} karakter (> {MSG_LIMIT})')
-    p = ROOT / 'log' / f'{today()}.md'
-    with p.open('a+', encoding='utf-8') as f:
+    # Gece yarısı yarışı: tarih tek örneklem; dosya adı ve damga aynı güne bağlı.
+    now = datetime.now()
+    day = now.date().isoformat()
+    p = ROOT / 'log' / f'{day}.md'
+    header = f'# {day}\n'.encode('utf-8')
+    entry = f'{now.strftime("%H:%M")} {op} @{node_id()} {actor} | {msg}\n'.encode('utf-8')
+    with p.open('a+b') as f:
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:
+            if is_crypt_blob(f):
+                raise SystemExit('hata: log kilitli — git-crypt unlock')
             f.seek(0, os.SEEK_END)
             if f.tell() == 0:
-                f.write(f'# {today()}\n')
-            f.write(f'{now_hhmm()} {op} @{node_id()} {actor} | {msg}\n')
+                f.write(header)
+            f.write(entry)
             f.flush()
         finally:
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)

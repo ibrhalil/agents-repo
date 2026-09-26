@@ -7,6 +7,7 @@ anonim vaka ID'leri stdout'a çıkar; bu bir LLM yanıt doğruluğu testi değil
 import argparse
 import json
 import math
+import os
 import re
 import sys
 from collections import defaultdict
@@ -15,10 +16,16 @@ import noma_lib as lib
 
 SCOPES = {'systems', 'learning'}
 CASE_FILE = 'plans/wiki-iliski-sorulari.json'
+DIAG_FILE = 'plans/wiki-iliski-tanisi.json'
+DIAG_ERROR = ('hata: tanı dosyası zaten var; üzerine yazmak için --force gerekli '
+              '(içerik gizlendi)')
 CONTEXT_LIMIT = 4
 SEED_WIDTH = 2
 ASSOCIATION_HOPS = 2
 MAX_EXPANSION = 16
+# "Anonim vaka ID" beyanı artık doğrulanır; geçersizse yalnız sayı basılır (R4).
+CASE_ID_RE = re.compile(r'^[a-z0-9-]{1,12}$')
+SPLIT_RE = re.compile(r'^[a-z0-9_-]{1,24}$')
 NAVIGATION_SECTIONS = {'alt temalar', 'tema notlari', 'agac haritasi',
                        'child notlar', 'politika kumesi', 'scripts', 'docs',
                        'yonetim', 'kaynaklar'}
@@ -136,8 +143,24 @@ def tree_context(idx, eligible, ranked, scores):
                                             -child_counts[s], s))
         if best not in selected:
             selected.append(best)
-    selected += [slug for slug in ranked if slug not in selected][:CONTEXT_LIMIT - len(selected)]
+    selected += [slug for slug in ranked if slug not in selected][:max(0, CONTEXT_LIMIT - len(selected))]
     return selected
+
+
+def _atomic_write(path, text):
+    """Kardeş geçici dosyaya yaz + os.replace; izlenen plan dosyası yarı yazılmaz."""
+    tmp = path.with_name(path.name + '.tmp')
+    tmp.write_text(text, encoding='utf-8')
+    os.replace(tmp, path)
+
+
+def _ids_ok(ids):
+    """Plan dosyasındaki her ID anonim mi? Değilse hiçbiri basılmaz (R4)."""
+    return all(isinstance(i, str) and CASE_ID_RE.fullmatch(i) for i in ids)
+
+
+def _safe_split(split):
+    return split if isinstance(split, str) and SPLIT_RE.fullmatch(split) else 'bilinmeyen'
 
 
 def choose_context(idx, eligible, graph, query):
@@ -193,9 +216,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--diagnostic', action='store_true',
                     help='şifreli plans/ altına vaka yollarını dosyala; stdout yalnız sayılar')
+    ap.add_argument('--force', action='store_true',
+                    help='var olan tanı dosyasının üzerine yazmayı onayla')
     ap.add_argument('--fresh', action='store_true',
                     help='algoritma dondurulduktan sonraki ayrı soru kümesini ölç')
     args = ap.parse_args()
+    diag = lib.ROOT / DIAG_FILE
+    if args.diagnostic and diag.exists() and not args.force:
+        print(DIAG_ERROR, file=sys.stderr)
+        return 1
     try:
         case_file = 'plans/wiki-iliski-son-kontrol.json' if args.fresh else CASE_FILE
         cases = json.loads((lib.ROOT / case_file).read_text(encoding='utf-8'))
@@ -204,21 +233,22 @@ def main():
         graph = association_graph(idx, eligible)
         result, details = evaluate(cases, idx, graph)
         if args.diagnostic:
-            (lib.ROOT / 'plans/wiki-iliski-tanisi.json').write_text(
-                json.dumps(details, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+            _atomic_write(diag, json.dumps(details, ensure_ascii=False, indent=2) + '\n')
     except (OSError, UnicodeError, ValueError, KeyError):
         print('değerlendirme başarısız (özel içerik gizlendi)', file=sys.stderr)
         return 2
     print(f'scope notları={len(eligible)} gövde bağı={sum(map(len, graph[0].values()))}')
     for split, r in sorted(result.items()):
-        print(f'{split}: soru={r["count"]} kaynaklı={r["answerable"]} '
+        print(f'{_safe_split(split)}: soru={r["count"]} kaynaklı={r["answerable"]} '
               f'A tam={r["a"]}/{r["answerable"]} B tam={r["b"]}/{r["answerable"]} '
               f'A kaynak={r["a_evidence"]} B kaynak={r["b_evidence"]} '
               f'A okuma={r["a_reads"]} B okuma={r["b_reads"]} '
               f'A özet-karakter={r["a_chars"]} B özet-karakter={r["b_chars"]} '
               f'B ilişki-adayı={r["b_graph_selected"]} '
               f'cevapsız-adaylı={r["negative_with_candidates"]}')
-        print(f'{split} eksik vaka ID: A={r["a_miss"]} B={r["b_miss"]}')
+        a_miss, b_miss = r['a_miss'], r['b_miss']
+        ids = f' · ID: A={a_miss} B={b_miss}' if _ids_ok(a_miss + b_miss) else ''
+        print(f'{_safe_split(split)} eksik vaka: A={len(a_miss)} B={len(b_miss)}{ids}')
     return 0
 
 

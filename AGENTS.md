@@ -16,7 +16,7 @@ SUBAGENT: Bağımsız işleri subagent'lara böl; eşzamanlı en fazla 3 (tavan,
 ÖĞRENME: Her oturumdaki somut, kalıcı ve ayrı öğrenimi tek fikirli wiki notu olarak ilgili mevcut Hub'a bağla; eşdeğer not varsa birleştir, logla. Sırf oturum bitti diye kopya/kotasız kaynak veya devir dosyası üretme ([[oturum-ogrenme-kaydi]]).
 tend: Kullanıcı serbest girdilerini (eksik frontmatter, kırık link) normalize et, stub genişlet, duplicate birleştir.
 lint: Kırık link, orphan, updated bump denetimi.
-YAZMA AKIŞI: PR darboğazı yoktur. Agent'lar serbestçe yazar, Git commit ve conflict çözümü periyodik cron job'a aittir.
+YAZMA AKIŞI: PR darboğazı yoktur. Agent'lar serbestçe yazar; commit ve conflict çözümü şu an insan tarafından yapılır (zamanlanmış cron hedefi ROADMAP B5'e bağlı, henüz yok).
 ## 3. Görünürlük ve Güvenlik
 ŞİFRELİ (Kişisel Veri): `index.md` `index/` `raw/` `wiki/` `agent/prompts/` `agent/sessions/` `plans/` `log/`
 PUBLIC (Veri YAZILAMAZ): `agent/` `scripts/` `docs/`

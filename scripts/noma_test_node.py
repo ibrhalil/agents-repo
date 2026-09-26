@@ -9,6 +9,7 @@ import json
 import pathlib
 import subprocess
 import sys
+import tempfile
 import urllib.request
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -35,18 +36,38 @@ def t_index_crypt():
 
 
 def t_hook_contract():
+    """Yerel düğüm LOCAL verir; karar payload cwd'sine DEĞİL hook'un ait olduğu
+    köke bağlıdır, bu yüzden kısıtlı dal sentetik şifreli klonla sınanır."""
     hook = str(ROOT / 'scripts/noma_hermes_context.py')
     local = run([sys.executable, '-B', hook], data=json.dumps({'cwd': str(ROOT)}))
-    restricted = run([sys.executable, '-B', hook], cwd=ROOT / 'scripts',
-                     data=json.dumps({'cwd': str(ROOT / 'scripts')}))
+    forged = run([sys.executable, '-B', hook], cwd=ROOT / 'scripts',
+                 data=json.dumps({'cwd': '/tmp'}))
+    locked = None
+    with tempfile.TemporaryDirectory(prefix='noma-node-', dir=ROOT / 'tmp') as tmp:
+        base = pathlib.Path(tmp) / 'node'
+        (base / 'wiki').mkdir(parents=True)
+        (base / 'index.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
+        (base / 'wiki' / 'not.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
+        probe = ('import json,sys,runpy,pathlib;'
+                 'sys.argv=["hook"];'
+                 f'sys.path.insert(0,{str(ROOT / "scripts")!r});'
+                 'import noma_hermes_context as h;'
+                 f'h.SCRIPT_ROOT=pathlib.Path({str(base)!r});'
+                 'sys.stdin=open("/dev/null");'
+                 'print(json.dumps({"context":h.LOCAL_CONTEXT if h.unlocked_index({})'
+                 ' else h.RESTRICTED_CONTEXT},ensure_ascii=False))')
+        locked = subprocess.run([sys.executable, '-B', '-c', probe],
+                                cwd=ROOT, capture_output=True, text=True)
     try:
         a = json.loads(local.stdout)['context']
-        b = json.loads(restricted.stdout)['context']
+        b = json.loads(forged.stdout)['context']
+        c = json.loads(locked.stdout)['context']
     except (ValueError, KeyError):
         return 'FAIL', 'hook JSON sözleşmesi geçersiz'
-    ok = (local.returncode == restricted.returncode == 0
-          and 'index.md' in a and 'yerel düğüm gerekli' in b
-          and '## Summary' not in a + b and len(a) < 600 and len(b) < 600)
+    ok = (local.returncode == forged.returncode == 0
+          and 'index.md' in a and 'yerel düğüm gerekli' in c
+          and b == a
+          and '## Summary' not in a + b + c and len(a) < 600 and len(b) < 600)
     return ('PASS' if ok else 'FAIL', 'statik context + kısıtlı düğüm yanıtı')
 
 

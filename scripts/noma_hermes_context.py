@@ -8,6 +8,9 @@ import json
 import sys
 from pathlib import Path
 
+CRYPT_MAGIC = b"\x00GITCRYPT\x00"
+# Hook'un ait olduğu düğüm kökü; testler bu bağıyı mock'lar (payload cwd DEĞİLDİR).
+SCRIPT_ROOT = Path(__file__).resolve().parent.parent
 
 LOCAL_CONTEXT = (
     "[Noma: bilgi sorusunda scripts/noma_wiki.py root --json ile index.md "
@@ -28,27 +31,57 @@ RESTRICTED_CONTEXT = (
 )
 
 
-def unlocked_index(payload):
-    cwd = payload.get("cwd") if isinstance(payload, dict) else None
-    base = Path(cwd) if isinstance(cwd, str) and cwd else Path.cwd()
-    p = base / "index.md"
+def is_plaintext(path):
+    """Dosya okunabilir ve şifreli git-crypt blob değilse True."""
     try:
-        if p.is_file():
-            with p.open("rb") as stream:
-                return stream.read(10) != b"\x00GITCRYPT\x00"
+        if not path.is_file():
+            return False
+        with path.open("rb") as stream:
+            return stream.read(len(CRYPT_MAGIC)) != CRYPT_MAGIC
     except OSError:
-        pass
-    return False
+        return False
+
+
+def repo_roots(payload):
+    """Kök = hook'un ait olduğu düğüm (script konumu). Payload cwd'si ve süreç cwd'si
+    saldırgan etkisinde olabilir; yalnız yedek aday oldukları için ASLA kullanılmaz."""
+    return SCRIPT_ROOT
+
+
+def unlocked_vault(base):
+    """index.md düz metin VE wiki/ düğümleri şifreli değilse yerel gezinme açılır.
+    index düz ama wiki şifreliyse LOCAL dal yanlış olur (read_file binary gürültü verir)."""
+    if not is_plaintext(base / "index.md"):
+        return False
+    for note in sorted((base / "wiki").glob("*.md")):
+        return is_plaintext(note)
+    return True
+
+
+def unlocked_index(payload):
+    return unlocked_vault(repo_roots(payload))
+
+
+def read_payload():
+    """TTY'de veya bozuk akışta sonsuz bekleme; boş yük döndür."""
+    if sys.stdin is None or sys.stdin.isatty():
+        return {}
+    try:
+        data = json.load(sys.stdin)
+    except (ValueError, OSError):
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def main():
+    # B9: hook asla traceback basmaz; her beklenmedik girdide kısıtlı talimat + 0.
     try:
-        payload = json.load(sys.stdin)
-    except (ValueError, OSError):
-        payload = {}
-    context = LOCAL_CONTEXT if unlocked_index(payload) else RESTRICTED_CONTEXT
+        context = LOCAL_CONTEXT if unlocked_index(read_payload()) else RESTRICTED_CONTEXT
+    except Exception:
+        context = RESTRICTED_CONTEXT
     print(json.dumps({"context": context}, ensure_ascii=False))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

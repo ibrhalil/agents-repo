@@ -4,6 +4,7 @@ import concurrent.futures
 import tempfile
 import threading
 import unittest
+from datetime import date, datetime
 from pathlib import Path
 from unittest import mock
 
@@ -11,6 +12,24 @@ import noma_hermes_context as context
 import noma_ingest as ingest
 import noma_lib as lib
 import noma_new_note as new_note
+
+MIDNIGHT = datetime(2026, 9, 26, 0, 0, 30)
+
+
+class FrozenDateTime(datetime):
+    """Gece yarısı yarışı: now() dondurulmuş, tek örnek."""
+
+    @classmethod
+    def now(cls, tz=None):
+        return MIDNIGHT if tz is None else MIDNIGHT.replace(tzinfo=tz)
+
+
+class StaleDate(date):
+    """Dosya adını bir gün geriden üreten tarih örneği (yarışın eski hâli)."""
+
+    @classmethod
+    def today(cls):
+        return date(2026, 9, 25)
 
 
 class GuardrailTests(unittest.TestCase):
@@ -129,12 +148,40 @@ class GuardrailTests(unittest.TestCase):
     def test_locked_index_does_not_enable_local_context(self):
         index = self.root / 'index.md'
         index.write_bytes(b'\x00GITCRYPT\x00synthetic')
-        with mock.patch.object(context.Path, 'cwd', return_value=self.root):
+        with mock.patch.object(context, 'SCRIPT_ROOT', self.root):
             self.assertFalse(context.unlocked_index({'cwd': str(self.root)}))
             index.write_text('# synthetic index', encoding='utf-8')
             self.assertTrue(context.unlocked_index({'cwd': str(self.root)}))
         self.assertNotIn('## Summary', context.LOCAL_CONTEXT + context.RESTRICTED_CONTEXT)
         self.assertIn('s <kavramlar> --json', context.LOCAL_CONTEXT)
+
+    def test_locked_daily_log_is_never_appended_plaintext(self):
+        """Kilitli günlük: şifreli blob + plaintext eklenirse dosya kalıcı bozulur."""
+        (self.root / 'log').mkdir()
+        path = self.root / 'log' / f'{lib.today()}.md'
+        blob = b'\x00GITCRYPT\x00sentetik-sifreli-blob'
+        path.write_bytes(blob)
+        with mock.patch.object(lib, 'ROOT', self.root):
+            with self.assertRaises(SystemExit) as err:
+                lib.append_log('tend', 'sentetik', actor='K')
+        self.assertEqual(blob, path.read_bytes())
+        self.assertIn('kilitli', str(err.exception))
+        self.assertNotIn('sentetik-sifreli-blob', str(err.exception))
+
+    def test_log_entry_uses_one_day_for_file_and_stamp(self):
+        """Gece yarısını aşan append tek dosyaya, damgası dosya adıyla uyumlu girecek."""
+        (self.root / 'log').mkdir()
+        with mock.patch.object(lib, 'ROOT', self.root), \
+                mock.patch.object(lib, 'datetime', FrozenDateTime), \
+                mock.patch.object(lib, 'date', StaleDate):
+            path = lib.append_log('tend', 'gece yarisi', actor='K')
+        self.assertEqual('2026-09-26.md', path.name)
+        self.assertEqual(['2026-09-26.md'],
+                         sorted(p.name for p in (self.root / 'log').iterdir()))
+        lines = path.read_text(encoding='utf-8').splitlines()
+        self.assertEqual('# 2026-09-26', lines[0])
+        self.assertTrue(lines[1].startswith('00:00 tend @'), lines[1])
+        self.assertEqual([], list(lib.log_issues(path)))
 
 
 if __name__ == '__main__':

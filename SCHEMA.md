@@ -15,7 +15,7 @@ ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzer
 ## 2. Bilgi Hattı ve Keşif
 Üretim: `raw/` -> `wiki/` (2 katman).
 Geri besleme: Değerli query sentezleri atomik wiki notu olarak geri dosyalanır (`-> filed: wiki/slug.md` log kaydıyla; AGENTS §2 query).
-Harita: Tek kanonik giriş şifreli `index.md`'dir; kök hub'ları gösterir. Cron, wiki'deki `## Links` yönünden (özelden genele) şifreli `index/hubs/` sayfalarını üretir; özel başlık/özetler public yüzeye kopyalanmaz.
+Harita: Tek kanonik giriş şifreli `index.md`'dir; kök hub'ları gösterir. `index/hubs/` sayfaları wiki'deki `## Links` yönünden (özelden genele) `scripts/noma_build_index.py` ile üretilir; özel başlık/özetler public yüzeye kopyalanmaz.
 SAYFA: `index/hubs/<hub-slug>/000001.md` (ve devamı); en çok 32 yaprak ve 16 KiB. Kök `index.md` en çok 8 KiB; `hub --json` yalnız istenen sayfanın yollarını ve `next_page` işaretçisini verir.
 ## 3. Wiki Not Formatı (Frontmatter)
 ZORUNLU ŞABLON: `docs/templates/wiki_note.md`

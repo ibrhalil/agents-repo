@@ -17,14 +17,17 @@ def main():
     ap.add_argument('--tags', help='virgülle ayrılmış ASCII etiketler')
     ap.add_argument('--log-op', choices=lib.LOG_OPS,
                     help='verilirse log satırı da yazar')
-    ap.add_argument('--actor', default='cron',
-                    help='log aktörü: gerçek session modeli adı (agent çağrısı) | K | cron')
+    ap.add_argument('--actor',
+                    help='log aktörü: gerçek session modeli adı (agent çağrısı) | K | '
+                         'cron (yalnız zamanlanmış iş); verilmezse NOMA_ACTOR')
     a = ap.parse_args()
     lib.check_slug(a.slug)
     lib.check_choice('type', a.type_, lib.TYPES)
     lib.check_choice('stage', a.stage, lib.STAGES)
     lib.check_choice('scope', a.scope, lib.SCOPES)
     lib.check_choice('status', a.status, lib.STATUS)
+    # Not yazılmadan önce aktörü çöz: yarım kalırsa not log'suz kalmaz.
+    actor = lib.resolve_actor(a.actor) if a.log_op else None
     title = a.title or a.slug.replace('-', ' ').title()
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
     out = lib.ROOT / 'wiki' / f'{a.slug}.md'
@@ -39,7 +42,7 @@ def main():
     print(f'wiki/{a.slug}.md üretildi (stage: {a.stage})')
     msg = f'not üretildi: wiki/{a.slug}.md'
     if a.log_op:
-        lib.append_log(a.log_op, msg, actor=a.actor)
+        lib.append_log(a.log_op, msg, actor=actor)
     else:
         print(f'log önerisi: {lib.now_hhmm()} tend @{lib.node_id()} <aktör> | {msg}')
 

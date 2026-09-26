@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Sentetik wiki ile kök/hub gezinme ve tam üretim maliyetini toplu ölç.
 
-Gerçek wiki metni okunmaz; fixture'lar yalnız tmp/ altında oluşturulup silinir.
+Gerçek wiki metni okunmaz; fixture'lar yalnız sistem geçici dizininde oluşturulup
+silinir (tmp/ taze klonda yoktur). Her not sayısı ayrı süreçte ölçülür; bellek
+sütunu o sürecin tepe RSS'idir, süreçler arası kıyaslanabilir.
 Çıktı yalnız sayı/süre/bellektir, not metni veya dosya yolu değildir.
 """
 import argparse
@@ -10,6 +12,7 @@ import io
 import json
 import resource
 import statistics
+import subprocess
 import sys
 import tempfile
 import time
@@ -23,7 +26,7 @@ import noma_wiki as wiki
 
 
 def benchmark(count, search=False):
-    with tempfile.TemporaryDirectory(prefix='noma-index-bench-', dir=lib.ROOT / 'tmp') as tmp:
+    with tempfile.TemporaryDirectory(prefix='noma-index-bench-') as tmp:
         root = Path(tmp)
         source = root / 'wiki'
         source.mkdir()
@@ -75,7 +78,7 @@ def benchmark(count, search=False):
                   f'page_yol={len(samples[1][2]["paths"])} '
                   f'uret_s={build_time:.3f} root_medyan_ms={samples[0][0]:.3f} '
                   f'root_p95_ms={samples[0][1]:.3f} hub_medyan_ms={samples[1][0]:.3f} '
-                  f'hub_p95_ms={samples[1][1]:.3f} islem_tepe_bellek_mb={rss_mb:.1f}'
+                  f'hub_p95_ms={samples[1][1]:.3f} surec_tepe_bellek_mb={rss_mb:.1f}'
                   + (f' tam_arama_s={search_time:.3f}' if search_time is not None else ''))
 
 
@@ -84,12 +87,24 @@ def main():
     ap.add_argument('counts', nargs='*', type=int, default=[1000, 10000],
                     help='sentetik not sayıları (örn. 1000 10000 100000)')
     ap.add_argument('--search', action='store_true', help='tam wiki aramasını da ölç')
+    ap.add_argument('--worker', action='store_true',
+                    help='gizli: tek sayıyı bu süreçte ölç (ana akış alt süreç açır)')
     args = ap.parse_args()
     if any(n < 1 for n in args.counts):
         ap.error('not sayısı pozitif olmalı')
+    if args.worker:
+        for count in args.counts:
+            benchmark(count, search=args.search)
+        return 0
+    # Her sayı ayrı süreçte: tepe RSS yalnız o yapılandırmaya ait olur.
     for count in args.counts:
-        benchmark(count, search=args.search)
+        command = [sys.executable, '-B', str(Path(__file__).resolve()),
+                   '--worker', str(count)] + (['--search'] if args.search else [])
+        code = subprocess.call(command)
+        if code:
+            return code
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

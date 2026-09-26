@@ -1,19 +1,39 @@
 #!/usr/bin/env python3
-"""Yanıt atıf doğrulayıcı: yanıt metnindeki wiki/raw atıflarını mekanik denetler.
+"""Yanıt atıf doğrulayıcı: yanıt metnindeki wiki/raw/log/plans atıflarını
+mekanik denetler.
 
 Kural tabanlıdır, LLM yargısı yoktur (üretici-doğrulayıcı ayrımı). Not içeriği
 çıktıya asla taşınmaz (AGENTS R4); yalnız yol + kural adı + toplam sayı basılır.
-Kırık/ilgisiz atıf exit 1; negatif iddia hatırlatması exit 0.
+Kırık/ilgisiz/dışarı atıf exit 1; negatif iddia hatırlatması exit 0.
 """
 import argparse
 import json
 import re
 import sys
+from pathlib import PurePosixPath
 
 import noma_lib as lib
 
-CITATION = re.compile(r'\b(?:wiki|raw)/[\w./-]+\.\w+')
+CITATION = re.compile(r'\b(?:wiki|raw|log|plans)/[\w./-]+\.\w+')
+# Uzantısız kaçış denemeleri de yakalanır; hiçbiri okunmaz.
+TRAVERSAL = re.compile(r'\b(?:wiki|raw|log|plans)/[\w./-]*\.\.[\w./-]*')
 NEGATIVE_CLAIM = re.compile(r'kay[iı]tl[iı] deg[iı]l', re.I)
+# Gerekçeleme yalnız not/ham kaynak için anlamlı; log ve plans kayıt defteridir.
+RELEVANCE_DIRS = ('wiki/', 'raw/')
+
+
+def _resolve(path):
+    """(hedef, kök_dışı_mı) — '..' taşıyan veya kökü aşan atıf asla okunmaz."""
+    if '..' in PurePosixPath(path).parts or PurePosixPath(path).is_absolute():
+        return None, True
+    try:
+        root = lib.ROOT.resolve()
+        resolved = (lib.ROOT / path).resolve()
+    except OSError:
+        return None, True
+    if resolved != root and root not in resolved.parents:
+        return None, True
+    return lib.ROOT / path, False
 
 
 def _upper_region(text):
@@ -39,30 +59,39 @@ def _overlap(term, region):
 
 
 def verify(text, idx=None):
-    """Yanıt metnini denetle → (bulgular, negatif_iddia). idx verilirse üst-bölge
-    eşleşmeleri önbellekten kullanılır; içerik döndürülmez."""
-    idx = idx if idx is not None else lib.load_wiki_index()
+    """Yanıt metnini denetle → (bulgular, negatif_iddia). idx geçmiş uyumluluk
+    için kabul edilir; gerekçeleme dosyanın kendi üst bölgesinden türetilir,
+    içerik döndürülmez."""
     upper = {}
     findings, cited = [], []
     for sentence in re.split(r'(?<=[.!?\n])\s+', text):
-        for path in dict.fromkeys(CITATION.findall(sentence)):
+        candidates = list(CITATION.findall(sentence))
+        candidates += [t.rstrip('.,;:)\'"') for t in TRAVERSAL.findall(sentence)]
+        for path in dict.fromkeys(candidates):
             if path in cited:
                 continue
             cited.append(path)
-            target = lib.ROOT / path
+            target, outside = _resolve(path)
+            if outside:
+                findings.append({'path': path, 'status': 'FAIL', 'rule': 'yol-dışı-atıf'})
+                continue
             if not target.is_file():
                 findings.append({'path': path, 'status': 'FAIL', 'rule': 'kırık-atıf'})
                 continue
-            slug = target.stem
-            if path.startswith('wiki/') and slug in idx:
-                if slug not in upper:
-                    upper[slug] = _upper_region(target.read_text(encoding='utf-8'))
-                terms = _sentence_terms(sentence)
-                related = any(_overlap(t, upper[slug]) for t in terms) if terms else True
-                if not related:
-                    findings.append({'path': path, 'status': 'WARN',
-                                     'rule': 'ilgisiz-atıf'})
-                    continue
+            if path.startswith(RELEVANCE_DIRS):
+                if path not in upper:
+                    try:
+                        upper[path] = _upper_region(target.read_text(encoding='utf-8'))
+                    except (OSError, UnicodeError):
+                        upper[path] = None
+                region = upper[path]
+                if region is not None:
+                    terms = _sentence_terms(sentence)
+                    related = any(_overlap(t, region) for t in terms) if terms else True
+                    if not related:
+                        findings.append({'path': path, 'status': 'WARN',
+                                         'rule': 'ilgisiz-atıf'})
+                        continue
             findings.append({'path': path, 'status': 'OK', 'rule': ''})
     return findings, bool(NEGATIVE_CLAIM.search(lib.fold_tr(text)))
 
@@ -73,8 +102,12 @@ def main():
     ap.add_argument('--json', action='store_true', help='makine okunur çıktı')
     a = ap.parse_args()
     try:
-        text = open(a.file, encoding='utf-8').read() if a.file else sys.stdin.read()
-    except OSError:
+        if a.file:
+            with open(a.file, encoding='utf-8') as handle:
+                text = handle.read()
+        else:
+            text = sys.stdin.read()
+    except (OSError, UnicodeError):
         print('yanıt okunamadı', file=sys.stderr)
         return 2
     findings, negative = verify(text)

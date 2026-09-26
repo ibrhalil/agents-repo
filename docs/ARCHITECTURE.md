@@ -10,11 +10,13 @@ genel bakışı tutar.
 2. **Runtime-bağımsız çekirdek** — herhangi bir agent'ın "Noma" olması için gereken
    her şey repoda: sözleşmeler (AGENTS/SCHEMA), bilgi hattı, kullanıcı profili
    (`wiki/kullanici-profili.md`), yetenekler.
-3. **Git = kontrol mekanizması** — Agent'lar serbestçe çalışır, commit ve conflict çözümü periyodik cron job ile yönetilir (ADR-10 Güncellendi).
+3. **Git = kontrol mekanizması** — Agent'lar serbestçe çalışır; PR darboğazı yoktur.
+   Commit ve conflict çözümü bugün **elle** yapılır: periyodik job henüz kurulmadı,
+   tasarım niyeti B5'e bağlı ve kullanıcı onayı gerektirir (ADR-10 Güncellendi).
 4. **Token optimizasyonu** — retrieval ucuzdan pahalıya; context bütçeli montaj. Sözleşmeler LLM-optimize edilmiştir.
 5. **Local-first dostu, bulut esnek** — direkt çoklu provider + Ollama düğümü (ADR-8).
 6. **Gereksiz complexity yok** — yeni katman/alan/dizin gerçek ihtiyaç ister
-   (wiki/agent-yapisi.md §44).
+   (wiki/agent-mimarisi.md §44).
 
 ## Bilgi hattı ve retrieval
 Üretim tarafı: `raw → wiki` (iki katman; atoms kaldırıldı — [[wiki/agent-yapisi]]).
@@ -39,8 +41,8 @@ sayfalar en çok 32 yol/16 KiB, kök en çok 8 KiB'dir; dosyalar kanonik değild
 Serbest metin araması/lint hâlen tüm wiki'yi
 tarar; daha büyük ölçekte yerel indeks gereksinimi ayrı ölçülecektir.
 
-Graph/search/embedding mimarisi henüz kararlaşmadı (§45-8/9) — belirli motor
-varsayılmaz. Epistemik hijyen: her cevap kaynak path'iyle atıflı (`wiki/slug.md`,
+Graph/search/embedding mimarisi henüz kararlaşmadı (`wiki/agent-talimati.md`
+§45-8/9) — belirli motor varsayılmaz. Epistemik hijyen: her cevap kaynak path'iyle atıflı (`wiki/slug.md`,
 `raw/...`); `unverified → established` yükseltmesi ikinci bağımsız kaynak ya da
 insan onayı ister.
 
@@ -55,15 +57,21 @@ veri yol adlarında bile yaşamaz. Hassas kapsam yalnız yerel model
 Düğüm = bu repoyu sözleşmeye bağlı kullanan her agent/model (kayıt dizini
 `docs/nodes/` 2026-09-23'te kaldırıldı; düğüm envanteri bu bölümde yaşar).
 - **Laptop (aktif):** opencode — etkileşimli geliştirme düğümü.
-- **VPS (7/24 birincil, planlı):** Hermes bulut runtime'ı yalnız public
-  `AGENTS/SCHEMA/README/docs/scripts` read-only mount alır; şifreli wiki, indeks,
-  `.env` ve Git kimliği bu konteynerde bulunmaz. Özel bilgi işi yerel düğümü
-  bekler. Önceki tam-klon Hermes mount'u güvenlik nedeniyle kaldırıldı.
-- **Ev (planlı local):** Ollama provider, aynı repo klonu, aynı SCHEMA.
-- **İnsan düğümü:** Obsidian ile `wiki/` doğrudan düzenleme.
-- **Senkron:** git; yetkili yerel düğümler serbest yazar, commit ve conflict çözümü
-  periyodik cron job'a aittir ([[wiki/git-akisi-ve-conflict]] kararı, 2026-09-23);
-  append-only tasarım çoklu yazıcıda çatışmaları seyrekleştirir.
+- **Noma düğümü (home Proxmox QEMU VM — mevcut plan, henüz kurulmadı):**
+  canlı ajan runtime'ı. VPS düğümünden bu plana döndü; kanonik yol
+  `wiki/proxmox-noma-kurulum.md` ve `wiki/noma-hermes-vm-docker.md`.
+- **Bulut Hermes (public-only/read-only mount, devam eden kısıt):** yalnız public
+  `AGENTS/SCHEMA/README/docs/scripts` okur; şifreli wiki, indeks, `.env` ve Git
+  kimliği bu konteynerde bulunmaz. Özel bilgi işi yerel düğümü bekler. Önceki
+  tam-klon Hermes mount'u güvenlik nedeniyle kaldırıldı.
+- **Ev Ollama provider (planlı):** aynı repo klonu, aynı SCHEMA.
+- **İnsan düğümü:** Obsidian ile `wiki/` doğrudan düzenleme (kurulum:
+  `docs/obsidian-recommended.md`).
+- **Senkron:** git; yetkili yerel düğümler serbest yazar. Commit ve conflict
+  çözümü bugün elle yapılır — periyodik job **yok**; hedef `docs/ROADMAP.md` B5
+  (karar: `wiki/git-akisi-ve-conflict.md`, 2026-09-23). Append-only tasarım
+  çoklu yazıcıda çatışmaları seyrekleştirir; lint `log/` append-only kuralını
+  HEAD'e karşı diff ile zorlar.
 
 Bulut Hermes home'u `~/.hermes-cloud` ile eskisinden ayrıdır;
 eski `~/.hermes` hafızası/cron'u otomatik olarak taşınmaz. `pre_llm_call` hook'u
@@ -75,7 +83,7 @@ işlemlerinden ayrıca izole edilmesi için provider proxy/araç sınırı gerek
 Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
 
 ## Teknoloji gerekçeleri (özet)
-- **Hermes (VPS düğümü runtime adayı):** agent loop / cron / gateway / model
+- **Hermes (Noma düğümü runtime adayı):** agent loop / zamanlanmış iş / gateway / model
   yönetimi yeniden yazılmaz; özel geliştirme bilgi sistemine odaklanır. Sıfırdan
   runtime değerlendirildi ve reddedildi (aylarca sürecek, tek kişi için bakımsız).
 - **MCP:** taşınabilirlik katmanı adayı; nihai kullanımı/sınırları henüz kararlaşmadı

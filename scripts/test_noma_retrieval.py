@@ -25,6 +25,16 @@ def note(slug, title, *, summary='', body='', parents=(), status='established',
             'fields': {k: lib.fold_tr(v) for k, v in fields.items()}}
 
 
+class ClosedStdin(io.StringIO):
+    """stdin tty değil; okunmaya çalışılırsa hata verir (B3: bloklanmaz)."""
+
+    def isatty(self):
+        return False
+
+    def readline(self, *args):
+        raise AssertionError('stdin tüketildi')
+
+
 class RetrievalTests(unittest.TestCase):
     def test_root_reads_only_generated_index_and_returns_paths(self):
         text = ("# index\n## Kök Hub'lar\n- [[agac|Özel Başlık]] — PRIVATE_SENTINEL\n"
@@ -129,7 +139,7 @@ class RetrievalTests(unittest.TestCase):
     def test_json_search_omits_body_and_summary(self):
         idx = {'leaf': note('leaf', 'PRIVATE_TITLE_SENTINEL Ağ', summary='PRIVATE_SUMMARY_SENTINEL',
                             body='PRIVATE_BODY_SENTINEL')}
-        a = SimpleNamespace(tokens=['ağ'], type=None, stage=None, scope=None,
+        a = SimpleNamespace(tokens=['private'], type=None, stage=None, scope=None,
                             status=None, tag=None, hub=None, limit=10, json=True)
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -162,6 +172,32 @@ class RetrievalTests(unittest.TestCase):
                          json.loads(output.getvalue()))
         self.assertNotIn('PRIVATE_', output.getvalue())
 
+    def test_title_lexicon_hub_is_readable(self):
+        output = io.StringIO()
+        with tempfile.TemporaryDirectory(prefix='noma-basliklar-', dir=lib.ROOT / 'tmp') as tmp:
+            page = Path(tmp) / 'index/hubs/_basliklar/000001.md'
+            page.parent.mkdir(parents=True)
+            page.write_text('# Sözlük\n- [[leaf|PRIVATE_TITLE_SENTINEL]]\n', encoding='utf-8')
+            with mock.patch.object(lib, 'ROOT', Path(tmp)), \
+                    mock.patch.object(lib, 'load_wiki_index', side_effect=AssertionError('wiki tarandı')), \
+                    contextlib.redirect_stdout(output):
+                self.assertEqual(0, wiki.cmd_hub(SimpleNamespace(slug='_basliklar', json=True, page=1)))
+        self.assertEqual({'paths': ['wiki/leaf.md'], 'next_page': None},
+                         json.loads(output.getvalue()))
+        self.assertNotIn('PRIVATE_', output.getvalue())
+
+    def test_hub_still_rejects_traversal_and_non_reserved_underscore(self):
+        error = io.StringIO()
+        with tempfile.TemporaryDirectory(prefix='noma-hub-skip-', dir=lib.ROOT / 'tmp') as tmp:
+            page = Path(tmp) / 'index/hubs/_basliklar/000001.md'
+            page.parent.mkdir(parents=True)
+            page.write_text('# Sözlük\n- [[leaf|PRIVATE_TITLE_SENTINEL]]\n', encoding='utf-8')
+            with mock.patch.object(lib, 'ROOT', Path(tmp)), contextlib.redirect_stderr(error):
+                for bad in ('../etc', 'Bad_Slug', '_basliklar/../root', '..', '_gizli'):
+                    self.assertEqual(1, wiki.cmd_hub(SimpleNamespace(slug=bad, json=True, page=1)))
+                self.assertEqual(1, wiki.cmd_hub(SimpleNamespace(slug='_basliklar', json=True, page=0)))
+        self.assertNotIn('PRIVATE_', error.getvalue())
+
     def test_hub_rejects_bad_slug_and_oversized_page(self):
         error = io.StringIO()
         with tempfile.TemporaryDirectory(prefix='noma-hub-size-', dir=lib.ROOT / 'tmp') as tmp:
@@ -172,6 +208,125 @@ class RetrievalTests(unittest.TestCase):
                 self.assertEqual(1, wiki.cmd_hub(SimpleNamespace(slug='../root', json=True, page=1)))
                 self.assertEqual(1, wiki.cmd_hub(SimpleNamespace(slug='root', json=True, page=1)))
         self.assertNotIn('PRIVATE_', error.getvalue())
+
+    def private_idx(self):
+        """R4 testleri için gövde/tarih/tag taşıyan sentetik indeks."""
+        idx = {'leaf': note('leaf', 'PRIVATE_TITLE_SENTINEL',
+                            summary='PRIVATE_SUMMARY_SENTINEL',
+                            body='PRIVATE_BODY_SENTINEL'),
+               'other': note('other', 'PRIVATE_NEIGHBOR_TITLE')}
+        idx['leaf']['tags'] = ['PRIVATE_TAG_SENTINEL']
+        idx['leaf']['fm']['created'] = '2026-01-02T03:04:05+03:00'
+        idx['leaf']['out'] = {'other'}
+        return idx
+
+    def run_wiki(self, fn, idx, **kw):
+        ns = dict(type=None, stage=None, scope=None, status=None, tag=None,
+                  hub=None, limit=10, json=False, human=False, hop=1)
+        ns.update(kw)
+        a = SimpleNamespace(**ns)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = fn(idx, a)
+        self.assertEqual(0, code)
+        return out.getvalue()
+
+    def test_default_human_output_is_path_only(self):
+        idx = self.private_idx()
+        search = self.run_wiki(wiki.cmd_search, idx, tokens=['private'])
+        self.assertTrue(search.startswith('wiki/leaf.md'))
+        for out in (search,
+                    self.run_wiki(wiki.cmd_recent, idx),
+                    self.run_wiki(wiki.cmd_links, idx, slug='leaf', hop=2)):
+            self.assertNotIn('PRIVATE_', out)
+            self.assertNotIn('created:', out)
+            self.assertNotIn('updated:', out)
+            self.assertIn('wiki/leaf.md', out)
+        self.assertNotIn('2026-08-01', self.run_wiki(wiki.cmd_recent, idx))
+
+    def test_human_flag_opts_into_titles_and_dates(self):
+        idx = self.private_idx()
+        for out in (self.run_wiki(wiki.cmd_search, idx, tokens=['private'], human=True),
+                    self.run_wiki(wiki.cmd_recent, idx, human=True),
+                    self.run_wiki(wiki.cmd_links, idx, slug='leaf', hop=2, human=True)):
+            self.assertIn('PRIVATE_TITLE_SENTINEL', out)
+        self.assertIn('created:', self.run_wiki(wiki.cmd_links, idx, slug='leaf', human=True))
+        self.assertIn('PRIVATE_TAG_SENTINEL', self.run_wiki(wiki.cmd_search, idx,
+                                                            tokens=['private'], human=True))
+
+    def test_json_payload_is_unchanged_by_human_flag(self):
+        idx = self.private_idx()
+        plain = self.run_wiki(wiki.cmd_search, idx, tokens=['private'], json=True)
+        human = self.run_wiki(wiki.cmd_search, idx, tokens=['private'], json=True, human=True)
+        self.assertEqual(plain, human)
+        row = json.loads(plain)[0]
+        self.assertEqual(['match', 'path', 'score'], sorted(row))
+        self.assertEqual('wiki/leaf.md', row['path'])
+        self.assertNotIn('PRIVATE_', plain)
+
+    def test_find_default_output_is_path_only(self):
+        idx = self.private_idx()
+        for extra in ([], ['--human']):
+            out = io.StringIO()
+            with mock.patch.object(lib, 'load_wiki_index', return_value=idx), \
+                    mock.patch.object(find, 'matches_fulltext', return_value=set(idx)), \
+                    mock.patch.object(sys, 'argv', ['noma_find.py', 'private'] + extra), \
+                    contextlib.redirect_stdout(out):
+                find.main()
+            self.assertIn('wiki/leaf.md', out.getvalue())
+            if extra:
+                self.assertIn('PRIVATE_TITLE_SENTINEL', out.getvalue())
+            else:
+                self.assertNotIn('PRIVATE_', out.getvalue())
+                self.assertNotIn('out:', out.getvalue())
+
+    def test_pick_without_tty_does_not_read_stdin(self):
+        idx = self.private_idx()
+        out, err = io.StringIO(), io.StringIO()
+        a = SimpleNamespace(tokens=['private'], type=None, stage=None, scope=None,
+                            status=None, tag=None, hub=None, limit=10, hop=1)
+        with mock.patch.object(sys, 'stdin', ClosedStdin('1\n')), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = wiki.cmd_pick(idx, a)
+        self.assertEqual(1, code)
+        self.assertIn('wiki/leaf.md', out.getvalue())
+        self.assertNotIn('PRIVATE_', out.getvalue())
+        self.assertIn('tty', err.getvalue())
+
+    def test_limit_below_one_is_rejected(self):
+        for argv in (['noma_wiki.py', 's', 'ağ', '--limit', '0'],
+                     ['noma_wiki.py', 's', 'ağ', '--limit', '-1'],
+                     ['noma_wiki.py', 'recent', '--limit', '0'],
+                     ['noma_find.py', '--stage', 'inbox', '--limit', '0'],
+                     ['noma_find.py', '--stage', 'inbox', '--limit', '-1']):
+            err = io.StringIO()
+            mod = wiki if argv[0].endswith('wiki.py') else find
+            with mock.patch.object(lib, 'load_wiki_index', side_effect=AssertionError('wiki tarandı')), \
+                    mock.patch.object(sys, 'argv', argv), \
+                    contextlib.redirect_stderr(err):
+                with self.assertRaises(SystemExit) as ctx:
+                    mod.main()
+            self.assertEqual(2, ctx.exception.code, argv)
+            self.assertIn('--limit >= 1 olmalı', err.getvalue())
+
+    def test_invalid_regex_exits_cleanly_without_echoing_stderr(self):
+        err = io.StringIO()
+        with mock.patch.object(find.shutil, 'which', return_value=None), \
+                contextlib.redirect_stderr(err):
+            with self.assertRaises(SystemExit) as ctx:
+                find.matches_fulltext('a(b')
+        self.assertEqual('hata: geçersiz regex', str(ctx.exception))
+        self.assertNotIn('re.error', err.getvalue())
+
+        rg = SimpleNamespace(returncode=2, stdout='',
+                             stderr='wiki/leaf.md:1: PRIVATE_LEAK')
+        with mock.patch.object(find.shutil, 'which', return_value='rg'), \
+                mock.patch.object(find.subprocess, 'run', return_value=rg), \
+                contextlib.redirect_stderr(err):
+            with self.assertRaises(SystemExit) as ctx:
+                find.matches_fulltext('gizli')
+        self.assertEqual('hata: rg araması başarısız', str(ctx.exception))
+        self.assertNotIn('PRIVATE_LEAK', str(ctx.exception))
 
     def test_index_build_shards_hub_and_removes_obsolete_page(self):
         with tempfile.TemporaryDirectory(prefix='noma-pages-', dir=lib.ROOT / 'tmp') as tmp:

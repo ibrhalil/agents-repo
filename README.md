@@ -27,3 +27,7 @@ Depodaki dosyalar ve mimari kurallar için aşağıdaki yönlendirmeleri takip e
 * **Agent Politikaları ve Kurallar:** `[[agent-policy]]`, `AGENTS.md`, `SCHEMA.md`
 * **Güvenlik ve Anahtar Protokolü:** `[[guvenlik-ve-anahtar]]`
 * **Geliştirme Planı:** `docs/ROADMAP.md`
+* **Obsidian Vault Kurulumu:** `docs/obsidian-recommended.md`
+
+Zamanlanmış iş (cron) henüz yoktur: commit, push ve conflict çözümü elle
+yapılır; zamanlanmış job `docs/ROADMAP.md` B5'e bağlıdır.

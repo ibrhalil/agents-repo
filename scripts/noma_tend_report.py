@@ -8,7 +8,6 @@ import argparse
 import json
 import re
 import sys
-from collections import Counter
 from datetime import date, timedelta
 
 import noma_lib as lib
@@ -17,16 +16,28 @@ from noma_build_index import PAGE_SIZE
 STALE_DAYS = 30
 
 
+def child_map(idx):
+    """hub slug → doğrudan çocuk slug kümesi (yön: çocuk → ## Links üstü)."""
+    children = {}
+    for slug, entry in idx.items():
+        for parent in entry['parents']:
+            children.setdefault(parent, set()).add(slug)
+    return children
+
+
 def collect(idx):
     """(bulgular, özet) — bulgu: tür, yol/slug, ölçü."""
-    child_counts = Counter()
-    for entry in idx.values():
-        for parent in entry['parents']:
-            child_counts[parent] += 1
+    children = child_map(idx)
+    child_counts = {hub: len(kids) for hub, kids in children.items()}
     findings = []
     for slug, count in sorted(child_counts.items(), key=lambda kv: (-kv[1], kv[0])):
-        if count > PAGE_SIZE:
-            findings.append({'kind': 'HUB-FULL', 'slug': slug, 'measure': count})
+        if count <= PAGE_SIZE:
+            continue
+        # Çok sayfalı hub desteklenen tasarımdır; yalnız doğal alt-hub yoksa bölünmeli.
+        if any(child_counts.get(child, 0) for child in children[slug]):
+            continue
+        findings.append({'kind': 'HUB-FULL', 'slug': slug, 'measure': count,
+                         'pages': -(-count // PAGE_SIZE)})
     for slug in sorted(idx):
         if idx[slug]['fm'].get('stage') == 'inbox':
             findings.append({'kind': 'INBOX', 'slug': slug, 'measure': ''})
@@ -48,9 +59,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--json', action='store_true', help='makine okunur çıktı')
     ap.add_argument('--no-log', action='store_true', help='log satırı yazma')
-    ap.add_argument('--actor', default='cron',
-                    help='gerçek oturum modeli | K | cron (zamanlanmış iş)')
+    ap.add_argument('--actor',
+                    help='gerçek oturum modeli | K | cron (zamanlanmış iş); '
+                         'verilmezse NOMA_ACTOR')
     a = ap.parse_args()
+    actor = lib.resolve_actor(a.actor) if not a.no_log else None
     idx = lib.load_wiki_index()
     findings, summary = collect(idx)
     if a.json:
@@ -58,12 +71,13 @@ def main():
                          ensure_ascii=False))
     else:
         for f in findings:
+            extra = f' · {f["pages"]} sayfa' if 'pages' in f else ''
             print(f"{f['kind']:8} wiki/{f['slug']}.md"
-                  + (f' · {f["measure"]}' if f['measure'] else ''))
+                  + (f' · {f["measure"]}' if f['measure'] else '') + extra)
         print('== ' + ' · '.join(f'{k}={v}' for k, v in summary.items()) + ' ==')
-    if not a.no_log:
+    if actor:
         lib.append_log('tend', 'bakım raporu: ' +
-                       ' '.join(f'{k}={v}' for k, v in summary.items()), actor=a.actor)
+                       ' '.join(f'{k}={v}' for k, v in summary.items()), actor=actor)
     return 0
 
 
