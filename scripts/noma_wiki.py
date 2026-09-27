@@ -4,7 +4,8 @@ Varsayılan çıktı YALNIZ YOLDUR (kural 4): başlık, tag, tarih ve link hedef
 basılmaz. Başlık/metadata görmek için `--human` gerekir; bu bayrak yalnız
 güvenilir yerel terminal içindir, agent/cron stdout'una kullanılmaz.
 `--json` çıktısı yalnız yol/puan/sayfa işaretçisi taşır (dışarıdan bağımlıdır).
-Not metni hiçbir modda basılmaz; dosyadan ayrıca seçilerek okunur."""
+Not metni hiçbir modda basılmaz; seçilen dosya read aracıyla bağlama
+açılır — AGENTS R4 yalnız stdout'a dökümü yasaklar, read ile açmayı değil."""
 import argparse
 import json
 import re
