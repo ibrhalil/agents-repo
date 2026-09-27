@@ -17,5 +17,6 @@ Notun ana fikrini veya amacını belirten 1-2 cümlelik özet.
 
 ## Body
 Notun içeriği. Yalın düğüm ilkesi (ZORUNLU): bir not = bir fikir; büyürse bölünür.
+Akış veya ilişkiler anlatımı kolaylaştırıyorsa gövdede isteğe bağlı Mermaid diyagramı kullan; yanında kısa metin açıklaması bırak.
 Üst bölge (frontmatter → Summary sonu) boş satırsız ve tekrarsızdır.
 Gövdede boş satır serbesttir.

@@ -50,3 +50,26 @@ sorulur. Üçüncü taraf sync/backup eklentileri varsayılan kapalıdır.
 - Not okurken `## Summary` → `## Links` → yalnız gereken gövde bölümü sırası.
 - `wiki/` dışına (public dizinler) kişisel veri yazılmaz.
 - Doğrulama/derleme turları Obsidian'dan değil `scripts/` CLI'dan koşar.
+
+## İsteğe bağlı Mermaid diyagramları
+Akış, ilişki veya karar dallarını anlamayı kolaylaştırıyorsa notun gövdesine
+`mermaid` kod bloğu koy. Diyagramın ne anlattığını bir cümleyle de yaz; düz
+Markdown okuyan agent için metin, görsel önizleme kullanan insan için diyagram
+birbirini tamamlar. `## Links` düz wikilink listesi ve `## Summary` kısa metin
+olarak kalır. Diyagram içindeki yazılar notlar arası bağlantının yerini almaz.
+
+````markdown
+## Akış
+Ham kaynaktan işlenen bilgi wiki notunda yaşar; gezinme haritası ondan üretilir.
+
+```mermaid
+flowchart LR
+    raw["Ham kaynak"] --> process["İşle ve doğrula"]
+    process --> wiki["Wiki notu"]
+    wiki --> index["Türetilmiş indeks"]
+```
+````
+
+Yalnız diyagram açıklamadan daha yararlıysa ekle; her nota boş diyagram veya yeni
+frontmatter alanı koyma. Sözdizimi ve Obsidian önizlemesi: [Obsidian Mermaid
+yardımı](https://help.obsidian.md/advanced-syntax#Diagram).

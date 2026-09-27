@@ -8,6 +8,7 @@ BELİRSİZLİK: Hub veya not açık değilse soruyu önce 2-4 kısa kavrama DAMI
 ADAY ≠ KANIT: Arama/bağlantı adayı kanıt sayılmaz; gövde wikilink'i yalnız gerekçesi okunursa izlenir ([[cekirdek-bilgi-erisimi]]). Kısmi eşleşme kanıt değildir; "wiki'de kayıtlı değil" ancak aday kanıt okunduktan sonra söylenir.
 GENİŞLETME: Tamamlanan yeni yaprak `## Links` üzerinden KESİNLİKLE mevcut Hub'a bağlanır (Bottom-Up); `stage: inbox` bağlantısız iskelet yalnız taslaktır, tend ile bağlanmadan tamamlanmış sayılmaz.
 BÖLME: Büyüyen notlar Hub'a dönüştürülüp alt yapraklara bölünerek ağaç organik genişletilir.
+GÖRSELLEŞTİRME: Akış, ilişki veya karar dalları metinden daha kolay anlaşılacaksa gövdede isteğe bağlı `mermaid` kod bloğu kullan; kısa metin açıklamasını koru. Frontmatter'a alan veya `## Summary`/`## Links` içine diyagram ekleme; diyagram not linklerinin yerini tutmaz (bkz. `docs/obsidian-recommended.md`).
 ## 2. Operasyonlar
 ingest: Kaynağı `raw/` altına yaz (inbox/clippings: verbatim; conversations: kısa `K:/<model>:` diyalog özeti — model adı gerçek session modeli). Anla, wiki ile merge et, `log/` kaydı düş.
 ÖNCELİK KURALI: Her bilgi sorusu — kategori fark etmez (kimlik, tercih, proje, karar, teknik) — ÖNCE wiki'ye sorulur. Wiki kilitli/erişilemezse "kayıtlı değil" deme; erişim durumunu belirt, erişilebilen public kaynakları ayrı etiketle. Düğüm-lokal hafıza (örn. Hermes Memory/USER.md) ve genel model bilgisi kanonik DEĞİLDİR; ancak wiki'de cevap yoksa, açıkça etiketlenerek (kaynak: hafıza/genel bilgi) kullanılır.
