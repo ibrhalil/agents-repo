@@ -35,6 +35,7 @@ R5. Yeni wiki notları ZORUNLU OLARAK `docs/templates/wiki_note.md` şablonundan
 R6. `updated:` alanı her değişikliğinde ISO 8601 formatında bump edilir.
 R7. Dil TÜRKÇE, slug/tag KISA ASCII'dir.
 R8. Geçici işler repo kökündeki `tmp/` dizininde yapılır.
+R9. Test fixture'larında Git gerekmiyorsa `git init` yapılmaz. Gerekiyorsa repo `tmp/` altında geçici yaşam döngüsüyle (`TemporaryDirectory`/`try-finally`) kurulur; başarı/hata sonrası test Git metadata'sı temizlenir. IDE VCS root kaydı eklenmez; kalıcı fixture içeriği ile geçici Git geçmişi ayrı tutulur.
 ## 5. Durum (State) Yönetimi
 Uzun işlerin state'i sohbette değil `plans/` altındaki dosyalarda yaşar; session bitiminde kritik kararlar `agent/sessions/` altına kompakt özet olarak bırakılır.
 Bağlam büyüyüp izlemeyi zorlaştırdığında kullanıcıya yeni session öner; kararları, durumu, açık adımları ve wiki yollarını kısa devir özetiyle aktar ([[oturum-devri]]).
