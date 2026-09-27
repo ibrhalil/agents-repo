@@ -20,6 +20,7 @@ import noma_hermes_context as context
 import noma_ingest as ingest
 import noma_lib as lib
 import noma_new_note as new_note
+import noma_privacy as privacy
 import noma_tend_report as tend
 
 SENTINEL_TEMPLATE = (
@@ -62,6 +63,62 @@ class SyntheticNode(unittest.TestCase):
 
     def staging_leftovers(self):
         return sorted(p.name for p in (self.root / 'tmp').rglob('*') if p.is_file())
+
+
+class PublicPrivacyTests(SyntheticNode):
+    def setUp(self):
+        super().setUp()
+        subprocess.run(['git', 'init', '-q', str(self.root)], check=True,
+                       capture_output=True)
+
+    def write(self, rel, data):
+        path = self.root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        return path
+
+    def test_tracked_and_untracked_public_files_across_repository(self):
+        self.write('README.md', b'contact: tracked' + b'@domain.test')
+        self.write('.github/workflows/check.yml', b'phone: 0532 ' + b'123 45 67')
+        self.write('agent/config.md', b'contact: new' + b'@domain.test')
+        subprocess.run(['git', 'add', '--', 'README.md', '.github/workflows/check.yml'],
+                       cwd=self.root, check=True, capture_output=True)
+        self.assertEqual([
+            ('.github/workflows/check.yml', 'telefon benzeri metin'),
+            ('README.md', 'e-posta benzeri metin'),
+            ('agent/config.md', 'e-posta benzeri metin'),
+        ], privacy.scan_public(self.root))
+
+    def test_private_ignored_binary_and_symlink_targets_are_never_read(self):
+        private = b'private' + b'@domain.test 0532 ' + b'123 45 67'
+        for rel in ('wiki/secret.md', 'raw/inbox/data.md', 'index.md',
+                    'index/hubs/page.md', 'agent/prompts/p.md',
+                    'agent/sessions/s.md', 'plans/p.md', 'log/l.md',
+                    'tmp/scratch.md', '.env', '.env.local'):
+            self.write(rel, private)
+        self.write('docs/ignored.md', private)
+        self.write('docs/.env.production', private)
+        self.write('.gitignore', b'docs/ignored.md\n')
+        self.write('docs/fixture.bin', b'\x00' + private)
+        self.write('docs/export.pdf', b'%PDF-1.4\n' + private)
+        self.write('scripts/invalid.dat', b'\xff' + private)
+        (self.root / 'docs' / 'shortcut.md').symlink_to(self.root / 'wiki' / 'secret.md')
+        (self.root / 'external').symlink_to(self.root / 'wiki', target_is_directory=True)
+        subprocess.run(['git', 'add', '-f', '--', 'wiki/secret.md', 'index.md',
+                        'docs/fixture.bin', 'scripts/invalid.dat'],
+                       cwd=self.root, check=True, capture_output=True)
+        self.assertEqual([], privacy.scan_public(self.root))
+
+    def test_diagnostics_never_include_matched_contents(self):
+        secret = 'SENTINEL_PRIVATE_123' + '@internal.test'
+        self.write('docs/report.md', (f'{secret}\n{secret}\n0555-987-' + '65-43').encode())
+        self.write('docs/example.md', b'`inline' + b'@domain.test`\n'
+                   b'```\nblock' + b'@domain.test\n```\nuser@example.com\n')
+        findings = privacy.scan_public(self.root)
+        self.assertEqual([('docs/report.md', 'e-posta benzeri metin'),
+                          ('docs/report.md', 'telefon benzeri metin')], findings)
+        self.assertNotIn('SENTINEL_PRIVATE', repr(findings))
+        self.assertNotIn('987', repr(findings))
 
 
 class RawAtomicityTests(SyntheticNode):
@@ -378,6 +435,12 @@ class HermesHookTests(SyntheticNode):
     def setUp(self):
         super().setUp()
         (self.root / 'index.md').write_text('# sentetik\n', encoding='utf-8')
+        pages = self.root / 'index' / 'hubs' / '_basliklar'
+        pages.mkdir(parents=True)
+        (pages / '000001.md').write_text('# sentetik\n', encoding='utf-8')
+        hub = self.root / 'index' / 'hubs' / 'ornek'
+        hub.mkdir()
+        (hub / '000001.md').write_text('# sentetik\n', encoding='utf-8')
 
     def hook(self, payload):
         out = io.StringIO()
@@ -401,6 +464,40 @@ class HermesHookTests(SyntheticNode):
         self.assertEqual(0, code)
         self.assertEqual(context.RESTRICTED_CONTEXT, text)
 
+    def test_locked_root_index_is_restricted(self):
+        (self.root / 'index.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
+        _, text = self.hook({})
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
+    def test_partially_locked_hub_pages_are_restricted(self):
+        hub = self.root / 'index' / 'hubs' / 'ornek'
+        (hub / '000002.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
+        _, text = self.hook({})
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
+    def test_locked_title_index_is_restricted(self):
+        page = self.root / 'index' / 'hubs' / '_basliklar' / '000001.md'
+        page.write_bytes(b'\x00GITCRYPT\x00sentetik')
+        _, text = self.hook({})
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
+    def test_missing_hub_map_is_restricted(self):
+        (self.root / 'index' / 'hubs' / '_basliklar' / '000001.md').unlink()
+        _, text = self.hook({})
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
+    def test_missing_hub_with_open_title_index_is_restricted(self):
+        hub = self.root / 'index' / 'hubs' / 'ornek'
+        (hub / '000001.md').unlink()
+        hub.rmdir()
+        _, text = self.hook({})
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
+    def test_empty_hub_is_restricted(self):
+        (self.root / 'index' / 'hubs' / 'ornek' / '000001.md').unlink()
+        _, text = self.hook({})
+        self.assertEqual(context.RESTRICTED_CONTEXT, text)
+
     def test_payload_cwd_cannot_forge_local_branch(self):
         (self.root / 'wiki' / 'not.md').write_bytes(b'\x00GITCRYPT\x00sentetik')
         forged = self.root / 'sahte'
@@ -413,6 +510,8 @@ class HermesHookTests(SyntheticNode):
 
     def test_unlocked_vault_keeps_local_branch(self):
         (self.root / 'wiki' / 'not.md').write_text('# sentetik\n', encoding='utf-8')
+        hub = self.root / 'index' / 'hubs' / 'ornek'
+        (hub / '000002.md').write_text('# sentetik\n', encoding='utf-8')
         code, text = self.hook({'cwd': str(self.root)})
         self.assertEqual(0, code)
         self.assertEqual(context.LOCAL_CONTEXT, text)
@@ -449,9 +548,12 @@ class HermesHookTests(SyntheticNode):
         (self.root / 'wiki' / 'not.md').write_text(
             '---\ntitle: "Gizli"\n---\n## Summary\nSENTINEL_PRIVATE_VALUE\n',
             encoding='utf-8')
+        (self.root / 'index' / 'hubs' / 'ornek' / '000001.md').write_text(
+            'SENTINEL_PRIVATE_HUB\n', encoding='utf-8')
         code, text = self.hook({'cwd': str(self.root)})
         self.assertEqual(0, code)
         self.assertNotIn('SENTINEL_PRIVATE_VALUE', text)
+        self.assertNotIn('SENTINEL_PRIVATE_HUB', text)
 
 
 if __name__ == '__main__':

@@ -148,7 +148,9 @@ LINK_RE = re.compile(r'\[\[([^\]|#]+)')
 
 def strip_code(text):
     text = re.sub(r'```.*?```', '', text, flags=re.S)
-    return re.sub(r'`[^`\n]*`', '', text)
+    # Markdown inline spans can use multiple backticks (including ``[[links]]``).
+    # Match equal-length delimiters without crossing a line or consuming longer runs.
+    return re.sub(r'(?<!`)(`+)(?!`)(?:(?!\1)[^\n])*?\1(?!`)', '', text)
 
 
 def fold_tr(text):

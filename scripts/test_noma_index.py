@@ -70,6 +70,15 @@ class IndexBuildTests(unittest.TestCase):
         self.root = Path(self.scratch.name) / 'repo'
         self.root.mkdir()
 
+    def test_multiple_backtick_example_is_not_a_parent_hub(self):
+        source = write_wiki(self.root, leaves=1)
+        leaf = source / 'leaf-000.md'
+        leaf.write_text(LEAF_NOTE.format(n=0).replace(
+            '[[root]]', '[[root]], ``[[sahte-hub]]``'), encoding='utf-8')
+        self.assertEqual(0, run_build(self.root))
+        self.assertFalse((self.root / 'index/hubs/sahte-hub').exists())
+        self.assertTrue((self.root / 'index/hubs/root/000001.md').exists())
+
     def test_index_writes_never_truncate_a_final_path(self):
         write_wiki(self.root, leaves=75)
         writes, replaces = [], []

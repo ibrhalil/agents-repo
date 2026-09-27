@@ -11,6 +11,8 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+import noma_lib as lib
+
 ROOT = Path(__file__).resolve().parent.parent
 WIKI_DIR = ROOT / "wiki"
 INDEX_FILE = ROOT / "index.md"
@@ -27,8 +29,7 @@ READ_ERROR = 'hata: indeks üretilemedi — wiki/şifreli içerik okunamadı'
 
 def _strip_code(text):
     """Kod bloğu/satır içi kodu kaldır — şablon yer tutucu linkleri hub olmasın."""
-    text = re.sub(r"```.*?```", "", text, flags=re.S)
-    return re.sub(r"`[^`\n]*`", "", text)
+    return lib.strip_code(text)
 
 
 def _latest_log_stem():

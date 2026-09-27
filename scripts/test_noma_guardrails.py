@@ -184,6 +184,11 @@ class GuardrailTests(unittest.TestCase):
         with mock.patch.object(context, 'SCRIPT_ROOT', self.root):
             self.assertFalse(context.unlocked_index({'cwd': str(self.root)}))
             index.write_text('# synthetic index', encoding='utf-8')
+            hubs = self.root / 'index' / 'hubs'
+            for slug in ('_basliklar', 'systems'):
+                page = hubs / slug / '000001.md'
+                page.parent.mkdir(parents=True, exist_ok=True)
+                page.write_text('# synthetic page\n', encoding='utf-8')
             self.assertTrue(context.unlocked_index({'cwd': str(self.root)}))
         self.assertNotIn('## Summary', context.LOCAL_CONTEXT + context.RESTRICTED_CONTEXT)
         self.assertIn('s <kavramlar> --json', context.LOCAL_CONTEXT)

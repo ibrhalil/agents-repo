@@ -64,6 +64,13 @@ class LintTests(unittest.TestCase):
             code = lint.main()
         return code, list(lint.out)
 
+    @contextlib.contextmanager
+    def staged(self, snapshot):
+        """Synthetic index snapshot; no private payload enters git/stdout."""
+        with mock.patch.object(lint, '_staged_wiki_paths', return_value=sorted(snapshot)), \
+                mock.patch.object(lint, '_staged_payload', side_effect=snapshot.get):
+            yield
+
     def mock_git(self, tracked=(), check_attr='git-crypt'):
         """ls-files ve check-attr çağrılarını sabit yanıtla; gerisi gerçek git."""
         real = subprocess.run
@@ -179,6 +186,25 @@ class LintTests(unittest.TestCase):
         self.assertEqual([o for o in out if o.startswith(('ERR', 'WRN'))], [])
         self.assertEqual(0, code)
 
+    def test_multiple_backtick_code_span_does_not_create_link(self):
+        text = note('kod-ornek') + '\n## Body\nÇift ayraç: ``[[olmayan-not]]``.\n'
+        self.write('kod-ornek', text)
+        code, out = self.run_lint()
+        self.assertFalse(any(o.startswith('ERR LINK:') for o in out))
+        self.assertEqual(0, code)
+
+    def test_immutable_legacy_log_exceptions_do_not_hide_new_errors(self):
+        path = self.root / 'log' / '2026-09-26.md'
+        old = '# günlük\n' + '# boş\n' * 57 + 'eski biçim\n# ara\neski biçim iki\n'
+        path.write_text(old, encoding='utf-8')
+        self.head.return_value = old.encode('utf-8')
+        self.assertTrue(lint._committed_legacy_log_line(path, 59))
+        self.assertTrue(lint._committed_legacy_log_line(path, 61))
+        path.write_text(old + 'yeni biçim hatası\n', encoding='utf-8')
+        self.assertFalse(lint._committed_legacy_log_line(path, 62))
+        path.write_text(old.replace('eski biçim iki', 'değişen satır'), encoding='utf-8')
+        self.assertFalse(lint._committed_legacy_log_line(path, 61))
+
     def test_links_then_non_summary_heading_reports_struct(self):
         self.write('kok-not', note('kok-not', title='Kök Not'))
         self.write('yaprak-not', note('yaprak-not', title='Yaprak Not',
@@ -227,7 +253,8 @@ class LintTests(unittest.TestCase):
         (self.root / 'raw').mkdir()
         (self.root / 'raw' / 'kaynak-01.md').write_text('kaynak\n', encoding='utf-8')
         self.write('kok-not', note('kok-not', title='Kök Not'))
-        with self.mock_git(['raw/kaynak-01.md', 'raw/kaynak-02.md', 'wiki/kok-not.md']):
+        with self.mock_git(['raw/kaynak-01.md', 'raw/kaynak-02.md', 'wiki/kok-not.md']), \
+                self.staged({'wiki/kok-not.md': (self.root / 'wiki' / 'kok-not.md').read_bytes()}):
             code, out = self.run_lint()
         self.assertEqual(1, len([c for c in self.git_calls
                                  if c[:2] == ['git', 'check-attr']]))
@@ -293,10 +320,64 @@ class LintTests(unittest.TestCase):
         self.write('guncel-not', old)  # worktree HEAD ile aynı
         self.head.return_value = old.encode('utf-8')
         with mock.patch.object(lint, '_staged_payload',
-                               mock.Mock(return_value=new.encode('utf-8'))):
+                               mock.Mock(return_value=new.encode('utf-8'))), \
+                mock.patch.object(lint, '_staged_wiki_paths',
+                                  return_value=['wiki/guncel-not.md']):
             code, out = self.run_lint()
         self.assertIn('ERR BUMP: wiki/guncel-not.md (staged): değişiklik var, '
                       'updated artırılmadı', out)
+        self.assertEqual(1, code)
+
+    def test_staged_new_note_validates_structure_and_links(self):
+        self.write('kok-not', note('kok-not'))
+        bad = note('yeni-not', links=['olmayan-not']).replace('## Summary', '## Gizli Başlık')
+        with self.staged({'wiki/kok-not.md': (self.root / 'wiki/kok-not.md').read_bytes(),
+                          'wiki/yeni-not.md': bad.encode()}):
+            code, out = self.run_lint()
+        self.assertIn('ERR STRUCT: wiki/yeni-not.md (staged): ## Links sonrası beklenmeyen '
+                      'bölüm — ## Summary beklenir (SCHEMA §4)', out)
+        self.assertIn('ERR LINK: wiki/yeni-not.md (staged): [[olmayan-not]] hedefi yok', out)
+        self.assertNotIn('Gizli Başlık', ' '.join(out))
+        self.assertEqual(1, code)
+
+    def test_staged_changed_note_validates_frontmatter_and_cycle(self):
+        self.write('not-a', note('not-a', links=['not-b']))
+        self.write('not-b', note('not-b'))
+        changed = note('not-b', links=['not-a'], updated='2026-09-21T10:00:00+03:00')
+        changed = changed.replace('type: concept', 'type: SECRET_INVALID')
+        with self.staged({'wiki/not-a.md': (self.root / 'wiki/not-a.md').read_bytes(),
+                          'wiki/not-b.md': changed.encode()}):
+            code, out = self.run_lint()
+        self.assertIn('ERR ENUM: wiki/not-b.md (staged): geçersiz type', out)
+        self.assertTrue(any(o.startswith('WRN CYCLE:') and '(staged)' in o for o in out))
+        self.assertNotIn('SECRET_INVALID', ' '.join(out))
+        self.assertEqual(1, code)
+
+    def test_staged_deletion_breaks_link_even_if_worktree_retains_target(self):
+        self.write('not-a', note('not-a', links=['not-b']))
+        self.write('not-b', note('not-b'))
+        with self.staged({'wiki/not-a.md': (self.root / 'wiki/not-a.md').read_bytes()}):
+            code, out = self.run_lint()
+        self.assertIn('ERR LINK: wiki/not-a.md (staged): [[not-b]] hedefi yok', out)
+        self.assertEqual(1, code)
+
+    def test_unstaged_link_does_not_contaminate_staged_graph(self):
+        self.write('not-a', note('not-a', links=['not-b']))
+        self.write('not-b', note('not-b', links=['not-a']))
+        with self.staged({'wiki/not-a.md': note('not-a', links=['not-b']).encode(),
+                          'wiki/not-b.md': note('not-b').encode()}):
+            code, out = self.run_lint()
+        self.assertEqual(1, len([o for o in out if o.startswith('WRN CYCLE')]))
+        self.assertFalse(any('(staged)' in o for o in out if 'CYCLE' in o))
+        self.assertEqual(0, code)
+
+    def test_staged_unreadable_note_fails_without_partial_graph_claims(self):
+        self.write('not-a', note('not-a', links=['not-b']))
+        with self.staged({'wiki/not-a.md': (self.root / 'wiki/not-a.md').read_bytes(),
+                          'wiki/not-b.md': lint.UNREADABLE}):
+            code, out = self.run_lint()
+        self.assertTrue(any(o.startswith('ERR CRYPT: wiki/not-b.md (staged)') for o in out))
+        self.assertFalse(any('(staged)' in o for o in out if o.startswith('ERR LINK')))
         self.assertEqual(1, code)
 
 

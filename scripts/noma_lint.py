@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import noma_lib as lib
+import noma_privacy
 
 ROOT = Path(__file__).resolve().parent.parent
 # B5 drift riski: aşağıdaki sabitler ve parse_fm, noma_lib kopyalarıdır. Birleştirilecek
@@ -19,8 +20,6 @@ ORDER = 'title type stage scope status tags created updated locked'.split()
 ISO_DT = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)')
 ENCRYPTED = ['index.md', 'index/', 'raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
 BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
-EMAIL = re.compile(r'[\w.+-]+@[\w-]+\.[A-Za-z]{2,}')
-PHONE = re.compile(r'\b0?5\d{2}[\s.-]?\d{3}[\s.-]?\d{2}[\s.-]?\d{2}\b')
 GITCRYPT_MAGIC = b'\x00GITCRYPT\x00'
 # HEAD/index okuma hatası sentinel'i: "yok" (None) ile "var ama okunamadı" ayrımı.
 UNREADABLE = object()
@@ -45,8 +44,7 @@ def parse_fm(text):
     return d, order
 
 def strip_code(text):
-    text = re.sub(r'```.*?```', '', text, flags=re.S)
-    return re.sub(r'`[^`\n]*`', '', text)
+    return lib.strip_code(text)
 
 def _gitcrypt_blob(data):
     return data.startswith(GITCRYPT_MAGIC)
@@ -133,78 +131,122 @@ def _history_checks(rel, cur_text, previous_payload, label=''):
         add('WRN', 'LOCKED', f'{rel}{label}: locked not değişmiş; insan değişikliği doğrulansın')
 
 
+def _check_note(rel, data, links_in, links_out, tree_out, label=''):
+    """Validate one snapshot note without exposing its contents in diagnostics."""
+    if _unverifiable(data):
+        add('ERR', 'CRYPT', f'{rel}{label}: dosya okunamadı (kilitli/bozuk) — denetlenemedi')
+        return
+    text = data.decode('utf-8')
+    fm, order = parse_fm(text)
+    if fm is None:
+        add('ERR', 'FM', f'{rel}{label}: frontmatter yok')
+        return
+    for k in ('title', 'type', 'stage', 'scope', 'created', 'updated'):
+        if not fm.get(k): add('ERR', 'FM', f'{rel}{label}: zorunlu alan {k} yok')
+    for k, ok in (('type', TYPES), ('stage', STAGES), ('scope', SCOPES),
+                  ('status', STATUS)):
+        v = fm.get(k, '').strip('"')
+        if v and v not in ok: add('ERR', 'ENUM', f'{rel}{label}: geçersiz {k}')
+    idx = [ORDER.index(f2) for f2 in order if f2 in ORDER]
+    if idx != sorted(idx): add('ERR', 'ORDER', f'{rel}{label}: frontmatter sırası hatalı')
+    for k in ('created', 'updated'):
+        if fm.get(k):
+            try:
+                if not ISO_DT.fullmatch(fm[k]): raise ValueError
+                datetime.fromisoformat(fm[k].replace('Z', '+00:00'))
+            except ValueError:
+                add('ERR', 'DATE', f'{rel}{label}: {k} geçerli ISO 8601 zaman damgası değil')
+    if fm.get('created') and fm.get('updated'):
+        c, u = lib.parse_iso_dt(fm['created']), lib.parse_iso_dt(fm['updated'])
+        if (c and u and u < c) or ((not c or not u)
+                                   and fm['updated'] < fm['created']):
+            add('ERR', 'DATE', f'{rel}{label}: updated created öncesinde')
+    if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*\.md', Path(rel).name):
+        add('ERR', 'SLUG', f'{rel}{label}: ASCII kebab-case değil')
+    body = strip_code(text)
+    links_out[rel] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', body)}
+    for s in links_out[rel]: links_in.setdefault(s.lower(), set()).add(rel)
+    links_m = re.search(r'^## Links[ \t]*$', body, re.M)
+    if not links_m:
+        add('ERR', 'STRUCT', f'{rel}{label}: ## Links bölümü yok (SCHEMA §4)')
+    else:
+        tail = body[links_m.end():]
+        nxt = re.search(r'^## ([^\n]+)', tail, re.M)
+        if not nxt or nxt.group(1).strip() != 'Summary':
+            add('ERR', 'STRUCT', f'{rel}{label}: ## Links sonrası beklenmeyen bölüm — '
+                                 '## Summary beklenir (SCHEMA §4)')
+        sec_text = tail[:nxt.start()] if nxt else tail
+        tree_out[Path(rel).stem] = {
+            s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', sec_text)
+        }
+    st = fm.get('stage', '')
+    upd = (fm.get('updated') or '')[:10]
+    if st in ('inbox', 'next', 'in_progress', 'waiting'):
+        try:
+            if date.fromisoformat(upd) < date.today() - timedelta(days=30):
+                add('WRN', 'STALE', f'{rel}{label}: aktif stage 30+ gün güncellenmedi (tend adayı)')
+        except ValueError: pass
+    return text
+
+
 def check_wiki(wiki):
     links_in, links_out, tree_out = {}, {}, {}
     for p in wiki:
         rel = f'wiki/{p.name}'
         data = p.read_bytes()
-        if _unverifiable(data):
-            # Kilitli/bozuk dosya: sessiz atlamak sahte yeşildir; kontrollü tanı.
-            add('ERR', 'CRYPT', f'{rel}: dosya okunamadı (kilitli/bozuk) — denetlenemedi')
-            continue
-        text = data.decode('utf-8')
-        fm, order = parse_fm(text)
-        if fm is None:
-            add('ERR', 'FM', f'{rel}: frontmatter yok'); continue
-        for k in ('title', 'type', 'stage', 'scope', 'created', 'updated'):
-            if not fm.get(k): add('ERR', 'FM', f'{rel}: zorunlu alan {k} yok')
-        for k, ok in (('type', TYPES), ('stage', STAGES), ('scope', SCOPES),
-                      ('status', STATUS)):
-            v = fm.get(k, '').strip('"')
-            if v and v not in ok: add('ERR', 'ENUM', f'{rel}: geçersiz {k}')
-        idx = [ORDER.index(f2) for f2 in order if f2 in ORDER]
-        if idx != sorted(idx): add('ERR', 'ORDER', f'{rel}: frontmatter sırası {order}')
-        for k in ('created', 'updated'):
-            if fm.get(k):
-                try:
-                    if not ISO_DT.fullmatch(fm[k]): raise ValueError
-                    datetime.fromisoformat(fm[k].replace('Z', '+00:00'))
-                except ValueError:
-                    add('ERR', 'DATE', f'{rel}: {k} geçerli ISO 8601 zaman damgası değil')
-        if fm.get('created') and fm.get('updated'):
-            c, u = lib.parse_iso_dt(fm['created']), lib.parse_iso_dt(fm['updated'])
-            if (c and u and u < c) or ((not c or not u)
-                                       and fm['updated'] < fm['created']):
-                add('ERR', 'DATE', f'{rel}: updated created öncesinde')
-        if not re.fullmatch(r'[a-z0-9]+(-[a-z0-9]+)*\.md', p.name):
-            add('ERR', 'SLUG', f'{rel}: ASCII kebab-case değil')
-        body = strip_code(text)
-        links_out[rel] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', body)}
-        for s in links_out[rel]: links_in.setdefault(s.lower(), set()).add(rel)
-        links_m = re.search(r'^## Links[ \t]*$', body, re.M)
-        if not links_m:
-            add('ERR', 'STRUCT', f'{rel}: ## Links bölümü yok (SCHEMA §4)')
-        else:
-            tail = body[links_m.end():]
-            nxt = re.search(r'^## ([^\n]+)', tail, re.M)
-            if not nxt or nxt.group(1).strip() != 'Summary':
-                # Gerçek bölüm adı tanıya taşınmaz (AGENTS R4: metadata gizli).
-                add('ERR', 'STRUCT', f'{rel}: ## Links sonrası beklenmeyen bölüm — '
-                                     '## Summary beklenir (SCHEMA §4)')
-            sec_text = tail[:nxt.start()] if nxt else tail
-            tree_out[p.stem] = {s.strip().rstrip('\\') for s in re.findall(r'\[\[([^\]|#]+)', sec_text)}
-        st = fm.get('stage', '')
-        upd = (fm.get('updated') or '')[:10]
-        if st in ('inbox', 'next', 'in_progress', 'waiting'):
-            try:
-                if date.fromisoformat(upd) < date.today() - timedelta(days=30):
-                    # Sahne/gün değeri basılmaz; yalnız yol + kural.
-                    add('WRN', 'STALE', f'{rel}: aktif stage 30+ gün güncellenmedi (tend adayı)')
-            except ValueError: pass
+        text = _check_note(rel, data, links_in, links_out, tree_out)
+        if text is None: continue
         # Git'in şifre çözme filtresi üzerinden önceki notu içeride karşılaştır;
         # eski notun hiçbir satırını stdout/stderr'e yansıtma.
         payload = _head_payload(rel)
         _history_checks(rel, text, payload)
-        # Commit edilecek (staged) sürüm worktree'den ayrışıyorsa onu da denetle:
-        # ihlal stage edilip dosya HEAD'e döndürülse bile kaçmasın.
-        staged = _staged_payload(rel)
-        if staged is UNREADABLE:
-            add('ERR', 'CRYPT', f'{rel}: staged sürüm okunamadı; BUMP/LOCKED doğrulanamadı')
-        elif staged is not None and not _unverifiable(staged):
-            staged_text = staged.decode('utf-8')
-            if staged_text != text:
-                _history_checks(rel, staged_text, payload, ' (staged)')
     return links_in, links_out, tree_out
+
+
+def _staged_wiki_paths():
+    """Index snapshot paths, including new notes and excluding staged deletions."""
+    r = subprocess.run(['git', 'ls-files', '-z', '--', 'wiki/'], cwd=ROOT,
+                       capture_output=True)
+    if r.returncode != 0:
+        return None
+    return sorted(p for p in r.stdout.decode('utf-8', errors='replace').split('\0')
+                  if p.startswith('wiki/') and p.endswith('.md') and '/' not in p[5:])
+
+
+def check_staged_wiki(wiki, worktree_graph):
+    paths = _staged_wiki_paths()
+    if paths is None:
+        add('ERR', 'CRYPT', 'wiki/: staged yollar okunamadı; graph doğrulanamadı')
+        return
+    links_in, links_out, tree_out = {}, {}, {}
+    worktree = {f'wiki/{p.name}': p for p in wiki}
+    changed = set(paths) != set(worktree)
+    unreadable = False
+    for rel in paths:
+        staged = _staged_payload(rel)
+        if staged is None or staged is UNREADABLE:
+            add('ERR', 'CRYPT', f'{rel} (staged): sürüm okunamadı; not/graph doğrulanamadı')
+            unreadable = True
+            continue
+        local = worktree.get(rel)
+        same = local is not None and local.read_bytes() == staged
+        changed |= not same
+        # Reuse already validated graph entries for identical worktree content.
+        if same:
+            for slug in worktree_graph[1].get(rel, set()):
+                links_in.setdefault(slug.lower(), set()).add(rel)
+            if rel in worktree_graph[1]:
+                links_out[rel] = worktree_graph[1][rel]
+            if local.stem in worktree_graph[2]:
+                tree_out[local.stem] = worktree_graph[2][local.stem]
+        else:
+            text = _check_note(rel, staged, links_in, links_out, tree_out, ' (staged)')
+            if text is not None:
+                _history_checks(rel, text, _head_payload(rel), ' (staged)')
+    if (not unreadable and changed
+            and (set(paths) != set(worktree) or links_out != worktree_graph[1]
+                 or tree_out != worktree_graph[2])):
+        check_graph(paths, links_in, links_out, tree_out, ' (staged)')
 
 def _safe_target(slug):
     """LINK tanısında yalnız slug-biçimli hedef göster; serbest metin sızmaz."""
@@ -242,18 +284,19 @@ def _find_cycles(tree_out):
     return cycles
 
 
-def check_graph(wiki, links_in, links_out, tree_out):
-    existing = {p.stem for p in wiki}
+def check_graph(wiki, links_in, links_out, tree_out, label=''):
+    existing = {Path(p).stem for p in wiki}
     for p in wiki:
-        if not (links_out.get(f'wiki/{p.name}', set()) & existing) and not links_in.get(p.stem):
-            add('INFO', 'ORPHAN', f'wiki/{p.name} (bilgi: bağlantısız not)')
+        rel = f'wiki/{Path(p).name}'
+        if not (links_out.get(rel, set()) & existing) and not links_in.get(Path(p).stem):
+            add('INFO', 'ORPHAN', f'{rel}{label} (bilgi: bağlantısız not)')
     for rel, slugs in links_out.items():
         for s in slugs:
-            if not (ROOT / 'wiki' / f'{s}.md').exists():
-                add('ERR', 'LINK', f'{rel}: [[{_safe_target(s)}]] hedefi yok')
+            if s not in existing:
+                add('ERR', 'LINK', f'{rel}{label}: [[{_safe_target(s)}]] hedefi yok')
     for cycle in _find_cycles(tree_out):
         chain = ' -> '.join(f'wiki/{s}.md' for s in cycle)
-        add('WRN', 'CYCLE', f'{chain} (Tree ihlali)')
+        add('WRN', 'CYCLE', f'{chain}{label} (Tree ihlali)')
 
 def walk_md(root):
     """node_modules/.git/tmp ve nokta dizinlerine inmeden md dosyalarını verir."""
@@ -275,8 +318,30 @@ def check_logs():
         if not re.fullmatch(r'\d{4}-\d{2}-\d{2}\.md', p.name):
             add('ERR', 'LOGF', f'log/{p.name}: dosya adı YYYY-MM-DD.md değil'); continue
         for code, number in lib.log_issues(p):
+            if code == 'LOGF' and _committed_legacy_log_line(p, number):
+                continue
             detail = 'satır formatı hatalı' if code == 'LOGF' else 'mesaj >120 karakter'
             add('ERR', code, f'log/{p.name}:{number}: {detail}')
+
+def _committed_legacy_log_line(path, number):
+    """İki eski hatalı satırı, ancak HEAD ile birebir aynı kaldıkları sürece koru.
+
+    Append-only log geçmişi değiştirilemez; bu istisna yeni biçim hatalarını
+    veya aynı satır numarasına yazılmış farklı içeriği gizlemez.
+    """
+    if path.name != '2026-09-26.md' or number not in (59, 61):
+        return False
+    previous = _head_payload(f'log/{path.name}')
+    if previous is None or previous is UNREADABLE or _unverifiable(previous):
+        return False
+    try:
+        old = previous.decode('utf-8').splitlines()
+        current = path.read_text(encoding='utf-8').splitlines()
+    except (OSError, UnicodeError):
+        return False
+    return (len(old) >= number and len(current) >= number
+            and old[number - 1] == current[number - 1]
+            and ('LOGF', number) in lib.log_issues(path))
 
 def check_gitattributes():
     ga = (ROOT / '.gitattributes').read_text(encoding='utf-8')
@@ -352,17 +417,8 @@ def check_tracked():
                 add('ERR', 'APPEND', f'{rel} (staged): günlük log kısaltılmış/değiştirilmiş')
 
 def check_privacy():
-    files = [ROOT / f for f in ('README.md', 'AGENTS.md', 'SCHEMA.md', '.env.example')]
-    for d in ('docs', 'scripts'):
-        files += [q for q in (ROOT / d).rglob('*') if q.is_file()]
-    for p in files:
-        if not p.exists(): continue
-        t = strip_code(p.read_text(encoding='utf-8', errors='ignore'))
-        for m in EMAIL.finditer(t):
-            if 'example' not in m.group():
-                add('WRN', 'PRIV', f'{p.relative_to(ROOT)}: e-posta benzeri metin')
-        for m in PHONE.finditer(t):
-            add('WRN', 'PRIV', f'{p.relative_to(ROOT)}: telefon benzeri metin')
+    for rel, message in noma_privacy.scan_public(ROOT):
+        add('WRN', 'PRIV', f'{rel}: {message}')
 
 def check_index():
     try:
@@ -386,8 +442,9 @@ def main():
     del out[:]
     check_budgets()
     wiki = sorted((ROOT / 'wiki').glob('*.md'))
-    links_in, links_out, tree_out = check_wiki(wiki)
-    check_graph(wiki, links_in, links_out, tree_out)
+    graph = check_wiki(wiki)
+    check_graph(wiki, *graph)
+    check_staged_wiki(wiki, graph)
     check_suffixes()
     check_logs()
     check_gitattributes()

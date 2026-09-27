@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Sentetik wiki ile kök/hub gezinme ve tam üretim maliyetini toplu ölç.
 
-Gerçek wiki metni okunmaz; fixture'lar yalnız sistem geçici dizininde oluşturulup
-silinir (tmp/ taze klonda yoktur). Her not sayısı ayrı süreçte ölçülür; bellek
+Gerçek wiki metni okunmaz; fixture'lar repo tmp/ dizininde oluşturulup
+silinir. Her not sayısı ayrı süreçte ölçülür; bellek
 sütunu o sürecin tepe RSS'idir, süreçler arası kıyaslanabilir.
 Çıktı yalnız sayı/süre/bellektir, not metni veya dosya yolu değildir.
 """
@@ -26,7 +26,9 @@ import noma_wiki as wiki
 
 
 def benchmark(count, search=False):
-    with tempfile.TemporaryDirectory(prefix='noma-index-bench-') as tmp:
+    scratch = lib.ROOT / 'tmp'
+    scratch.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='noma-index-bench-', dir=scratch) as tmp:
         root = Path(tmp)
         source = root / 'wiki'
         source.mkdir()

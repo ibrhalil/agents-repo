@@ -43,6 +43,17 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
 - [ ] B4 Workspace klonu
 - [ ] B5 Zamanlanmış iş (cron) — kullanıcı onayına bağlı; henüz yok
 - [ ] B6 Telegram (sonraya atıldı)
+- [ ] B1–B4 kabul turu: VM için disk/şifreleme ve ağ erişimini insan düğümünde
+      doğrula; VM içinde Hermes'i yalnız seçilen kurulum notundaki yöntemle
+      başlat; `.env` dosyasını repoya eklemeden `NODE_ID`/endpoint'leri doğrula;
+      yetkili klonda `index.md` + hub sayfalarının açıldığını ve
+      `python3 -B scripts/noma_lint.py` sonucunu denetle. Kanonik kurulum
+      adımları: `wiki/proxmox-noma-kurulum.md`, `wiki/noma-hermes-vm-docker.md`.
+      Her adımın sonucu kaydedilmeden B5'e geçme.
+- [ ] B5 kabul turu (ayrı kullanıcı onayından sonra): işin hangi düğümde,
+      hangi aralıkta ve hangi Git yetkisiyle çalışacağını kararlaştır; ilk
+      koşuyu manuel başlatıp hata halinde commit/push yapılmadığını ve
+      append-only/şifreleme kapılarının geçtiğini doğrula.
 - [ ] Güvenlik advisory: LUKS + Obsidian plugin denetimi
 - [x] `index.md` git-crypt kapsamına alındı; eski açık indeks geçmişinin
       içerik incelemesi ayrı karar (otomatik history rewrite yok)
@@ -100,6 +111,9 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
 - [ ] Kararlaştırılmayı bekleyen mimariler (`wiki/agent-talimati.md` §45):
       Master DB view'ları, graph, indekslenmiş arama/embedding — gerçek ihtiyaç
       ortaya çıktığında tasarım önerisiyle ele alınır
+- [ ] Ölçek eşiğini ölç: `python3 -B scripts/noma_bench_index.py 1000 10000
+      --search` ile sentetik kök/hub ve arama süresi/belleğini kaydet;
+      gerçek darboğaz doğrulanmadıkça kalıcı indeks katmanı ekleme.
 
 ---
 

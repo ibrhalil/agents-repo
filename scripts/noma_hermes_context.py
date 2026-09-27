@@ -49,12 +49,18 @@ def repo_roots(payload):
 
 
 def unlocked_vault(base):
-    """index.md düz metin VE TÜM wiki/ notları şifreli değilse yerel gezinme açılır.
-    Kısmi kilitli kasada ilk dosya örneklemesi yanıltır; her not denetlenir
-    (index düz ama herhangi bir wiki şifreliyse LOCAL dal yanlış olur)."""
+    """Kök indeks, wiki ve üretilmiş hub sayfalarının tamamı açıksa gezinme açılır."""
     if not is_plaintext(base / "index.md"):
         return False
-    return all(is_plaintext(note) for note in (base / "wiki").glob("*.md"))
+    hubs = base / "index" / "hubs"
+    if not is_plaintext(hubs / "_basliklar" / "000001.md"):
+        return False
+    hub_dirs = [hub for hub in hubs.iterdir() if hub.is_dir()]
+    if not any(hub.name not in ("_basliklar", "_uncategorized") for hub in hub_dirs):
+        return False
+    return (all(is_plaintext(note) for note in (base / "wiki").glob("*.md"))
+            and all(pages and all(is_plaintext(page) for page in pages)
+                    for pages in (list(hub.glob("*.md")) for hub in hub_dirs)))
 
 
 def unlocked_index(payload):
