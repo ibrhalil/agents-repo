@@ -21,6 +21,66 @@ PAGE_SIZE = 32
 ROOT_MAX_BYTES = 8192
 HUB_PAGE_MAX_BYTES = 16384
 LOCK_FILE = ".noma-index.lock"
+# Özet bütçesi: yaprak satırı bu sınırı aşınca hub sayfası 16 KiB'ı zorlar.
+DESC_MAX = 110
+# Satır sonu sayılmayan noktalama: kod içi, kısaltma, sıralama işareti, ondalık.
+ABBREVIATIONS = {'vb', 'bkz', 'örn', 'ör', 's', 'ss', 'no', 'dr', 'mrs', 'prof',
+                 'st', 'ing', 'vs', 'cf', 'örn.ler', 'sayfa', 'sf'}
+CODE_SPAN_RE = re.compile(r'(`+)(?!`)(?:(?!\1)[^\n])*?\1(?!`)')
+# Cümle sonu: noktalama + boşluk/satır sonu. Nokta yalnız bu biçimde gelirse
+# gerçek cümle sonudur; `.env`, "vb.", "..." ve "3.5" böyle değildir.
+SENTENCE_END_RE = re.compile(r'[.!?]+(?=\s|$)')
+# Tam nokta kümesi (...) elipsis işaretidir, cümle sonu değildir.
+ELLIPSIS_RE = re.compile(r'\.{3,}|…')
+
+
+def _flatten_summary(summary_text):
+    """Summary bölümünü tek satıra indir: kod işaretleri düzleşir, boşluklar toplanır.
+
+    Bölüm bir paragraf olduğundan satır sonları cümle sonu sayılmaz; aksi halde
+    ilk satırda noktalama yoksa özet yarım kalırdı.
+    """
+    text = CODE_SPAN_RE.sub(lambda m: m.group(0).strip('`').replace('``', '`'),
+                            summary_text)
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def _first_sentence(line):
+    """İlk cümleyi döndür; kod/kısaltma/elipsis içi noktalamayı kesme noktası sayma."""
+    for match in SENTENCE_END_RE.finditer(line):
+        if ELLIPSIS_RE.fullmatch(match.group(0)):
+            continue
+        head = re.search(r'([^\s]+)$', line[:match.start()])
+        if head and head.group(1).rstrip('.').casefold() in ABBREVIATIONS:
+            continue
+        return line[:match.end()].strip()
+    return line.strip()
+
+
+def _clip(text, limit):
+    """Metni `limit` karaktere indir: bağlantı/kelime bölmeden, elipsisle bitir."""
+    if len(text) <= limit:
+        return text
+    cut = text[:max(limit - 1, 1)].rstrip()
+    if '[[' in cut and cut.count('[[') > cut.count(']]'):
+        cut = cut[:cut.rindex('[[')].rstrip()
+    if ' ' in cut:
+        head, _, tail = cut.rpartition(' ')
+        if tail and not tail.startswith(('(', '[')):
+            cut = head.rstrip()
+    if not cut:
+        return text[:max(limit - 1, 1)]
+    return cut + '…'
+
+
+def _summarize(summary_text, stage=''):
+    """Summary gövdesinden kısa, kendi başına anlamlı bir açıklama üret."""
+    desc = _first_sentence(_flatten_summary(summary_text))
+    if not (stage and stage != 'done'):
+        return desc if len(desc) <= DESC_MAX else _clip(desc, DESC_MAX)
+    suffix = f' [{stage}]' if desc else f'[{stage}]'
+    limit = max(DESC_MAX - len(suffix), 0)
+    return (_clip(desc, limit) if len(desc) > limit else desc) + suffix
 # Sabit mesajlar: ne not ne de dosya yolu sızar (R4).
 LIMIT_ERROR = ('hata: indeks üretilemedi — sayfa/kök sınırı aşıldı ya da hub slug '
                'geçersiz; yapı düzenlenmeli')
@@ -61,15 +121,7 @@ def generate_all():
             if stage_match:
                 stage = stage_match.group(1).strip('"')
         summary_match = re.search(r"## Summary\n(.*?)(?=\n## |\Z)", content, re.DOTALL)
-        desc = ""
-        if summary_match:
-            first_line = next((l.strip() for l in summary_match.group(1).splitlines() if l.strip()), "")
-            sentence = re.match(r"(.+?[.!?])", first_line)
-            desc = (sentence.group(1) if sentence else first_line).strip()
-            if len(desc) > 110:
-                desc = desc[:107].rstrip() + "…"
-        if stage and stage != "done":
-            desc = f"{desc} [{stage}]" if desc else f"[{stage}]"
+        desc = _summarize(summary_match.group(1) if summary_match else "", stage)
 
         # ## Links bölümünü bul (yapı sözleşmesi: Links'i ## Summary takip eder;
         # uymayan not "Kategorize Edilmemiş" kuyruğuna düşer — tend adayı)

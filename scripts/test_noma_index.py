@@ -62,6 +62,84 @@ def huge_root_wiki(root, hubs=140):
     return source
 
 
+class SummaryDescTests(unittest.TestCase):
+    """Summary ayrıştırıcısı: kod, kısaltma, elipsis, kırpma ve boşluk durumları.
+
+    Beklentiler sentetik metinlerden türetilir; gerçek wiki içeriği kullanılmaz.
+    """
+
+    def test_backtick_span_does_not_end_the_sentence(self):
+        desc = build._summarize('Sırlar yalnız `.env` dosyasında tutulur; başka yol yok.')
+        self.assertIn('.env', desc)
+        self.assertTrue(desc.endswith('.'), desc)
+        self.assertNotIn('`', desc)
+
+    def test_abbreviation_and_ellipsis_are_not_sentence_ends(self):
+        for text in ('Kısaltma listesi vb. tüm notlarda geçerli.',
+                     'Model seçimi 3.5 puanla başlar ve devam eder.',
+                     'Aday cümle... sonrası ikinci cümle gelir.'):
+            with self.subTest(text=text):
+                self.assertEqual(text, build._summarize(text))
+
+    def test_first_sentence_wins_over_later_ones(self):
+        self.assertEqual('İlk cümle biter.',
+                         build._summarize('İlk cümle biter. İkinci cümle gelir.'))
+
+    def test_inline_whitespace_is_collapsed(self):
+        self.assertEqual('Tek satırlık özet.',
+                         build._summarize('Tek    satırlık\n\n  özet.'))
+
+    def test_long_summary_is_clipped_at_word_boundary_within_budget(self):
+        summary = ' '.join(f'kelime{i:02d}' for i in range(40)) + '. Sonra devam.'
+        desc = build._summarize(summary)
+        self.assertLessEqual(len(desc), build.DESC_MAX)
+        self.assertTrue(desc.endswith('…'), desc)
+        self.assertNotIn(' ', desc[-2:], 'kelime ortasından kesilmemeli')
+
+    def test_clipping_never_splits_a_wikilink(self):
+        summary = ('Bu girdi ' + 'x' * 90 + ' [[hedef-not]] sonrasında devam eden metin.')
+        desc = build._summarize(summary)
+        self.assertEqual(desc.count('[['), desc.count(']]'))
+
+    def test_stage_suffix_counts_against_the_budget(self):
+        desc = build._summarize('Kısa bir özet metni.', stage='in_progress')
+        self.assertTrue(desc.endswith(' [in_progress]'))
+        self.assertLessEqual(len(desc), build.DESC_MAX)
+
+    def test_broken_backtick_run_does_not_break_parsing(self):
+        self.assertEqual('Açılış ` işareti düzleştirilir.',
+                         build._summarize('Açılış ` işareti düzleştirilir.'))
+
+    def test_empty_summary_yields_only_the_stage_marker(self):
+        self.assertEqual('', build._summarize('\n   \n', stage='done'))
+        self.assertEqual('[inbox]', build._summarize('', stage='inbox'))
+
+    def test_generated_leaf_lines_are_structurally_sound_and_bounded(self):
+        scratch = tempfile.TemporaryDirectory(prefix='noma-desc-', dir=lib.ROOT / 'tmp')
+        self.addCleanup(scratch.cleanup)
+        root = Path(scratch.name) / 'repo'
+        source = root / 'wiki'
+        source.mkdir(parents=True)
+        (source / 'root.md').write_text(HUB_NOTE, encoding='utf-8')
+        summary = ('Sırlar yalnız `.env` dosyasında tutulur, vb. uzun bir liste 3.5 '
+                   'puanla ölçülür ve ' + 'filler ' * 40 + '[[bağ-hedefi]] ile biter.')
+        for number in range(3):
+            (source / f'leaf-{number:03d}.md').write_text(
+                f'---\ntitle: "Yaprak {number}"\nstage: in_progress\n---\n'
+                f'# Yaprak\n## Links\n[[root]]\n## Summary\n{summary}\n', encoding='utf-8')
+        self.assertEqual(0, run_build(root))
+        page = (root / 'index/hubs/root/000001.md').read_text(encoding='utf-8')
+        self.assertLessEqual(len(page.encode('utf-8')), build.HUB_PAGE_MAX_BYTES)
+        leaves = [l for l in page.splitlines() if l.startswith('- [[')]
+        self.assertEqual(3, len(leaves))
+        for line in leaves:
+            self.assertRegex(line, r'^- \[\[leaf-\d{3}\|[^\]]+\]\] — .+$')
+            desc = line.split(' — ', 1)[1]
+            self.assertEqual(desc.count('[['), desc.count(']]'), desc)
+            self.assertNotIn('`', desc, desc)
+            self.assertLessEqual(len(desc), build.DESC_MAX)
+
+
 class IndexBuildTests(unittest.TestCase):
     def setUp(self):
         self.scratch = tempfile.TemporaryDirectory(prefix='noma-index-',
