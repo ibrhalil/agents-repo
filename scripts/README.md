@@ -9,9 +9,11 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 
 | Script | İş |
 |---|---|
-| `noma_lint.py` | lint() mekanik kontrolleri: append-only (HEAD + staged silme/değişim), tüm özel staged blob'ların gerçekten şifreli olması, kırık link, orphan, enum, tz-bilinçli updated-bump, satır bütçeleri, `.gitattributes` tutarlılığı, genel döngü (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT); özel satır içerikleri ve metadata değerleri basılmaz |
+| `noma_lint.py` | lint() mekanik kontrolleri: append-only (HEAD + staged silme/değişim), tüm özel staged blob'ların gerçekten şifreli olması, kırık link, orphan, enum, tz-bilinçli updated-bump, satır bütçeleri, `.gitattributes` tutarlılığı, genel döngü (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT), board biçimi ve yeni staged board'da aktif kayıt yasağı; özel satır içerikleri ve metadata değerleri basılmaz |
 | `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit (linter aynı zamanda pre-commit kancasıdır) |
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log, ISO zaman) — doğrudan çalıştırılmaz |
+| `noma_board.py` | aynı checkout'ta atomik begin/claim/release/finish; salt-okunur status; kısa OS kilidi, JSON durum sinyali; dosya/Git değişikliklerini kendiliğinden sahiplenmez veya geri almaz |
+| `test_noma_board.py` | sentetik ayrı süreçlerle mükerrer iş, dosya/dizin claim yarışı, kapanış, bozuk durum ve staged board regresyonları |
 | `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (SCHEMA §3 şablon zorunluluğu); içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
 | `noma_ingest.py` | girdileri kalıcı yazmadan ÖNCE doğrular (slug/aktör/stage); kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması); not bellede üretilip doğrulanır ve atomik yayınlanır — doğrulama hatasında not inbox'a iner (`[verify-fail]`/`NO-HUB`; içerik basılmaz) |
 | `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal; varsayılan çıktı yalnız yol, başlık/metadata `--human` ile |
@@ -30,6 +32,66 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz/okunamayan-atıf WARN, negatif iddia hatırlatması; `--json`. Tetikleyici politikanın kanonik sahibi `wiki/epistemik-hijyen.md`'dir; burası yalnız kullanım dokümanıdır. Web citation doğrulayıcısı değildir |
 | `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar. Kategorileri `FM/LINK` lint bulgularının yerine geçmez (`wiki/bakim-disiplini.md`) |
 | `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
+
+## Agent Koordinasyonu
+
+`BOARD.md` tek durum kaynağıdır; kayıtları elle düzenlemek yerine yardımcıyı
+kullanın. Boş durum JSON `[]`'dır. Komutlar repo kökünü script konumundan bulur;
+yalnız bu checkout'u koordine eder. Varsayılan çıktı JSON'dur, ek paket gerekmez.
+
+```bash
+python3 -B scripts/noma_board.py status
+python3 -B scripts/noma_board.py begin update-fixture
+# Use the returned run_id in all following calls.
+python3 -B scripts/noma_board.py claim run-example scripts/fixture.py
+python3 -B scripts/noma_board.py release run-example scripts/fixture.py
+python3 -B scripts/noma_board.py finish run-example
+```
+
+- `begin <task-key> [--source manual|cron] [--run-id <own-run-id>]`: task anahtarı
+  genel ASCII kebab-case, aynı iş için kararlı olmalıdır. Varsayılan kimlik/zaman
+  üretilir; `--run-id` yalnız kendi bilinen işini idempotent sürdürmek içindir.
+  Başka kaydın duplicate yanıtındaki kimliğini kullanmak devir değildir.
+- `claim <run-id> <paths...>`: ilk yazımdan hemen önce repo-relative yolları
+  sahiplenir. Çoklu claim all-or-nothing'dir. Dizin ve alt yolları çatışır;
+  örneğin `index/hubs/`, altındaki bütün sayfaları kapsar. Absolute/traversal,
+  symlink, `BOARD.md`, `.git` ve `tmp/` claim'leri reddedilir. Rename'de iki yol
+  da claim edilir; aynı sahibi tekrar claim etmek güvenlidir.
+- `release <run-id> <paths...>`: yalnız verilen claim'leri kaldırır; dizin claim'i
+  için aynı dizin yolunu kullanın. Kendi yarım işini sahipsiz bırakmayın.
+- `finish <run-id>`: yalnız o kaydı kaldırır; tekrar çağrı güvenlidir. Çalışma
+  dosyalarını veya Git index'i değiştirmez. Log/test/teslim hazırlığı bittiğinde
+  çağrılır; commit yapılması gerekmez.
+- `status`: kimlik, task anahtarı ve claim yollarını okur; hiçbir dosya veya kilit
+  oluşturmaz. Serbest görev metni ve özel içerik/metadata board'a taşınmaz.
+
+| Exit | Durum | Eylem |
+|---|---|---|
+| `0` | `started`, `already-active`, `claimed`, `released`, `finished`, `already-finished`, `ok` | İlgili adım tamamlandı. |
+| `3` | `duplicate` | Aynı işi yeniden başlatma. |
+| `3` | `conflict` | Bildirilen yollara yazma; bağımsız işi sürdür veya somut engelle kapan. |
+| `3` | `busy` | Kilit en fazla iki saniye beklendi; bir kez yeniden dene, sonsuz bekleme döngüsü kurma. |
+| `2` | `error` | Biçim/kimlik/IO hatası; sabit `rule` kodunu değerlendir, board'u boşaltarak onarma. |
+
+Board güncellemesi `tmp/.noma-board.lock` altında read/check/atomic-replace
+işlemidir; kilit dosyası silinmez. Hata board'un önceki sürümünü korur. Yardımcı,
+protokolü atlayan editörleri engellemez ve ani oturum ölümünde kaydı otomatik
+silmez; yaş tek başına devir izni değildir. Boş legacy board yeni JSON biçimine
+geçirilirken aktif kayıt varsa korunmalıdır; araç bilinmeyen biçimi dönüştürmez.
+
+Ortak çıktı kullanımı: günlük log yalnız `noma_lib.append_log` kilitli append'iyle
+yazılır, uzun süreli özel claim'e alınmaz. İndeks üretiminde `index.md` ve
+`index/hubs/` birlikte, graph üretiminde `web/data/` claim edilir; üretim bitince
+bu türev claim'leri release edilebilir. `tmp/` fixture'ları benzersiz geçici dizin
+ve cleanup kullanır. Board bookkeeping ve geçici fixture ayrı log üretmez.
+
+Mekanik regresyonlar:
+
+```bash
+python3 -B -m unittest discover -s scripts -p 'test_noma_board.py'
+```
+
+Agent davranış kabulü: `docs/agent-workflow-checks.md`.
 
 ## Örnekler
 

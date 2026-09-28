@@ -7,6 +7,7 @@ from pathlib import Path
 
 import noma_lib as lib
 import noma_privacy
+import noma_board
 
 ROOT = Path(__file__).resolve().parent.parent
 # B5 drift riski: aşağıdaki sabitler ve parse_fm, noma_lib kopyalarıdır. Birleştirilecek
@@ -436,11 +437,35 @@ def check_index():
     except Exception:
         add('WRN', 'INDEX', 'index denetlenemedi (ayrıntı özel çıktıya taşınmaz)')
 
+def check_board():
+    """Validate local state and prevent publishing active runs in a new snapshot."""
+    try:
+        noma_board.Board(ROOT).status()
+    except (noma_board.BoardError, OSError, UnicodeError):
+        add('ERR', 'BOARD', 'BOARD.md: coordination state invalid or unreadable')
+    staged = _staged_payload('BOARD.md')
+    head = _head_payload('BOARD.md')
+    # An unchanged legacy snapshot is allowed during migration to the new format.
+    if staged == head and staged is not UNREADABLE:
+        return
+    if not isinstance(staged, bytes):
+        add('ERR', 'BOARD', 'BOARD.md: staged state missing or unreadable')
+        return
+    try:
+        _, entries = noma_board.parse_state(staged.decode('utf-8'))
+    except (noma_board.BoardError, UnicodeError):
+        add('ERR', 'BOARD', 'BOARD.md: staged coordination state invalid')
+        return
+    if entries:
+        add('ERR', 'BOARD', 'BOARD.md: active runs must not be committed')
+
+
 def main():
     global err, wrn
     err = wrn = 0
     del out[:]
     check_budgets()
+    check_board()
     wiki = sorted((ROOT / 'wiki').glob('*.md'))
     graph = check_wiki(wiki)
     check_graph(wiki, *graph)

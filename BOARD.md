@@ -1,15 +1,9 @@
 # Board
 
-_No active work._
+Use `python3 -B scripts/noma_board.py` to manage active work; do not edit entries manually.
+Commands and exit codes: `scripts/README.md`. Policy: `wiki/notice-board-esaslari.md`.
+An empty array means no active work. Paths are repo-relative; keep task keys generic and public-safe.
 
-<!--
-Repo değişikliği YAPACAK agent: değişiklikten önce aşağıya giriş ekle, iş bitince sil.
-Başka bir giriş varsa önce wiki/notice-board-esaslari.md oku (çakışma kuralları).
-
-### agent-01
-task_key: <stable-task-id>
-task: <short task description>
-source: <manual | cron>
-started_at: <ISO 8601>
-working_files: []
--->
+```json
+[]
+```

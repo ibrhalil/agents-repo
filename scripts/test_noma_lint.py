@@ -47,6 +47,7 @@ class LintTests(unittest.TestCase):
                     for d in lint.ENCRYPTED if d.endswith('/')), encoding='utf-8')
         for attr, value in (('ROOT', self.root),
                             ('check_index', lambda: None),
+                            ('check_board', lambda: None),  # Covered in test_noma_board.
                             ('_head_payload', mock.Mock(return_value=None))):
             patcher = mock.patch.object(lint, attr, value)
             patcher.start()

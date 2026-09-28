@@ -11,6 +11,6 @@ Runtime/model bağımsız küçük yönlendiricidir; kural deposu değildir. Oto
 - CLI yalnız gezinme JSON sinyali üretir: path/slug, `next_page`, arama skoru/eşleşme işareti.
 - Açık klonda seçili dosya read aracıyla bağlama açılabilir; yasak olan stdout'a dökmektir ([[r4-stdout-read-ayrimi]]).
 ## 3. Politikalar
-Repo-geneli davranış kuralları (veri bütünlüğü, güvenlik, atıf doğrulama, bakım, test fixture, ingest vb.) ihtiyaç halinde `wiki/agent-policy.md` register'ından bulunur.
-Eş zamanlılık: repo değişikliği yapacak agent önce `BOARD.md`'ye giriş yazar, iş bitince siler ([[notice-board-esaslari]]).
-Temel: okuma [[agent-read-policy]], yazma [[agent-write-policy]].
+- Görevi araştırmadan önce `wiki/agent-read-policy.md` oku; aynı oturumda değişmediyse yeniden yükleme.
+- İlk kalıcı değişiklikten önce `wiki/agent-write-policy.md` oku ve `python3 -B scripts/noma_board.py begin <task-key>` çalıştır. Düzenleme öncesi `claim <run-id> <paths...>`, teslim öncesi `finish <run-id>`; kullanım `scripts/README.md`.
+- Salt-okuma/plan görevi kayıt açmaz. Diğer davranış kuralları yalnız ilgili tetikleyicide `wiki/agent-policy.md` register'ından bulunur; rutin teknik kararları agent verir, önemli ve kaynaktan çözülemeyen belirsizliği sorar.
