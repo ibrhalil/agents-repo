@@ -17,11 +17,14 @@ open web/index.html                   # çift tık da olur; sunucu gerekmez
 
 - Arama: `/` odaklanır, Enter ilk sonuca gider.
 - Node tık → detay paneli; `Yerel graph` → seçili notun derinlik 1-3 çevresi;
-  `Genel` → tüm graph. Sağ tık da seçer.
+  `Genel` → tüm graph. Sağ tık → bağlam menüsü, çift tık → odakla.
+- Sürüklerken komşular yaylanır (canlı ForceAtlas2); `Fizik` düğmesi kapatır.
+- Klavye: `←`/`→` komşu gez, `↑` üst hub, `↓` alt not, `Enter` yerel/global,
+  `+`/`−` zoom, `0` genel görünüm, `Esc` temizle.
+- Hover: node/kenar ipucu, komşu vurgusu; seçili node nabız efekti.
 - Filtreler: type/scope/stage/bağlantı durumu (eksik notlar dahil).
 - `Yeniden diz`: ForceAtlas2 yerleşimini sıfırdan hesaplar (ana thread'de
   dilimli; `file://` üzerinde Web Worker CORS nedeniyle kullanılamaz).
-- `Esc`: seçimi ve yerel modu temizler.
 
 ## Yapı
 

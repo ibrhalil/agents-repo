@@ -6,6 +6,9 @@
 
   var running = false;
   var lastRestoredRatio = 1;
+  var live = false;
+  var liveRaf = null;
+  var LIVE_MAX_ORDER = 3000;
 
   function load() {
     try {
@@ -58,12 +61,12 @@
       lastRestoredRatio = seed(graph);
     },
     ensurePositions: function (graph, renderer, onDone) {
-      if (graph.order < 2 || lastRestoredRatio >= 0.9) {
+      if (graph.order < 2 || lastRestoredRatio >= 0.995) {
         renderer.refresh();
         if (onDone) onDone();
         return;
       }
-      this.run(graph, renderer, onDone, MAX_ITER);
+      this.run(graph, renderer, onDone, lastRestoredRatio >= 0.9 ? 60 : MAX_ITER);
     },
     run: function (graph, renderer, onDone, iterations) {
       var total = iterations || MAX_ITER;
@@ -95,6 +98,44 @@
     },
     stop: function () {
       running = false;
+    },
+    startLive: function (graph, renderer, pinned) {
+      // Sürükleme sırasında canlı FA2: pinned node her karede sabitlenir,
+      // komşular yaylanır (Obsidian graph hissi). file:// worker yok → main thread.
+      if (graph.order > LIVE_MAX_ORDER) return;
+      this.stop();
+      this.stopLive();
+      var fa2 = window.graphologyLayoutForceAtlas2;
+      var settings = fa2.inferSettings(graph);
+      settings.slowDown = Math.max(2, (settings.slowDown || 1) * 2);
+      settings.gravity = 0.08;
+      live = true;
+      var frame = function () {
+        if (!live) return;
+        var px = graph.getNodeAttribute(pinned, 'x');
+        var py = graph.getNodeAttribute(pinned, 'y');
+        try {
+          fa2.assign(graph, { iterations: 2, settings: settings });
+        } catch (err) {
+          live = false;
+          return;
+        }
+        graph.setNodeAttribute(pinned, 'x', px);
+        graph.setNodeAttribute(pinned, 'y', py);
+        renderer.refresh({ skipIndexation: true });
+        liveRaf = requestAnimationFrame(frame);
+      };
+      liveRaf = requestAnimationFrame(frame);
+    },
+    stopLive: function () {
+      live = false;
+      if (liveRaf !== null) {
+        cancelAnimationFrame(liveRaf);
+        liveRaf = null;
+      }
+    },
+    isLive: function () {
+      return live;
     },
     savePositions: save,
     reset: function (graph, renderer, onDone) {

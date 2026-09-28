@@ -27,6 +27,7 @@ html, body {
   position: absolute;
   inset: 0;
   touch-action: none;
+  background: radial-gradient(1200px 800px at 50% 38%, #181b21 0%, var(--bg) 55%, #101216 100%);
 }
 
 #topbar {
@@ -78,6 +79,12 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 9px;
   backdrop-filter: blur(6px);
+  animation: dropIn 0.16s ease-out;
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .search-hit {
@@ -131,10 +138,22 @@ html, body {
   color: var(--text);
   font-size: 13px;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.1s ease;
 }
 
 .btn:hover { background: var(--btn-bg-hover); }
+.btn:active { transform: scale(0.95); }
 .btn.active { border-color: var(--accent); color: var(--accent); }
+
+.mode-bar {
+  animation: popIn 0.18s ease-out;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
 
 #panel {
   position: absolute;
@@ -150,6 +169,12 @@ html, body {
   padding: 14px 16px;
   z-index: 25;
   backdrop-filter: blur(8px);
+  animation: panelIn 0.22s ease-out;
+}
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 #panel h2 {
@@ -255,9 +280,105 @@ html, body {
   right: 12px;
   bottom: 10px;
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
   z-index: 15;
 }
+
+.panel-section {
+  margin: 12px 0 4px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.neighbor-list { display: flex; flex-direction: column; gap: 3px; }
+
+.neighbor-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.13s ease, border-color 0.13s ease;
+}
+
+.neighbor-chip span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.neighbor-chip:hover { background: var(--btn-bg-hover); border-color: var(--border); }
+
+.panel-hint {
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+#tooltip {
+  position: fixed;
+  max-width: 280px;
+  padding: 8px 11px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 35;
+  animation: dropIn 0.14s ease-out;
+}
+
+#tooltip .t-label { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+#tooltip .t-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+#context-menu {
+  position: fixed;
+  min-width: 190px;
+  padding: 5px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  backdrop-filter: blur(8px);
+  z-index: 38;
+  animation: popIn 0.15s ease-out;
+}
+
+.menu-title {
+  padding: 6px 9px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.menu-item:hover { background: var(--btn-bg-hover); }
 
 #notice {
   position: absolute;
@@ -284,9 +405,18 @@ html, body {
     top: auto;
     left: 8px;
     right: 8px;
-    bottom: 48px;
+    bottom: 62px;
     width: auto;
     max-height: 44vh;
+  }
+
+  #controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    right: 8px;
+    bottom: 8px;
+    max-width: calc(100vw - 16px);
   }
 
   .btn { height: 40px; min-width: 40px; }

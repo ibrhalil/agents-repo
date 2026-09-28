@@ -90,12 +90,46 @@
     });
   }
 
+  function neighborsPanel(id) {
+    var neighbors = [];
+    graphRef.forEachNeighbor(id, function (neighbor) {
+      neighbors.push(neighbor);
+    });
+    neighbors.sort(function (a, b) {
+      var da = graphRef.getNodeAttribute(a, 'degree') || 0;
+      var db = graphRef.getNodeAttribute(b, 'degree') || 0;
+      return db - da || a.localeCompare(b);
+    });
+    if (!neighbors.length) return '';
+    var chips = neighbors.slice(0, 10).map(function (neighbor) {
+      var attrs = graphRef.getNodeAttributes(neighbor);
+      var color = attrs.color || '#8b93a4';
+      return '<button class="neighbor-chip" type="button" data-node="' + esc(neighbor) + '">' +
+        '<span class="dot" style="background:' + color + '"></span>' +
+        '<span>' + esc(attrs.label || neighbor) + '</span></button>';
+    }).join('');
+    return '<div class="panel-section">Komşular (' + neighbors.length + ')</div>' +
+      '<div class="neighbor-list">' + chips + '</div>';
+  }
+
   var NOMA = (window.NOMA = window.NOMA || {});
   var stateRef = null;
   var apiRef = null;
   var graphRef = null;
   var dataRef = null;
   var nodeIndex = {};
+  var tooltip = null;
+  var menu = null;
+
+  function place(element, x, y) {
+    element.style.left = '0px';
+    element.style.top = '0px';
+    var box = element.getBoundingClientRect();
+    var left = Math.min(x + 14, window.innerWidth - box.width - 8);
+    var top = Math.min(y + 14, window.innerHeight - box.height - 8);
+    element.style.left = Math.max(8, left) + 'px';
+    element.style.top = Math.max(8, top) + 'px';
+  }
 
   function updateModeBar() {
     var bar = document.getElementById('mode-bar');
@@ -145,13 +179,25 @@
       '</div>' +
       '<div class="panel-path">' + esc(node.path || 'wiki/' + node.id + '.md yok') + '</div>' +
       (node.exists ? '' : '<div class="warn">Çözülmemiş bağlantı: hedef not bulunamadı</div>') +
+      neighborsPanel(id) +
       '<div class="panel-actions">' +
       '<button class="btn" id="btn-local">Yerel graph</button>' +
+      '<button class="btn" id="btn-focus">Odakla</button>' +
       (node.exists && node.url ? '<a class="btn" href="' + esc(node.url) + '" target="_blank" rel="noreferrer">URL</a>' : '') +
-      '</div>';
+      '</div>' +
+      '<div class="panel-hint">← → komşu · ↑ hub · Enter yerel/global · Esc temizle</div>';
     panel.hidden = false;
+    panel.scrollTop = 0;
     document.getElementById('btn-local').addEventListener('click', function () {
       apiRef.setLocal(id, stateRef.depth);
+    });
+    document.getElementById('btn-focus').addEventListener('click', function () {
+      apiRef.focusNode(id);
+    });
+    panel.querySelectorAll('.neighbor-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        apiRef.focusNode(chip.dataset.node);
+      });
     });
   }
 
@@ -196,6 +242,8 @@
       data.nodes.forEach(function (node) {
         nodeIndex[node.id] = node;
       });
+      tooltip = document.getElementById('tooltip');
+      menu = document.getElementById('context-menu');
 
       buildSelect('filter-type', countBy(data.nodes, 'type'), TYPE_ORDER, 'Tür');
       buildSelect('filter-scope', countBy(data.nodes, 'scope'), SCOPE_ORDER, 'Kapsam');
@@ -234,6 +282,9 @@
         if (!event.target.closest('.search')) {
           document.getElementById('search-results').hidden = true;
         }
+        if (!event.target.closest('#context-menu')) {
+          NOMA.ui.hideMenu();
+        }
       });
       document.addEventListener('keydown', function (event) {
         if (event.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) {
@@ -241,9 +292,15 @@
           search.focus();
         }
         if (event.key === 'Escape' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) {
+          NOMA.ui.hideMenu();
+          NOMA.ui.hideTooltip();
           state.clearSelection();
           state.clearLocal();
         }
+      });
+      var stage = document.getElementById('graph-container');
+      stage.addEventListener('mousemove', function (event) {
+        if (!tooltip.hidden) place(tooltip, event.clientX, event.clientY);
       });
 
       document.getElementById('btn-global').addEventListener('click', function () {
@@ -256,6 +313,21 @@
       });
       document.getElementById('btn-relayout').addEventListener('click', function () {
         api.relayout();
+      });
+      document.getElementById('btn-zoom-in').addEventListener('click', function () {
+        api.zoom(1);
+      });
+      document.getElementById('btn-zoom-out').addEventListener('click', function () {
+        api.zoom(-1);
+      });
+      document.getElementById('btn-reset-view').addEventListener('click', function () {
+        api.resetView();
+      });
+      var physicsBtn = document.getElementById('btn-physics');
+      physicsBtn.classList.toggle('active', state.physicsOn);
+      physicsBtn.addEventListener('click', function () {
+        state.setPhysics(!state.physicsOn);
+        physicsBtn.classList.toggle('active', state.physicsOn);
       });
 
       this.updateAll();
@@ -272,6 +344,59 @@
     onModeChange: function () {
       updateModeBar();
       updateMeta();
+    },
+    showNodeTooltip: function (node) {
+      if (!node || !nodeIndex[node]) {
+        this.hideTooltip();
+        return;
+      }
+      var item = nodeIndex[node];
+      tooltip.innerHTML =
+        '<div class="t-label">' + esc(item.label) + '</div>' +
+        '<div class="t-meta">' + esc(item.type || '?') + ' · ' + esc(item.scope || '?') +
+        ' · ' + esc(item.stage || '?') + ' · ' + item.degree + ' bağlantı</div>';
+      tooltip.hidden = false;
+    },
+    showEdgeTooltip: function (edge) {
+      if (!edge || !graphRef.hasEdge(edge)) {
+        this.hideTooltip();
+        return;
+      }
+      var source = graphRef.getNodeAttributes(graphRef.source(edge));
+      var target = graphRef.getNodeAttributes(graphRef.target(edge));
+      var kind = graphRef.getEdgeAttributes(edge).kind === 'tree' ? 'hub bağlantısı' : 'referans';
+      tooltip.innerHTML =
+        '<div class="t-label">' + esc(source.label) + ' → ' + esc(target.label) + '</div>' +
+        '<div class="t-meta">' + kind + '</div>';
+      tooltip.hidden = false;
+    },
+    hideTooltip: function () {
+      tooltip.hidden = true;
+    },
+    showMenu: function (node, x, y) {
+      if (!node || !nodeIndex[node]) return;
+      var item = nodeIndex[node];
+      menu.innerHTML =
+        '<div class="menu-title">' + esc(item.label) + '</div>' +
+        '<button class="menu-item" data-action="focus">Odakla</button>' +
+        '<button class="menu-item" data-action="local">Yerel graph (derinlik ' + stateRef.depth + ')</button>' +
+        '<button class="menu-item" data-action="global">Genel graph</button>' +
+        '<button class="menu-item" data-action="relayout">Yerleşimi yeniden diz</button>';
+      menu.hidden = false;
+      place(menu, x, y);
+      menu.querySelectorAll('.menu-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var action = btn.dataset.action;
+          NOMA.ui.hideMenu();
+          if (action === 'focus') apiRef.focusNode(node);
+          if (action === 'local') apiRef.setLocal(node, stateRef.depth);
+          if (action === 'global') stateRef.clearLocal();
+          if (action === 'relayout') apiRef.relayout();
+        });
+      });
+    },
+    hideMenu: function () {
+      if (menu) menu.hidden = true;
     }
   };
 })();

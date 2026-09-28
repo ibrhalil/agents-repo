@@ -48,26 +48,74 @@
     });
   });
 
+  var navIndex = -1;
+
+  function cycleNeighbor(step) {
+    var base = state.selected;
+    var list = base
+      ? NOMA.render.neighborsSorted(graph, base)
+      : graph.nodes().sort(function (a, b) {
+          return (graph.getNodeAttribute(b, 'degree') || 0) -
+                 (graph.getNodeAttribute(a, 'degree') || 0);
+        });
+    if (!list.length) return;
+    navIndex = (navIndex + step + list.length) % list.length;
+    var next = list[navIndex];
+    state.select(next);
+    NOMA.render.focusNode(renderer, graph, next, 0.12);
+  }
+
+  function moveTree(direction) {
+    if (!state.selected) return;
+    var next = direction > 0
+      ? NOMA.render.treeParent(graph, state.selected)
+      : NOMA.render.treeChild(graph, state.selected);
+    if (!next) return;
+    state.select(next);
+    NOMA.render.focusNode(renderer, graph, next, 0.12);
+  }
+
+  function toggleLocal() {
+    if (state.visibleSet && state.localCenter) {
+      state.clearLocal();
+    } else if (state.selected) {
+      api.setLocal(state.selected, state.depth);
+    }
+  }
+
   var state = {
     selected: null,
     hover: null,
+    hoverEdge: null,
     visibleSet: null,
     localCenter: null,
     depth: 1,
+    physicsOn: true,
     lastDragAt: 0,
     filters: { type: '', scope: '', stage: '', exists: 'all' },
     setHover: function (node) {
       if (state.hover === node) return;
       state.hover = node;
       renderer.refresh();
+      NOMA.ui.showNodeTooltip(node);
+    },
+    setHoverEdge: function (edge) {
+      if (state.hoverEdge === edge) return;
+      state.hoverEdge = edge;
+      renderer.refresh();
+      NOMA.ui.showEdgeTooltip(edge);
     },
     select: function (node) {
+      if (state.selected && state.selected !== node) NOMA.anim.stopPulse(state.selected);
       state.selected = node;
+      navIndex = -1;
+      if (node) NOMA.anim.pulse(node);
       renderer.refresh();
       NOMA.ui.onSelectionChange();
     },
     clearSelection: function () {
       if (!state.selected) return;
+      NOMA.anim.stopPulse(state.selected);
       state.selected = null;
       renderer.refresh();
       NOMA.ui.onSelectionChange();
@@ -90,6 +138,10 @@
       state.localCenter = null;
       renderer.refresh();
       NOMA.ui.onModeChange();
+    },
+    setPhysics: function (on) {
+      state.physicsOn = on;
+      if (!on) NOMA.layout.stopLive();
     }
   };
 
@@ -97,9 +149,12 @@
     state.visibleSet = NOMA.render.neighborhood(graph, center, depth);
     state.localCenter = center;
     state.selected = center;
+    navIndex = -1;
     renderer.refresh();
+    NOMA.anim.pop(Array.from(state.visibleSet));
     NOMA.ui.onModeChange();
     NOMA.ui.onSelectionChange();
+    NOMA.render.focusNode(renderer, graph, center, 0.2);
   }
 
   NOMA.layout.seedPositions(graph);
@@ -111,6 +166,19 @@
     {
       onDragEnd: function () {
         state.lastDragAt = performance.now();
+      },
+      onDragStartLive: function (node) {
+        NOMA.layout.startLive(graph, renderer, node);
+      },
+      onDoubleClickNode: function (node) {
+        state.select(node);
+        NOMA.render.focusNode(renderer, graph, node, 0.12);
+      },
+      onDoubleClickStage: function () {
+        NOMA.render.resetView(renderer);
+      },
+      onContextMenu: function (node, event) {
+        NOMA.ui.showMenu(node, event.clientX, event.clientY);
       }
     }
   );
@@ -122,10 +190,59 @@
     },
     setLocal: applyLocal,
     relayout: function () {
+      NOMA.anim.removeLoops('intro');
       NOMA.layout.reset(graph, renderer);
+    },
+    zoom: function (direction) {
+      NOMA.render.zoom(renderer, direction);
+    },
+    resetView: function () {
+      NOMA.render.resetView(renderer);
     }
   };
 
+  document.addEventListener('keydown', function (event) {
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    if (/INPUT|SELECT|TEXTAREA/.test(tag)) return;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'Tab':
+        event.preventDefault();
+        cycleNeighbor(1);
+        break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        cycleNeighbor(-1);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        moveTree(1);
+        break;
+      case 'ArrowDown':
+        event.preventDefault();
+        moveTree(-1);
+        break;
+      case 'Enter':
+        event.preventDefault();
+        toggleLocal();
+        break;
+      case '+':
+      case '=':
+        api.zoom(1);
+        break;
+      case '-':
+        api.zoom(-1);
+        break;
+      case '0':
+      case 'r':
+        api.resetView();
+        break;
+      default:
+        break;
+    }
+  });
+
   NOMA.ui.init(data, graph, state, api);
   NOMA.layout.ensurePositions(graph, renderer);
+  NOMA.anim.intro(graph.nodes(), 900);
 })();

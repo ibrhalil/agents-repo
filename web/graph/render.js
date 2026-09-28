@@ -52,6 +52,19 @@
     return seen;
   }
 
+  function neighborsSorted(graph, node) {
+    var out = [];
+    graph.forEachNeighbor(node, function (neighbor) {
+      out.push(neighbor);
+    });
+    out.sort(function (a, b) {
+      var da = graph.getNodeAttribute(a, 'degree') || 0;
+      var db = graph.getNodeAttribute(b, 'degree') || 0;
+      return db - da || a.localeCompare(b);
+    });
+    return out;
+  }
+
   var NOMA = (window.NOMA = window.NOMA || {});
 
   NOMA.render = {
@@ -59,6 +72,21 @@
     colorOf: colorOf,
     sizeOf: sizeOf,
     neighborhood: neighborhood,
+    neighborsSorted: neighborsSorted,
+    treeParent: function (graph, node) {
+      var found = null;
+      graph.forEachOutEdge(node, function (edge, attrs, source, target) {
+        if (attrs.kind === 'tree' && !found) found = target;
+      });
+      return found;
+    },
+    treeChild: function (graph, node) {
+      var found = null;
+      graph.forEachInEdge(node, function (edge, attrs, source, target) {
+        if (attrs.kind === 'tree' && !found) found = source;
+      });
+      return found;
+    },
     create: function (graph, container, state, handlers) {
       var renderer = new Sigma(graph, container, {
         allowInvalidContainer: false,
@@ -82,6 +110,7 @@
             res.hidden = true;
             return res;
           }
+          res.size = Math.max(0.6, attrs.size * NOMA.anim.scale(node));
           var focus = state.hover || state.selected;
           if (focus) {
             if (node === focus) {
@@ -95,6 +124,17 @@
             }
           } else if (node === state.selected) {
             res.highlighted = true;
+          }
+          if (state.hoverEdge) {
+            var hoverSource = graph.source(state.hoverEdge);
+            var hoverTarget = graph.target(state.hoverEdge);
+            if (node === hoverSource || node === hoverTarget) {
+              res.forceLabel = true;
+              res.size = Math.max(res.size, attrs.size * 1.15);
+            } else if (!focus) {
+              res.color = NODE_DIM_COLOR;
+              res.label = '';
+            }
           }
           if (state.selected === node) {
             res.highlighted = true;
@@ -115,6 +155,11 @@
             res.hidden = true;
             return res;
           }
+          if (state.hoverEdge === edge) {
+            res.color = EDGE_FOCUS_COLOR;
+            res.size = 2.4;
+            return res;
+          }
           var focus = state.hover || state.selected;
           if (focus) {
             var touched = source === focus || target === focus;
@@ -124,12 +169,29 @@
           return res;
         }
       });
+      NOMA.renderer = renderer;
+
+      var hoverTween = function (node, on) {
+        if (!node || node === state.selected) return;
+        NOMA.anim.tweenScale(node, on ? 1.18 : 1, 200);
+      };
 
       renderer.on('enterNode', function (event) {
+        container.style.cursor = 'pointer';
         state.setHover(event.node);
+        hoverTween(event.node, true);
       });
       renderer.on('leaveNode', function () {
+        container.style.cursor = 'default';
         state.setHover(null);
+      });
+      renderer.on('enterEdge', function (event) {
+        container.style.cursor = 'crosshair';
+        state.setHoverEdge(event.edge);
+      });
+      renderer.on('leaveEdge', function () {
+        container.style.cursor = 'default';
+        state.setHoverEdge(null);
       });
       renderer.on('clickNode', function (event) {
         state.select(event.node);
@@ -138,9 +200,20 @@
         if (performance.now() - (state.lastDragAt || 0) < 150) return;
         state.clearSelection();
       });
+      renderer.on('doubleClickNode', function (event) {
+        event.event.preventDefault();
+        if (handlers.onDoubleClickNode) handlers.onDoubleClickNode(event.node);
+      });
+      renderer.on('doubleClickStage', function (event) {
+        event.event.preventDefault();
+        if (handlers.onDoubleClickStage) handlers.onDoubleClickStage();
+      });
       renderer.on('rightClickNode', function (event) {
         event.event.preventDefault();
         state.select(event.node);
+        if (handlers.onContextMenu) {
+          handlers.onContextMenu(event.node, event.event);
+        }
       });
 
       var dragNode = null;
@@ -155,7 +228,9 @@
         if (!dragMoved) {
           dragMoved = true;
           NOMA.layout.stop();
-          mouseCaptor.killCurrentEvents();
+          if (state.physicsOn && handlers.onDragStartLive) {
+            handlers.onDragStartLive(dragNode);
+          }
         }
         var pos = renderer.viewportToGraph(event);
         graph.setNodeAttribute(dragNode, 'x', pos.x);
@@ -165,6 +240,7 @@
       var finishDrag = function () {
         if (!dragNode) return;
         if (dragMoved) {
+          NOMA.layout.stopLive();
           NOMA.layout.savePositions(graph);
           if (handlers.onDragEnd) handlers.onDragEnd(dragNode);
         }
@@ -177,14 +253,25 @@
       if (handlers.onReady) handlers.onReady(renderer);
       return renderer;
     },
-    focusNode: function (renderer, graph, node) {
+    focusNode: function (renderer, graph, node, ratioTarget) {
       var attrs = graph.getNodeAttributes(node);
       if (!isFinite(attrs.x)) return;
       var camera = renderer.getCamera();
       camera.animate(
-        { x: attrs.x, y: attrs.y, ratio: Math.min(camera.ratio, 0.12) },
-        { duration: 350, easing: 'cubicInOut' }
+        { x: attrs.x, y: attrs.y, ratio: Math.min(camera.ratio, ratioTarget || 0.12) },
+        { duration: 380, easing: 'cubicInOut' }
       );
+    },
+    zoom: function (renderer, direction) {
+      var camera = renderer.getCamera();
+      if (direction > 0) {
+        camera.animatedZoom({ duration: 260, factor: 1.25 });
+      } else {
+        camera.animatedUnzoom({ duration: 260, factor: 1.25 });
+      }
+    },
+    resetView: function (renderer) {
+      renderer.getCamera().animatedReset({ duration: 420 });
     }
   };
 })();

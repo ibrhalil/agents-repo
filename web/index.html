@@ -37,8 +37,14 @@
     <aside id="panel" hidden></aside>
     <div id="meta-bar"></div>
     <div id="controls">
+      <button id="btn-zoom-in" class="btn" type="button" title="Yakınlaştır (+)">+</button>
+      <button id="btn-zoom-out" class="btn" type="button" title="Uzaklaştır (−)">−</button>
+      <button id="btn-reset-view" class="btn" type="button" title="Genel görünüm (0)">Genel görünüm</button>
+      <button id="btn-physics" class="btn" type="button" title="Sürükleme fiziği: komşular yaylanır">Fizik</button>
       <button id="btn-relayout" class="btn" type="button" title="Yerleşimi yeniden hesapla">Yeniden diz</button>
     </div>
+    <div id="tooltip" hidden></div>
+    <div id="context-menu" hidden></div>
     <div id="notice"><div>
       Graph verisi yok.<br>
       <code>python3 scripts/noma_build_graph.py</code>
@@ -50,6 +56,7 @@
   <script src="vendor/graphology-layout-forceatlas2.min.js"></script>
   <script src="data/graph.js"></script>
   <script src="graph/layout.js"></script>
+  <script src="graph/anim.js"></script>
   <script src="graph/render.js"></script>
   <script src="graph/ui.js"></script>
   <script src="graph/graph.js"></script>
