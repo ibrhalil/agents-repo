@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Tend öneri raporu: bakım adaylarını mekanik listeler (AGENTS §2 tend).
+"""Tend öneri raporu: bakım adaylarını mekanik listeler (wiki/bakim-disiplini.md).
 
-Yalnız slug/yol + sayı basılır; not içeriği çıktıya taşınmaz (AGENTS R4).
-Cron'a hazır --json; koşusu log'a tend satırı yazar.
+Yalnız slug/yol + sayı basılır; not içeriği çıktıya taşınmaz (AGENTS.md
+gizlilik/stdout sınırı). Cron'a hazır --json; koşusu log'a tend satırı yazar.
+Kategorileri FM/LINK lint bulgularının yerine geçmez.
 """
 import argparse
 import json

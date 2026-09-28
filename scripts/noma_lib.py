@@ -317,7 +317,7 @@ def log_issues(path):
 
 def render_note(slug, title, type_, scope, stage='inbox', status=None,
                 tags=None, source_path=None):
-    """docs/templates/wiki_note.md'den doldurulmuş not içeriği üretir (AGENTS R5).
+    """docs/templates/wiki_note.md'den doldurulmuş not içeriği üretir (SCHEMA §3).
     Verilmeyen opsiyonel alanlar yazılmaz — yalnız anlamlı alan (SCHEMA §6).
     Başlık JSON/YAML uyumlu kaçışlı serileştirilir (ters bölü, tırnak, kontrol
     karakterleri); görünen başlıkta satır sonları düzleştirilir."""

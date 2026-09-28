@@ -17,7 +17,7 @@
 #   - B1 hatırlatma: ufw default deny incoming; gateway için ek inbound port YOK.
 #
 # Provider anahtarı çalışma alanındaki .env dosyasından değil yalnız runtime ortamından gelir.
-# Sır içermeyen dosyadır — PUBLIC yüzeye değer gömülmez (AGENTS §3).
+# Sır içermeyen dosyadır — PUBLIC yüzeye değer gömülmez (wiki/guvenlik-ve-anahtar.md).
 # İlk kurulumda ~/.hermes-cloud/config.yaml'a ekle:
 #   hooks:
 #     pre_llm_call:

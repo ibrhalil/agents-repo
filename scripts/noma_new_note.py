@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Şablondan yeni wiki notu iskeleti üretir (AGENTS R5; SCHEMA §3).
+"""Şablondan yeni wiki notu iskeleti üretir (SCHEMA §3; wiki/bakim-disiplini.md).
 Git işlemi yapmaz — commit ve conflict çözümü periyodik cron'a aittir."""
 import argparse
 
@@ -28,14 +28,14 @@ def main():
     lib.check_choice('status', a.status, lib.STATUS)
     if a.stage in ('done', 'archived'):
         raise SystemExit("hata: bağlantısız şablon iskeleti done/archived olamaz — "
-                         'önce inbox ile üret, doldurup hub\'a bağla (AGENTS GENİŞLETME)')
+                         'önce inbox ile üret, doldurup hub\'a bağla (SCHEMA §4)')
     # Not yazılmadan önce aktörü çöz: yarım kalırsa not log'suz kalmaz.
     actor = lib.resolve_actor(a.actor) if a.log_op else None
     title = a.title or a.slug.replace('-', ' ').title()
     tags = [t for t in (lib.parse_tags(a.tags) or []) if t != a.scope]
     out = lib.ROOT / 'wiki' / f'{a.slug}.md'
     if out.exists():
-        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
+        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (wiki/veri-butunlugu.md)')
     # İçerik önce bellede üretilir; şablon okunamazsa boş dosya kalmasın.
     content = lib.render_note(a.slug, title, a.type_, a.scope, a.stage,
                               a.status, tags or None)
@@ -43,7 +43,7 @@ def main():
         with out.open('x', encoding='utf-8') as stream:
             stream.write(content)
     except FileExistsError:
-        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (AGENTS R2)')
+        raise SystemExit(f'hata: wiki/{a.slug}.md zaten var — blind-overwrite yasak (wiki/veri-butunlugu.md)')
     except BaseException:
         out.unlink(missing_ok=True)  # yarım not bırakma
         raise

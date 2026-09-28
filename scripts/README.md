@@ -12,7 +12,7 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_lint.py` | lint() mekanik kontrolleri: append-only (HEAD + staged silme/değişim), tüm özel staged blob'ların gerçekten şifreli olması, kırık link, orphan, enum, tz-bilinçli updated-bump, satır bütçeleri, `.gitattributes` tutarlılığı, genel döngü (CYCLE), bayat stage (STALE), bölüm sırası (STRUCT); özel satır içerikleri ve metadata değerleri basılmaz |
 | `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit (linter aynı zamanda pre-commit kancasıdır) |
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log, ISO zaman) — doğrudan çalıştırılmaz |
-| `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (AGENTS R5); içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
+| `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (SCHEMA §3 şablon zorunluluğu); içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
 | `noma_ingest.py` | girdileri kalıcı yazmadan ÖNCE doğrular (slug/aktör/stage); kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması); not bellede üretilip doğrulanır ve atomik yayınlanır — doğrulama hatasında not inbox'a iner (`[verify-fail]`/`NO-HUB`; içerik basılmaz) |
 | `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal; varsayılan çıktı yalnız yol, başlık/metadata `--human` ile |
 | `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur (`_basliklar`/`_uncategorized` dâhil); arama Türkçe katlamalıdır; tüm modlarda varsayılan çıktı yalnız yol, başlık/metadata `--human` ile; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
@@ -26,8 +26,8 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `test_noma_retrieval.py` | Sentetik Türkçe sorgu, hub filtresi, sıralama ve çıktı regresyonları |
 | `test_noma_context.py` | Üst hub seçimi ile gerekçeli gövde çağrışımının sentetik regresyonları |
 | `noma_eval_retrieval.py` | Şifreli plandaki temsilî sorguların toplu ilk-3/ikinci-rota isabetini ölçer (içerik basmaz) |
-| `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz/okunamayan-atıf WARN, negatif iddia hatırlatması; `--json` |
-| `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar |
+| `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz/okunamayan-atıf WARN, negatif iddia hatırlatması; `--json`. Tetikleyici politikanın kanonik sahibi `wiki/epistemik-hijyen.md`'dir; burası yalnız kullanım dokümanıdır. Web citation doğrulayıcısı değildir |
+| `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar. Kategorileri `FM/LINK` lint bulgularının yerine geçmez (`wiki/bakim-disiplini.md`) |
 | `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
 
 ## Örnekler
@@ -72,8 +72,8 @@ Notlar:
   `wiki/`, `index.md`, `index/`, `.env` veya `.git` yoktur. Bu CLI'ları gerçek wiki için
   kilidi açılmış yerel çalışma alanında çalıştırın.
 - `noma_find.py` ve `noma_wiki.py` varsayılan olarak **yalnız yol** basar; başlık,
-  tag, tarih ve link hedefi yalnız `--human` ile basılır (AGENTS R4: metadata de
-  gizlidir). `--human` yalnız güvenilir yerel terminal içindir; agent/cron
+  tag, tarih ve link hedefi yalnız `--human` ile basılır (AGENTS.md gizlilik/stdout
+  sınırı: metadata da gizlidir — `wiki/r4-stdout-read-ayrimi.md`). `--human` yalnız güvenilir yerel terminal içindir; agent/cron
   stdout'una kullanılmaz. Not gövdesi hiçbir modda basılmaz.
 - Agent'ın kalıcı bağlamı yalnız rotayı tutar: `w root --json` (`index.md`'nin
   kök hub'ları) → `w hub <slug> --json` (en fazla 32 yol, varsa `next_page` için

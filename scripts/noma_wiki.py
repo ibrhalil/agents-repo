@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """wiki arama CLI: root/search/pick/hub/recent/links/stats.
-Varsayılan çıktı YALNIZ YOLDUR (kural 4): başlık, tag, tarih ve link hedefi
-basılmaz. Başlık/metadata görmek için `--human` gerekir; bu bayrak yalnız
-güvenilir yerel terminal içindir, agent/cron stdout'una kullanılmaz.
+Varsayılan çıktı YALNIZ YOLDUR (gizlilik/stdout sınırı): başlık, tag, tarih ve
+link hedefi basılmaz. Başlık/metadata görmek için `--human` gerekir; bu bayrak
+yalnız güvenilir yerel terminal içindir, agent/cron stdout'una kullanılmaz.
 `--json` çıktısı yalnız yol/puan/sayfa işaretçisi taşır (dışarıdan bağımlıdır).
 Not metni hiçbir modda basılmaz; seçilen dosya read aracıyla bağlama
-açılır — AGENTS R4 yalnız stdout'a dökümü yasaklar, read ile açmayı değil."""
+açılır — gizlilik/stdout sınırı yalnız stdout'a dökümü yasaklar, read ile
+açmayı değil (wiki/r4-stdout-read-ayrimi.md)."""
 import argparse
 import json
 import re
@@ -16,7 +17,7 @@ from noma_build_index import HUB_PAGE_MAX_BYTES, PAGE_SIZE, ROOT_MAX_BYTES
 
 FILTERS = ('type', 'stage', 'scope', 'status')
 GENERATED_HUBS = ('_basliklar', '_uncategorized')
-HUMAN_HELP = 'güvenilir yerel terminal için başlık/metadata gösterir (kural 4 istisnası)'
+HUMAN_HELP = 'güvenilir yerel terminal için başlık/metadata gösterir (gizlilik/stdout sınırı istisnası)'
 
 
 def cmd_root(a):

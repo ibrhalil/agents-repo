@@ -2,8 +2,10 @@
 """Yanıt atıf doğrulayıcı: yanıt metnindeki wiki/raw/log/plans atıflarını
 mekanik denetler.
 
-Kural tabanlıdır, LLM yargısı yoktur (üretici-doğrulayıcı ayrımı). Not içeriği
-çıktıya asla taşınmaz (AGENTS R4); yalnız yol + kural adı + toplam sayı basılır.
+Kural tabanlıdır, LLM yargısı yoktur (üretici-doğrulayıcı ayrımı). Tetikleyici
+politiğin kanonik sahibi wiki/epistemik-hijyen.md'dir; web citation
+doğrulayıcısı değildir. Not içeriği çıktıya asla taşınmaz (AGENTS.md
+gizlilik/stdout sınırı); yalnız yol + kural adı + toplam sayı basılır.
 Kırık/ilgisiz/dışarı atıf exit 1; negatif iddia hatırlatması exit 0.
 """
 import argparse

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ingest() mekanik adımları: kaynağı raw/'a kopyala (inbox/clippings: verbatim;
 conversations: elle diyalog özeti — script kopyalamaz) + şablondan wiki notu üret
-+ log satırı yaz (AGENTS ingest; SCHEMA §1, §5). Git işlemi yapmaz."""
++ log satırı yaz (SCHEMA §1, §5). Git işlemi yapmaz."""
 import argparse
 import os
 import re
@@ -85,7 +85,7 @@ def _safe_rule_target(target):
 
 
 def verify_text(text, stem):
-    """Üretilen not İÇERİĞİ için mekanik doğrulama (AGENTS R2/R5) — saf fonksiyon.
+    """Üretilen not İÇERİĞİ için mekanik doğrulama (wiki/veri-butunlugu.md; SCHEMA §3) — saf fonksiyon.
 
     Not içeriği hiçbir koşulda döndürülmez/basılmaz; yalnız kural adları.
     Dönen: (hatalar, uyarılar) — hata giderilemezse not stage: inbox'a iner ve
@@ -119,7 +119,7 @@ def verify_text(text, stem):
                              if not (lib.ROOT / 'wiki' / f'{t}.md').exists()):
             errors.append(f'LINK:{_safe_rule_target(target)}')
         if not targets and not errors:
-            # Bağlantısız iskelet yalnız inbox olabilir (AGENTS GENİŞLETME).
+            # Bağlantısız iskelet yalnız inbox olabilir (SCHEMA §4).
             if fm.get('stage') in ('done', 'archived'):
                 errors.append(f'NO-HUB:{fm.get("stage")}')
             else:
@@ -175,7 +175,7 @@ def main():
     slug = lib.check_slug(a.slug or lib.slugify(title))
     if a.stage in ('done', 'archived'):
         raise SystemExit('hata: bağlantısız şablon iskeleti done/archived olamaz — '
-                         'önce inbox ile üret, doldurup hub\'a bağla (AGENTS GENİŞLETME)')
+                         'önce inbox ile üret, doldurup hub\'a bağla (SCHEMA §4)')
 
     is_file = a.source != '-'
     data = Path(a.source).read_bytes() if is_file else sys.stdin.buffer.read()
@@ -197,7 +197,7 @@ def main():
     note = lib.ROOT / 'wiki' / f'{slug}.md'
     if note.exists():
         print(f'wiki/{slug}.md zaten var — raw kopyası yapıldı, not atlandı '
-              '(mevcut notla merge edin, AGENTS R2)', file=sys.stderr)
+              '(mevcut notla merge edin, wiki/veri-butunlugu.md)', file=sys.stderr)
         lib.append_log('ingest', _log_msg(f'{slug} (not var)', rel, suffix),
                        actor=actor)
         return 0
@@ -215,7 +215,7 @@ def main():
             stream.write(content)
     except FileExistsError:
         print(f'wiki/{slug}.md aynı anda üretildi — raw kopyası yapıldı, '
-              'mevcut notla merge edin (AGENTS R2)', file=sys.stderr)
+              'mevcut notla merge edin (wiki/veri-butunlugu.md)', file=sys.stderr)
         lib.append_log('ingest', _log_msg(f'{slug} (not var)', rel, suffix),
                        actor=actor)
         return 0
