@@ -109,8 +109,9 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
 - [x] Kök indeks küçük girişe, hub haritaları şifreli/sayfalı türeve ayrıldı
       (`wiki/sayfali-turetilmis-indeks.md`); `root`/`hub` yalnız ilgili sayfayı okur.
 - [ ] Kararlaştırılmayı bekleyen mimariler (`wiki/agent-talimati.md` §45):
-      Master DB view'ları, graph, indekslenmiş arama/embedding — gerçek ihtiyaç
-      ortaya çıktığında tasarım önerisiyle ele alınır
+      Master DB view'ları, indekslenmiş arama/embedding — gerçek ihtiyaç
+      ortaya çıktığında tasarım önerisiyle ele alınır (görsel graph
+      2026-09-28'de kesinleşti: `wiki/graph-view-web.md`)
 - [ ] Ölçek eşiğini ölç: `python3 -B scripts/noma_bench_index.py 1000 10000
       --search` ile sentetik kök/hub ve arama süresi/belleğini kaydet;
       gerçek darboğaz doğrulanmadıkça kalıcı indeks katmanı ekleme.
@@ -132,5 +133,7 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
 - [ ] Ek integration'lar (takvim, RSS e-posta)
 - [x] ~~Sözleşme kompakt versiyonu (token verimliliği)~~ (2026-09-23: AGENTS/SCHEMA
       makine-okunur kompakt formda yeniden yazıldı)
-- [ ] Web UI: view katmanı tasarımı (tech seçimi §45-13 ile; `web/` iskeleti
-      2026-09-23'te kaldırıldı — gerekirse yeniden kurulur)
+- [ ] Web UI: graph view kuruldu (2026-09-28: `web/` yeniden kuruldu —
+      Sigma.js/Graphology read-only explorer, `scripts/noma_build_graph.py`
+      türev hattı, karar `wiki/graph-view-web.md`); kalan view'lar (table/board/
+      calendar) ve nihai view katmanı tech seçimi §45-13 ile ayrıca değerlendirilir

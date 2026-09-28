@@ -10,6 +10,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `tmp/` (Yerel/Gitignore): Geçici (scratch) işlem dizini; git'e girmez, şifrelenmez. Kalıcı çöp bırakılmaz.
 `agent/` (Public): Agent root altyapısı.
 `scripts/` (Public): Çalıştırılabilir kodlar.
+`web/` (Public): Read-only graph view (`index.html`, `graph/`, `vendor/`); `web/data/` türev graph verisi gitignore'ludur, kanonik değildir ([[graph-view-web]]).
 `docs/` (Public): Mimari kararlar, şablonlar, yol haritası.
 ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzerinden ulaşılır; yenisi oraya bağlanır.
 ## 2. Bilgi Hattı ve Keşif

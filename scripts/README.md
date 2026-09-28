@@ -18,6 +18,7 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur (`_basliklar`/`_uncategorized` dâhil); arama Türkçe katlamalıdır; tüm modlarda varsayılan çıktı yalnız yol, başlık/metadata `--human` ile; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
 | `noma-bootstrap.sh` | düğüm kurulum desteği: git-crypt kilit denetimi (tüm özel dizinlerden örnek, yollar tek tek) ve `.env` hazırlığı |
 | `noma_build_index.py` | `index.md` küçük kök + `index/hubs/` altında 32 yapraklık şifreli sayfalar + `_basliklar/` damıtma sözlüğü |
+| `noma_build_graph.py` | wiki `[[wikilink]]`'lerinden `web/data/graph.{json,js}` türev graph verisi üretir (deterministik; kırık hedef `exists=false`, self-link/mükerrer kenar üretmez; stdout yalnız sayı/yol; `--check` bayatlık denetimi; görünüm `web/index.html`) |
 | `noma_bench_index.py` | gerçek wiki okumayan sentetik 1K/10K/100K indeks maliyeti ölçümü; yalnız sayısal çıktı |
 | `docker-compose.hermes.yml` | Hermes Agent runtime compose (yerel doğrulandı; VPS Faz 1 B2-B4 notları dosyada) |
 | `noma_hermes_context.py` | Hermes `pre_llm_call`: yalnız sabit gezinme talimatı; kilit kararında TÜM wiki notları denetlenir (kısmi kasa kısıtlı sayılır); özel wiki gövdesini stdout'a vermez |
@@ -54,6 +55,7 @@ python3 -B -m unittest discover -s scripts -p 'test_*.py'
 python3 -B scripts/noma_eval_retrieval.py
 printf 'yanıt ... (wiki/slug.md)' | python3 scripts/noma_verify_citations.py
 python3 scripts/noma_tend_report.py
+python3 scripts/noma_build_graph.py              # graph verisi → web/data/
 python3 -B scripts/noma_eval_context.py
 python3 -B scripts/noma_eval_context.py --fresh
 python3 -B scripts/noma_bench_index.py 1000 10000

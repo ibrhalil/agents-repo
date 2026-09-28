@@ -41,8 +41,10 @@ sayfalar en çok 32 yol/16 KiB, kök en çok 8 KiB'dir; dosyalar kanonik değild
 Serbest metin araması/lint hâlen tüm wiki'yi
 tarar; daha büyük ölçekte yerel indeks gereksinimi ayrı ölçülecektir.
 
-Graph/search/embedding mimarisi henüz kararlaşmadı (`wiki/agent-talimati.md`
-§45-8/9) — belirli motor varsayılmaz. Epistemik hijyen: her cevap kaynak path'iyle atıflı (`wiki/slug.md`,
+Graph/search/embedding: görsel graph view 2026-09-28'de kesinleşti
+(`wiki/graph-view-web.md` — wiki → `scripts/noma_build_graph.py` → `web/data/`
+türevi, Sigma.js/Graphology viewer `web/` altında, read-only); genel/semantik
+arama motoru ayrı tasarım konusudur. Epistemik hijyen: her cevap kaynak path'iyle atıflı (`wiki/slug.md`,
 `raw/...`); `unverified → established` yükseltmesi ikinci bağımsız kaynak ya da
 insan onayı ister.
 
@@ -94,7 +96,9 @@ Canlı yol haritası (kalan işler + tamamlanan fazlar): `docs/ROADMAP.md`.
   günden bir kuruldu.
 - **graph/index üretimi:** küçük `index.md` kökü ve sayfalı `index/hubs/` haritaları
   `scripts/noma_build_index.py` ile wiki `## Links` yönünden deterministik üretilir;
-  graph ile genel/semantik arama motoru hâlâ ayrı tasarım konusudur.
+  graph view verisi `scripts/noma_build_graph.py` ile aynı ilkeyle `web/data/`
+  altına üretilir (gitignore'lu türev; karar: `wiki/graph-view-web.md`); graph ile
+  genel/semantik arama motoru hâlâ ayrı tasarım konusudur.
 - **Kanonik profil wiki'de:** Hermes yerleşik hafızası düğüm-lokal olduğundan çok
   düğümlü senaryoda kanonik profil repoda taşınır; `memories/` dizini 2026-09-23'te
   kaldırıldı — profil `wiki/kullanici-profili.md` olarak yaşar, tüm düğümlere

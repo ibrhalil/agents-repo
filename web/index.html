@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Noma Graph</title>
+  <link rel="stylesheet" href="graph/graph.css">
+</head>
+<body>
+  <div id="stage">
+    <div id="graph-container"></div>
+
+    <header id="topbar">
+      <div class="brand">Noma Graph</div>
+      <div class="search">
+        <input id="search" type="search" placeholder="Not ara (/)" autocomplete="off" spellcheck="false" aria-label="Not ara">
+        <div id="search-results" hidden></div>
+      </div>
+      <div id="mode-bar" class="mode-bar" hidden>
+        <button id="btn-global" class="btn" type="button">Genel</button>
+        <span id="local-label"></span>
+        <div class="depth" role="group" aria-label="Derinlik">
+          <button class="btn depth-btn" data-depth="1" type="button">1</button>
+          <button class="btn depth-btn" data-depth="2" type="button">2</button>
+          <button class="btn depth-btn" data-depth="3" type="button">3</button>
+        </div>
+      </div>
+    </header>
+
+    <nav id="filter-bar" aria-label="Filtreler">
+      <select id="filter-type" aria-label="Tür"></select>
+      <select id="filter-scope" aria-label="Kapsam"></select>
+      <select id="filter-stage" aria-label="Stage"></select>
+      <select id="filter-exists" aria-label="Bağlantı durumu"></select>
+    </nav>
+
+    <aside id="panel" hidden></aside>
+    <div id="meta-bar"></div>
+    <div id="controls">
+      <button id="btn-relayout" class="btn" type="button" title="Yerleşimi yeniden hesapla">Yeniden diz</button>
+    </div>
+    <div id="notice"><div>
+      Graph verisi yok.<br>
+      <code>python3 scripts/noma_build_graph.py</code>
+    </div></div>
+  </div>
+
+  <script src="vendor/graphology.umd.min.js"></script>
+  <script src="vendor/sigma.min.js"></script>
+  <script src="vendor/graphology-layout-forceatlas2.min.js"></script>
+  <script src="data/graph.js"></script>
+  <script src="graph/layout.js"></script>
+  <script src="graph/render.js"></script>
+  <script src="graph/ui.js"></script>
+  <script src="graph/graph.js"></script>
+</body>
+</html>
