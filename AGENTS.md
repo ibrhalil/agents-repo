@@ -12,3 +12,5 @@ Runtime/model bağımsız küçük yönlendiricidir; kural deposu değildir. Oto
 - Açık klonda seçili dosya read aracıyla bağlama açılabilir; yasak olan stdout'a dökmektir ([[r4-stdout-read-ayrimi]]).
 ## 3. Politikalar
 Repo-geneli davranış kuralları (veri bütünlüğü, güvenlik, atıf doğrulama, bakım, test fixture, ingest vb.) ihtiyaç halinde `wiki/agent-policy.md` register'ından bulunur.
+Eş zamanlılık: repo değişikliği yapacak agent önce `BOARD.md`'ye giriş yazar, iş bitince siler ([[notice-board-esaslari]]).
+Temel: okuma [[agent-read-policy]], yazma [[agent-write-policy]].

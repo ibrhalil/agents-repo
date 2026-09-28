@@ -14,16 +14,16 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$|^web/vendor/'
       - id: end-of-file-fixer
-        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$|^web/vendor/'
       - id: check-yaml
-        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$|^web/vendor/'
       - id: check-merge-conflict
-        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$|^web/vendor/'
       - id: mixed-line-ending
         args: ['--fix=no']
-        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$'
+        exclude: '^(raw|wiki|log|plans|index|agent/(prompts|sessions))/|^index\.md$|^web/vendor/'
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.42.0
