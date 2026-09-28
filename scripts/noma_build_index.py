@@ -20,6 +20,10 @@ HUB_DIR = ROOT / "index" / "hubs"
 PAGE_SIZE = 32
 ROOT_MAX_BYTES = 8192
 HUB_PAGE_MAX_BYTES = 16384
+# Biçim sözleşmesi (tek kaynak): noma_wiki.py tüketicileri de buradan okur.
+ROOT_HEADING = "## Kök Hub'lar"
+SLUG_PATTERN = r'[a-z0-9]+(?:-[a-z0-9]+)*'
+LEAF_LINE_RE = re.compile(rf'^- \[\[({SLUG_PATTERN})(?:\|[^\]]+)?\]\]', re.M)
 LOCK_FILE = ".noma-index.lock"
 # Özet bütçesi: yaprak satırı bu sınırı aşınca hub sayfası 16 KiB'ı zorlar.
 DESC_MAX = 110
@@ -153,7 +157,7 @@ def generate_all():
     else:
         parts.append("")
     if root_hubs:
-        parts.append("## Kök Hub'lar")
+        parts.append(ROOT_HEADING)
         for leaf_slug, leaf_title, leaf_desc in sorted(root_hubs):
             line = f"- [[{leaf_slug}|{leaf_title}]]"
             if leaf_desc:
@@ -188,7 +192,7 @@ def generate_all():
         pages[f'index/hubs/_basliklar/{page:06d}.md'] = content
 
     for hub_slug in sorted(hubs.keys()):
-        if not re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', hub_slug):
+        if not re.fullmatch(SLUG_PATTERN, hub_slug):
             raise ValueError('geçersiz hub slug; önce wiki lint çalıştırılmalı')
         leaves = sorted(hubs[hub_slug])
         for offset in range(0, len(leaves), PAGE_SIZE):

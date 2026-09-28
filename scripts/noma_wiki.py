@@ -13,7 +13,8 @@ import re
 import sys
 
 import noma_lib as lib
-from noma_build_index import HUB_PAGE_MAX_BYTES, PAGE_SIZE, ROOT_MAX_BYTES
+from noma_build_index import (HUB_PAGE_MAX_BYTES, LEAF_LINE_RE, PAGE_SIZE,
+                              ROOT_HEADING, ROOT_MAX_BYTES)
 
 FILTERS = ('type', 'stage', 'scope', 'status')
 GENERATED_HUBS = ('_basliklar', '_uncategorized')
@@ -31,8 +32,8 @@ def cmd_root(a):
     except (OSError, UnicodeError):
         print('index okunamadı (özel içerik gizlendi)', file=sys.stderr)
         return 1
-    m = re.search(r"^## Kök Hub'lar\n(.*?)(?=^## |\Z)", text, re.M | re.S)
-    slugs = re.findall(r'^- \[\[([a-z0-9-]+)(?:\|[^\]]+)?\]\]', m.group(1), re.M) if m else []
+    m = re.search(re.escape(ROOT_HEADING) + r'\n(.*?)(?=^## |\Z)', text, re.M | re.S)
+    slugs = LEAF_LINE_RE.findall(m.group(1)) if m else []
     if not slugs:
         print('kök hub bulunamadı', file=sys.stderr)
         return 1
@@ -207,7 +208,7 @@ def cmd_hub(a):
     except (OSError, UnicodeError):
         print('hub sayfası bulunamadı; indeks yeniden üretilmeli', file=sys.stderr)
         return 1
-    leaves = re.findall(r'^- \[\[([a-z0-9]+(?:-[a-z0-9]+)*)(?:\|[^\]]+)?\]\]', text, re.M)
+    leaves = LEAF_LINE_RE.findall(text)
     if not 0 < len(leaves) <= PAGE_SIZE:
         print('hub sayfası biçimi geçersiz', file=sys.stderr)
         return 1
