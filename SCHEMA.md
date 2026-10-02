@@ -2,7 +2,7 @@
 ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için wiki'ye (örn: [[agent-policy]]) bakınız. Çelişkide SCHEMA kazanır.
 ## 1. Dizinler ve Rolleri
 `raw/` (Şifreli): Ham kaynaklar. `inbox/`+`clippings/` verbatim; `conversations/` kısa `K:/<model>:` diyalog ÖZETİ (model = gerçek session modeli). APPEND-ONLY.
-`wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR. Kullanıcı profili dahil tüm kanonik içerik burada yaşar (örn: [[kullanici-profili]]).
+`wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR. Kullanıcı profili ve işlenen kaynakların eksiksiz bilgi/bağlamı burada yaşar; raw günlük bilgi kullanımının önkoşulu değildir ([[wiki-kapsam-butunlugu]]).
 `agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri (`YYYY-MM-DD-<kısa-slug>.md`).
 `plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).
@@ -15,6 +15,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 ERİŞİM: Public dizin artifact'leri wiki'den [[arac-zemini]] register'ı üzerinden ulaşılır; yenisi oraya bağlanır.
 ## 2. Bilgi Hattı ve Keşif
 Üretim: `raw/` -> `wiki/` (2 katman).
+KAPSAM: Kaynak/rapor kaydı + kavram/ayrıntı notları bilgi kaybetmeden aktarılır; yalnız özet/ham link yeterli değildir. Tamamlanma karşılaştırmalı kapsam kontrolü ister; eski notlar ilgili yazma/session çalışmasında aşamalı uyarlanır ([[wiki-kapsam-butunlugu]]). Raw append-only kalır.
 Geri besleme: Değerli query sentezleri atomik wiki notu olarak geri dosyalanır (`-> filed: wiki/slug.md` log kaydıyla; [[epistemik-hijyen]]).
 Harita: Tek kanonik giriş şifreli `index.md`'dir; kök hub'ları gösterir. `index/hubs/` sayfaları wiki'deki `## Links` yönünden (özelden genele) `scripts/noma_build_index.py` ile üretilir; özel başlık/özetler public yüzeye kopyalanmaz.
 Rota: Keşif `noma_wiki.py root --json` → `hub <slug> --json` → seçilen notun read aracıyla açılması şeklindedir (AGENTS.md bootstrap'ı; araç kullanımı `scripts/README.md`).

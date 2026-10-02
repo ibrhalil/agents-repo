@@ -158,5 +158,11 @@ Notlar:
 - Log satırları SCHEMA §5 formatındadır: `HH:mm <op> @<node> <aktör> | mesaj ≤120`.
 - Enum varsayılanları: `noma_new_note` → `concept/common/inbox`; `noma_ingest`
   → `resource/common/inbox`. Değerler SCHEMA §3'teki listelerle doğrulanır.
+- Ingest CLI yalnız raw kopyası ve wiki iskeleti hazırlar; mevcut wiki kaydını
+  merge etmez ve kaynak içeriğini semantik olarak aktarmaz. Exit 0 ve lint
+  başarısı kapsam onayı değildir. Agent, `wiki/wiki-kapsam-butunlugu.md`
+  uyarınca kaynak/rapor ve kavram/ayrıntı kayıtlarını doldurup bölüm/ek → wiki
+  kapsam eşlemesini karşılaştırır. Depodaki raw yeniden kopyalanmaz; eski notlar
+  ilgili içeriksel çalışmada aşamalı tamamlanır.
 
 Kök: [[index]]

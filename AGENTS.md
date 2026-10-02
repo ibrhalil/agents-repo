@@ -13,4 +13,5 @@ Runtime/model bağımsız küçük yönlendiricidir; kural deposu değildir. Oto
 ## 3. Politikalar
 - Görevi araştırmadan önce `wiki/agent-read-policy.md` oku; aynı oturumda değişmediyse yeniden yükleme.
 - İlk kalıcı değişiklikten önce `wiki/agent-write-policy.md` oku ve `python3 -B scripts/noma_board.py begin <task-key>` çalıştır. Düzenleme öncesi `claim <run-id> <paths...>`, teslim öncesi `finish <run-id>`; kullanım `scripts/README.md`.
+- Kaynak ingest veya ilgili not/session'ın içeriksel yeniden ele alınmasında `wiki/wiki-kapsam-butunlugu.md` oku; eksiksiz bilgi aktarımı/kapsam kontrolü ve eski notların aşamalı uyarlaması uygulanır.
 - Salt-okuma/plan görevi kayıt açmaz. Diğer davranış kuralları yalnız ilgili tetikleyicide `wiki/agent-policy.md` register'ından bulunur; rutin teknik kararları agent verir, önemli ve kaynaktan çözülemeyen belirsizliği sorar.
