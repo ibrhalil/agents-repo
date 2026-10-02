@@ -39,7 +39,7 @@ locked: false # OPSİYONEL (true ise model dokunamaz)
 KİMLİK: Global ID yoktur, dosya adı = kimlik (`kebab-case-ascii.md`).
 YAPI: `frontmatter` -> `# Başlık` -> `## Links` -> `## Summary` -> `Gövde`. `---` ile Summary sonu arasında boş satır YASAKTIR.
 LİNK: `## Links` altında virgülle ayrılmış düz liste kullanılır. Yön ZORUNLU olarak ÖZELDEN GENELE'dir (Yaprak -> Hub). Parent alanı yoktur.
-KARARLAR: Yeni kararlar numarasız `type: decision` notudur. Eski kararı supersede eden açıkça belirtir.
+KARARLAR: Yeni kararlar numarasız `type: decision` notudur. Eski kararı supersede eden açıkça belirtir. İnsan kaynaklı kararlar ayrıca `wiki/insan-karar-defteri.md`'de KRR-NN kaydı alır; etkilenen not gövdede `[[insan-karar-defteri#KRR-NN|KRR-NN]]` anchor atfı taşır (tahsis kuralları o notta; frontmatter'a KRR alanı eklenmez).
 ## 5. Log Formatı
 DOSYA: `log/YYYY-MM-DD.md`
 SATIR FORMATI: `HH:mm <op> @<node> <aktör> | mesaj ≤120 karakter` (op: ingest, query, tend, lint, sync; aktör: gerçek session modeli | K | cron; neden opsiyonel: `(neden: ...)`).

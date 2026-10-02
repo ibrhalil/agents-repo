@@ -374,11 +374,147 @@ class LintTests(unittest.TestCase):
 
     def test_staged_unreadable_note_fails_without_partial_graph_claims(self):
         self.write('not-a', note('not-a', links=['not-b']))
-        with self.staged({'wiki/not-a.md': (self.root / 'wiki/not-a.md').read_bytes(),
+        with self.staged({'wiki/not-a.md': (self.root / 'wiki' / 'not-a.md').read_bytes(),
                           'wiki/not-b.md': lint.UNREADABLE}):
             code, out = self.run_lint()
         self.assertTrue(any(o.startswith('ERR CRYPT: wiki/not-b.md (staged)') for o in out))
         self.assertFalse(any('(staged)' in o for o in out if o.startswith('ERR LINK')))
+        self.assertEqual(1, code)
+
+    # --- KRR: insan karar defteri anchor/referans sözleşmesi --------------
+
+    def krr_registry(self, anchors):
+        text = note('insan-karar-defteri', title='İnsan Karar Defteri',
+                    links=list(FILLER), summary='Sentetik KRR defteri.')
+        return text + '\n## Kayıtlar\n' + ''.join(
+            f'### KRR-{a}\ngövde satırı\n' for a in anchors)
+
+    def test_valid_krr_ref_passes_cleanly(self):
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01',)))
+        self.write('karar-not', note('karar-not', title='Karar Notu',
+                                     links=[*FILLER, 'insan-karar-defteri'],
+                                     summary='Karar ([[insan-karar-defteri#KRR-01|KRR-01]]).'))
+        code, out = self.run_lint()
+        self.assertEqual([o for o in out if 'KRR' in o], [])
+        self.assertEqual(0, code)
+
+    def test_krr_ref_without_registry_fires(self):
+        self.write('karar-not', note('karar-not', title='Karar Notu',
+                                     links=list(FILLER),
+                                     summary='Karar ([[insan-karar-defteri#KRR-01|KRR-01]]).'))
+        code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md: KRR atfı var '
+                          'ama wiki/insan-karar-defteri.md yok'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_krr_ref_to_missing_anchor_fires(self):
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01',)))
+        self.write('karar-not', note('karar-not', title='Karar Notu',
+                                     links=[*FILLER, 'insan-karar-defteri'],
+                                     summary='Karar ([[insan-karar-defteri#KRR-02|KRR-02]]).'))
+        code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md: '
+                          '[[insan-karar-defteri#KRR-02]] kaydı defterde yok'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_krr_duplicate_anchor_fires(self):
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01', '01')))
+        code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/insan-karar-defteri.md: mükerrer kayıt KRR-01'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_krr_heading_with_description_is_not_an_anchor(self):
+        """Kırmızı kanıt: `### KRR-01 — açıklama` tam hedef biçimi değil (Obsidian
+        heading link tam başlık metni ister); ref artık tanımsız kalır."""
+        for s in FILLER:
+            self.write(s, note(s))
+        registry = self.krr_registry(('01',)).replace(
+            '### KRR-01\ngövde satırı\n', '### KRR-01 — açıklamalı başlık\ngövde satırı\n')
+        self.write('insan-karar-defteri', registry)
+        self.write('karar-not', note('karar-not', title='Karar Notu',
+                                     links=[*FILLER, 'insan-karar-defteri'],
+                                     summary='Karar ([[insan-karar-defteri#KRR-01|KRR-01]]).'))
+        code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md: '
+                          '[[insan-karar-defteri#KRR-01]] kaydı defterde yok'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_staged_krr_ref_without_staged_registry_fires(self):
+        """Staged snapshot, kendi defteri olmadan KRR atfı taşıyamaz."""
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01',)))
+        karar = note('karar-not', title='Karar Notu',
+                     links=[*FILLER, 'insan-karar-defteri'],
+                     summary='Karar ([[insan-karar-defteri#KRR-01|KRR-01]]).')
+        self.write('karar-not', karar)
+        with self.staged({'wiki/karar-not.md': karar.encode()}):
+            code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md (staged): KRR atfı var '
+                          'ama wiki/insan-karar-defteri.md yok'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_staged_krr_ref_to_missing_anchor_fires(self):
+        """Worktree temiz olsa bile staged sürümdeki tanımsız KRR yakalanır."""
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01',)))
+        temiz = note('karar-not', title='Karar Notu',
+                     links=[*FILLER, 'insan-karar-defteri'],
+                     summary='Karar ([[insan-karar-defteri#KRR-01|KRR-01]]).')
+        bozuk = temiz.replace('#KRR-01|KRR-01', '#KRR-02|KRR-02')
+        self.write('karar-not', temiz)
+        with self.staged({'wiki/insan-karar-defteri.md':
+                          (self.root / 'wiki' / 'insan-karar-defteri.md').read_bytes(),
+                          'wiki/karar-not.md': bozuk.encode()}):
+            code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md (staged): '
+                          '[[insan-karar-defteri#KRR-02]] kaydı defterde yok'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_krr_target_with_malformed_suffix_fires(self):
+        """Kırmızı kanıt: `#KRR-01-invalid` hedefi 01 yakalayıp geçerli
+        sayılamaz — tam hedef parçası biçim doğrulamasından geçmelidir."""
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01',)))
+        self.write('karar-not', note('karar-not', title='Karar Notu',
+                                     links=[*FILLER, 'insan-karar-defteri'],
+                                     summary='Karar ([[insan-karar-defteri#KRR-01-invalid|KRR-01]]).'))
+        code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md: hatalı KRR hedef biçimi '
+                          '(KRR-NN beklenir): 01-invalid'],
+                         [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+    def test_krr_nonnumeric_and_short_targets_do_not_escape(self):
+        """Kırmızı kanıt: `#KRR-invalid` hiç eşleşme üretmez, `#KRR-1` tek hane —
+        ikisi de artık yakalanıp reddedilir."""
+        for s in FILLER:
+            self.write(s, note(s))
+        self.write('insan-karar-defteri', self.krr_registry(('01',)))
+        self.write('karar-not', note('karar-not', title='Karar Notu',
+                                     links=[*FILLER, 'insan-karar-defteri'],
+                                     summary='A ([[insan-karar-defteri#KRR-invalid|x]]) '
+                                            'B ([[insan-karar-defteri#KRR-1|y]]).'))
+        code, out = self.run_lint()
+        self.assertEqual(['ERR KRR: wiki/karar-not.md: hatalı KRR hedef biçimi '
+                          '(KRR-NN beklenir): 1',
+                          'ERR KRR: wiki/karar-not.md: hatalı KRR hedef biçimi '
+                          '(KRR-NN beklenir): invalid'],
+                         [o for o in out if o.startswith('ERR KRR')])
         self.assertEqual(1, code)
 
 

@@ -21,3 +21,4 @@ Kaynak/rapor aktarımında bilgi ve bağlamı eksiksiz koru; kaynak kaydının g
 Akış veya ilişkiler anlatımı kolaylaştırıyorsa gövdede isteğe bağlı Mermaid diyagramı kullan; yanında kısa metin açıklaması bırak.
 Üst bölge (frontmatter → Summary sonu) boş satırsız ve tekrarsızdır.
 Gövdede boş satır serbesttir.
+İnsan kararının etkilediği notlarda gövde içi `[[insan-karar-defteri#KRR-NN|KRR-NN]]` anchor atfı kullanılır ([[insan-karar-defteri]] tahsis kuralları; frontmatter'a KRR alanı eklenmez).

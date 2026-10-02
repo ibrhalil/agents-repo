@@ -21,6 +21,13 @@ ORDER = 'title type stage scope status tags created updated locked'.split()
 ISO_DT = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)')
 ENCRYPTED = ['index.md', 'index/', 'raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
 BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
+KRR_NOTE = 'wiki/insan-karar-defteri.md'
+KRR_ANCHOR = re.compile(r'^### KRR-(\d{2,})$', re.M)
+# Tam hedef: [[insan-karar-defteri#KRR-<hedefparçası> — parça `]]`/`|`'a kadar
+# yakalanır ve ayrıca tam sayı biçiminde mi diye doğrulanır; "KRR-01-invalid"
+# veya "KRR-invalid" hedefleri yakalanıp reddedilir, kaçamaz.
+KRR_REF = re.compile(r'\[\[insan-karar-defteri#KRR-([^\]|]*)')
+KRR_ID = re.compile(r'\d{2,}')
 GITCRYPT_MAGIC = b'\x00GITCRYPT\x00'
 # HEAD/index okuma hatası sentinel'i: "yok" (None) ile "var ama okunamadı" ayrımı.
 UNREADABLE = object()
@@ -191,17 +198,18 @@ def _check_note(rel, data, links_in, links_out, tree_out, label=''):
 
 
 def check_wiki(wiki):
-    links_in, links_out, tree_out = {}, {}, {}
+    links_in, links_out, tree_out, texts = {}, {}, {}, {}
     for p in wiki:
         rel = f'wiki/{p.name}'
         data = p.read_bytes()
         text = _check_note(rel, data, links_in, links_out, tree_out)
         if text is None: continue
+        texts[rel] = text
         # Git'in şifre çözme filtresi üzerinden önceki notu içeride karşılaştır;
         # eski notun hiçbir satırını stdout/stderr'e yansıtma.
         payload = _head_payload(rel)
         _history_checks(rel, text, payload)
-    return links_in, links_out, tree_out
+    return links_in, links_out, tree_out, texts
 
 
 def _staged_wiki_paths():
@@ -219,7 +227,7 @@ def check_staged_wiki(wiki, worktree_graph):
     if paths is None:
         add('ERR', 'CRYPT', 'wiki/: staged yollar okunamadı; graph doğrulanamadı')
         return
-    links_in, links_out, tree_out = {}, {}, {}
+    links_in, links_out, tree_out, texts = {}, {}, {}, {}
     worktree = {f'wiki/{p.name}': p for p in wiki}
     changed = set(paths) != set(worktree)
     unreadable = False
@@ -240,10 +248,14 @@ def check_staged_wiki(wiki, worktree_graph):
                 links_out[rel] = worktree_graph[1][rel]
             if local.stem in worktree_graph[2]:
                 tree_out[local.stem] = worktree_graph[2][local.stem]
+            if rel in worktree_graph[3]:
+                texts[rel] = worktree_graph[3][rel]
         else:
             text = _check_note(rel, staged, links_in, links_out, tree_out, ' (staged)')
             if text is not None:
+                texts[rel] = text
                 _history_checks(rel, text, _head_payload(rel), ' (staged)')
+    check_krr(texts, ' (staged)')
     if (not unreadable and changed
             and (set(paths) != set(worktree) or links_out != worktree_graph[1]
                  or tree_out != worktree_graph[2])):
@@ -284,6 +296,33 @@ def _find_cycles(tree_out):
         # state 2 (tamamlanmış) düğümlere in yok: cross-edge döngü değildir
     return cycles
 
+
+def check_krr(texts, label=''):
+    """KRR sözleşmesi (wiki/insan-karar-defteri.md): kayıt yalnız defterde tam
+    `### KRR-NN` satırı olarak tanımlanır (Obsidian heading link); defterde
+    olmayan veya mükerrer KRR atfı ERR'dir (uydurma KRR tespiti). Worktree ve
+    staged snapshot ayrı ayrı denetlenir."""
+    reg = texts.get(KRR_NOTE)
+    if reg is None:
+        for rel, text in sorted(texts.items()):
+            if KRR_REF.search(strip_code(text)):
+                add('ERR', 'KRR', f'{rel}{label}: KRR atfı var ama {KRR_NOTE} yok')
+        return
+    anchors = KRR_ANCHOR.findall(strip_code(reg))
+    for a in sorted({a for a in anchors if anchors.count(a) > 1}):
+        add('ERR', 'KRR', f'{KRR_NOTE}{label}: mükerrer kayıt KRR-{a}')
+    valid = set(anchors)
+    for rel in sorted(texts):
+        for target in sorted(set(KRR_REF.findall(strip_code(texts[rel])))):
+            if not KRR_ID.fullmatch(target):
+                shown = (target if len(target) <= 24
+                         and re.fullmatch(r'[A-Za-z0-9._-]*', target)
+                         else 'geçersiz-biçimli-hedef')
+                add('ERR', 'KRR', f'{rel}{label}: hatalı KRR hedef biçimi '
+                                  f'(KRR-NN beklenir): {shown}')
+            elif target not in valid:
+                add('ERR', 'KRR', f'{rel}{label}: [[insan-karar-defteri#KRR-{target}]] '
+                                  f'kaydı defterde yok')
 
 def check_graph(wiki, links_in, links_out, tree_out, label=''):
     existing = {Path(p).stem for p in wiki}
@@ -468,7 +507,8 @@ def main():
     check_board()
     wiki = sorted((ROOT / 'wiki').glob('*.md'))
     graph = check_wiki(wiki)
-    check_graph(wiki, *graph)
+    check_graph(wiki, *graph[:3])
+    check_krr(graph[3])
     check_staged_wiki(wiki, graph)
     check_suffixes()
     check_logs()
