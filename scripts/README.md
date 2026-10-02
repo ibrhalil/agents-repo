@@ -1,8 +1,10 @@
 # scripts/
 
-Noma sözleşme linter'ı ve agent destek scriptleri. Hepsi stdlib-only'dir ve **git
+Noma sözleşme linter'ı ve agent destek scriptleri. `noma_*` scriptleri stdlib-only'dir ve **git
 mutation yapmaz** — yazma akışı serbesttir; commit ve conflict çözümü bugün
 **elle** yapılır, zamanlanmış cron işi ROADMAP B5'e bağlıdır (henüz yok).
+`laya_*` scriptleri repo `.venv`'inde `laya[serve]` ister (System One pilotu;
+`wiki/laya-gate-servisi.md`).
 
 Adlandırma: Python `noma_` (snake), shell `noma-` (kebab) ön eklidir; compose
 dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
@@ -32,6 +34,11 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_verify_citations.py` | Yanıt atıflarını mekanik doğrular: kırık-atıf FAIL (exit 1), ilgisiz/okunamayan-atıf WARN, negatif iddia hatırlatması; `--json`. Tetikleyici politikanın kanonik sahibi `wiki/epistemik-hijyen.md`'dir; burası yalnız kullanım dokümanıdır. Web citation doğrulayıcısı değildir |
 | `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar. Kategorileri `FM/LINK` lint bulgularının yerine geçmez (`wiki/bakim-disiplini.md`) |
 | `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
+| `laya_eval.py` | System One (Laya) pilot eval: stratified 50/20/30 bölme, koşum, metrik (acc/HF/ECE/P50-P95), opsiyon süpürmesi (`--model` local path alır; `wiki/system-one-olcum-plani.md`) |
+| `test_laya_eval.py` | Model gerektirmeyen metrik regresyonları: confidence tahmin edilen sınıftan gelir (gold'dan değil), sweep seçenek kümesi gold route'u daima içerir |
+| `laya_finetune.py` | Laya multilingual tabanı Noma görev verisiyle RLCD+CE fine-tune eder; calib bölmesinden temperature fit eder, `models/` altına yazar |
+| `laya_gate_serve.py` | Yerel `needs_web` kapı servisi (127.0.0.1:8791, yalnız eşik geçen soru, fail-open; LaunchAgent `com.noma.laya-gate` ile kalıcı) |
+| `data/laya_eval_set.json` | 84 örneklik etiketli eval/fine-tune seti (TR ağırlıklı + kısa Latin tuzakları; bölme seed 42) |
 
 ## Agent Koordinasyonu
 

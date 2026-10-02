@@ -8,6 +8,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).
 `index/` (Şifreli): `index.md` kökünden ulaşılan, yeniden üretilebilir sayfalı hub haritaları; kanonik veri değildir.
 `tmp/` (Yerel/Gitignore): Geçici (scratch) işlem dizini; git'e girmez, şifrelenmez. Kalıcı çöp bırakılmaz.
+`models/` (Yerel/Gitignore): Yerel ML checkpoint'ları (ör. laya-ft); kanonik bilgi değildir, `scripts/` üreticileriyle yeniden oluşturulur ([[laya-gate-servisi]]).
 `agent/` (Public): Agent root altyapısı.
 `scripts/` (Public): Çalıştırılabilir kodlar.
 `web/` (Public): Read-only graph view (`index.html`, `graph/`, `vendor/`); `web/data/` türev graph verisi gitignore'ludur, kanonik değildir ([[graph-view-web]]).

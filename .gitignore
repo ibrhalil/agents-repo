@@ -6,6 +6,8 @@
 
 # Üretilen veri — yeniden oluşturulabilir; markdown truth'tır
 data/
+!scripts/data/
+!scripts/data/**
 
 # Obsidian çalışma dosyaları (içerik repo'da kalır)
 .obsidian/
@@ -28,3 +30,6 @@ __pycache__/
 # opencode oturum durumu
 .opencode/
 tmp/
+
+# Yerel ML checkpoint'ları — yeniden üretilebilir (scripts/laya_finetune.py)
+models/
