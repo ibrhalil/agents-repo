@@ -115,6 +115,10 @@ iş (cron) henüz yok, commit ve conflict çözümü elle yapılır (bkz. B5).
 - [ ] Ölçek eşiğini ölç: `python3 -B scripts/noma_bench_index.py 1000 10000
       --search` ile sentetik kök/hub ve arama süresi/belleğini kaydet;
       gerçek darboğaz doğrulanmadıkça kalıcı indeks katmanı ekleme.
+- [ ] Log-türevli sıcak-rota (`noma_wiki.py hot`, 2026-10-02 erteleme): query
+      log'ları okunan not yolunu tutarlı kaydetmiyor (yalnız `-> filed:`
+      hedefleri var); keşif darboğazı ölçümle doğrulanırsa query log'una okunan
+      hedef yolun eklenmesiyle birlikte tasarlanır — kalıcı state/json yok.
 
 ---
 

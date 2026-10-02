@@ -4,7 +4,7 @@ ZORUNLU: Makine okuması için optimize edilmiştir. Detaylar/gerekçeler için 
 `raw/` (Şifreli): Ham kaynaklar. `inbox/`+`clippings/` verbatim; `conversations/` kısa `K:/<model>:` diyalog ÖZETİ (model = gerçek session modeli). APPEND-ONLY.
 `wiki/` (Şifreli): Kanonik ağaç (Tree). Alt klasör YOKTUR. Kullanıcı profili ve işlenen kaynakların eksiksiz bilgi/bağlamı burada yaşar; raw günlük bilgi kullanımının önkoşulu değildir ([[wiki-kapsam-butunlugu]]).
 `agent/prompts/` & `agent/sessions/` (Şifreli): Prompt hazırlık ve session özetleri (`YYYY-MM-DD-<kısa-slug>.md`).
-`plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları.
+`plans/` (Şifreli): Çok adımlı uzun işlerin durum dosyaları (`docs/templates/plan_note.md`; oturum devrinde Durum/Sıradaki Adım/Devir Notu zorunludur).
 `log/` (Şifreli): Günlük operasyonel loglar (Append-only).
 `index/` (Şifreli): `index.md` kökünden ulaşılan, yeniden üretilebilir sayfalı hub haritaları; kanonik veri değildir.
 `tmp/` (Yerel/Gitignore): Geçici (scratch) işlem dizini; git'e girmez, şifrelenmez. Kalıcı çöp bırakılmaz.
