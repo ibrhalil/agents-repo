@@ -16,7 +16,7 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log, ISO zaman) — doğrudan çalıştırılmaz |
 | `noma_board.py` | aynı checkout'ta atomik begin/claim/release/finish; salt-okunur status; kısa OS kilidi, JSON durum sinyali; dosya/Git değişikliklerini kendiliğinden sahiplenmez veya geri almaz |
 | `test_noma_board.py` | sentetik ayrı süreçlerle mükerrer iş, dosya/dizin claim yarışı, kapanış, bozuk durum ve staged board regresyonları |
-| `noma_new_note.py` | şablondan yeni wiki notu iskeleti üretir (SCHEMA §3 şablon zorunluluğu); içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
+| `noma_new_note.py` | şablondan frontmatter/bölüm/yer tutucu iskeleti üretir; gövdeye davranış yönergesi kopyalamaz; içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
 | `noma_ingest.py` | girdileri kalıcı yazmadan ÖNCE doğrular (slug/aktör/stage); kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması); not bellede üretilip doğrulanır ve atomik yayınlanır — doğrulama hatasında not inbox'a iner (`[verify-fail]`/`NO-HUB`; içerik basılmaz) |
 | `noma_find.py` | metadata filtre → regex (rg) → ortak aday sıralaması → wikilink traversal; varsayılan çıktı yalnız yol, başlık/metadata `--human` ile |
 | `noma_wiki.py` | `root/hub` yalnız ilgili şifreli harita sayfasını okur (`_basliklar`/`_uncategorized` dâhil); arama Türkçe katlamalıdır; tüm modlarda varsayılan çıktı yalnız yol, başlık/metadata `--human` ile; agent JSON yalnız yol/puan/sayfa işaretçisi taşır |
@@ -165,6 +165,11 @@ Notlar:
 - Log satırları SCHEMA §5 formatındadır: `HH:mm <op> @<node> <aktör> | mesaj ≤120`.
 - Enum varsayılanları: `noma_new_note` → `concept/common/inbox`; `noma_ingest`
   → `resource/common/inbox`. Değerler SCHEMA §3'teki listelerle doğrulanır.
+- `docs/templates/wiki_note.md` bir yapı iskeletidir: `{{Summary}}` ve
+  `{{Content}}` doldurulacak bölgelerdir. Renderer şablon gövdesini aynen aktarır;
+  şablonda not yönetimi veya agent çalışma yönergesi bulunmaz. Hedef/kapsam
+  politikasının sahibi `wiki/yalin-dugum-ilkesi.md`, policy yerleşiminin sahibi
+  `wiki/agent-policy.md`'dir.
 - Ingest CLI yalnız raw kopyası ve wiki iskeleti hazırlar; mevcut wiki kaydını
   merge etmez ve kaynak içeriğini semantik olarak aktarmaz. Exit 0 ve lint
   başarısı kapsam onayı değildir. Agent, `wiki/wiki-kapsam-butunlugu.md`

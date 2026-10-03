@@ -13,12 +13,7 @@ updated: {{YYYY-MM-DDTHH:mm:ss+ZZ:ZZ}}
 ## Links
 `[[ust-not-slug-veya-hub]], [[varsa-ikinci-hub|Açıklayıcı Başlık]]`
 ## Summary
-Notun ana fikrini veya amacını belirten 1-2 cümlelik özet.
+{{Summary}}
 
 ## Body
-Notun içeriği. Kavram notu tek fikre odaklanır; bağımsız fikirler bilgi kaybetmeden bölünür, tek konunun derinliği başlıklarla kalabilir.
-Kaynak/rapor aktarımında bilgi ve bağlamı eksiksiz koru; kaynak kaydının gövdesinde Aktarım Kapsamı (kaynak bölüm/ek → wiki notu/başlığı, istisnalar, açık eksikler, kontrol tarihi) tut. Summary veya raw linki içerik yerine geçmez; kapsam politikası wiki/wiki-kapsam-butunlugu.md'dedir.
-Akış veya ilişkiler anlatımı kolaylaştırıyorsa gövdede isteğe bağlı Mermaid diyagramı kullan; yanında kısa metin açıklaması bırak.
-Üst bölge (frontmatter → Summary sonu) boş satırsız ve tekrarsızdır.
-Gövdede boş satır serbesttir.
-İnsan kararının etkilediği notlarda gövde içi `[[insan-karar-defteri#KRR-NN|KRR-NN]]` anchor atfı kullanılır ([[insan-karar-defteri]] tahsis kuralları; frontmatter'a KRR alanı eklenmez).
+{{Content}}
