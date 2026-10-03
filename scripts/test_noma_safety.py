@@ -22,6 +22,7 @@ import noma_lib as lib
 import noma_new_note as new_note
 import noma_privacy as privacy
 import noma_tend_report as tend
+from test_noma_policy import seed_policy
 
 SENTINEL_TEMPLATE = (
     '---\ntitle: "{{Tam Başlık}}"\ncreated: {{YYYY-MM-DDTHH:mm:ss+ZZ:ZZ}}\n'
@@ -434,6 +435,7 @@ class BootstrapScriptTests(SyntheticNode):
 class HermesHookTests(SyntheticNode):
     def setUp(self):
         super().setUp()
+        seed_policy(self.root)
         (self.root / 'index.md').write_text('# sentetik\n', encoding='utf-8')
         pages = self.root / 'index' / 'hubs' / '_basliklar'
         pages.mkdir(parents=True)
@@ -515,6 +517,12 @@ class HermesHookTests(SyntheticNode):
         code, text = self.hook({'cwd': str(self.root)})
         self.assertEqual(0, code)
         self.assertEqual(context.LOCAL_CONTEXT, text)
+
+    def test_missing_approved_policy_uses_blocked_loading_branch(self):
+        (self.root / context.noma_policy.STATE).unlink()
+        code, text = self.hook({})
+        self.assertEqual(0, code)
+        self.assertEqual(context.POLICY_CONTEXT, text)
 
     def test_tty_and_broken_payload_exit_zero(self):
         class Tty(io.StringIO):

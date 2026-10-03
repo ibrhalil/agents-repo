@@ -7,6 +7,7 @@ gerçek wiki/ ve index/ ağacına dokunduğu için testte devre dışı bırakı
 """
 import contextlib
 import io
+import json
 import re
 import subprocess
 import tempfile
@@ -16,6 +17,7 @@ from unittest import mock
 
 import noma_lib as lib
 import noma_lint as lint
+import noma_policy as policy
 
 GITCRYPT = b'\x00GITCRYPT\x00\x01\x8b\x01\x00s\x9cmimi'
 FILLER = tuple(f'ark-adasi-{i:02d}' for i in range(12))
@@ -48,6 +50,9 @@ class LintTests(unittest.TestCase):
         for attr, value in (('ROOT', self.root),
                             ('check_index', lambda: None),
                             ('check_board', lambda: None),  # Covered in test_noma_board.
+                            # Policy gate is isolated here; meaningful policy-lint
+                            # integration lives in PolicyLintTests below.
+                            ('check_policy', lambda: None),
                             ('_head_payload', mock.Mock(return_value=None))):
             patcher = mock.patch.object(lint, attr, value)
             patcher.start()
@@ -506,15 +511,192 @@ class LintTests(unittest.TestCase):
             self.write(s, note(s))
         self.write('insan-karar-defteri', self.krr_registry(('01',)))
         self.write('karar-not', note('karar-not', title='Karar Notu',
-                                     links=[*FILLER, 'insan-karar-defteri'],
-                                     summary='A ([[insan-karar-defteri#KRR-invalid|x]]) '
-                                            'B ([[insan-karar-defteri#KRR-1|y]]).'))
+                                      links=[*FILLER, 'insan-karar-defteri'],
+                                      summary='A ([[insan-karar-defteri#KRR-invalid|x]]) '
+                                             'B ([[insan-karar-defteri#KRR-1|y]]).'))
         code, out = self.run_lint()
         self.assertEqual(['ERR KRR: wiki/karar-not.md: hatalı KRR hedef biçimi '
                           '(KRR-NN beklenir): 1',
                           'ERR KRR: wiki/karar-not.md: hatalı KRR hedef biçimi '
                           '(KRR-NN beklenir): invalid'],
                          [o for o in out if o.startswith('ERR KRR')])
+        self.assertEqual(1, code)
+
+
+def seed_active_policy(root):
+    """Lint-compatible synthetic root with a fully activated policy bundle."""
+    for path in policy.CONTROL:
+        if path == '.gitattributes':
+            continue
+        target = root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('synthetic control\n', encoding='utf-8')
+    register = note('agent-policy', title='Agent Policy') + \
+        '\n## Aktif Policy Kümesi\n- [[agent-read-policy]]\n'
+    (root / 'wiki' / 'agent-policy.md').write_text(register, encoding='utf-8')
+    (root / 'wiki' / 'agent-read-policy.md').write_text(
+        note('agent-read-policy', title='Agent Read Policy'), encoding='utf-8')
+    key = policy.propose(root, 'author-session')
+    policy.record_review(root, key, 'independent-session')
+    policy.activate(root, key, key)
+    return key
+
+
+class PolicyLintTests(unittest.TestCase):
+    """check_policy() meaningful integration: staged receipts, snapshot closure,
+    older staged activations, staged edits and deletions fail closed."""
+
+    def setUp(self):
+        self.scratch = tempfile.TemporaryDirectory(prefix='noma-policy-lint-',
+                                                   dir=lib.ROOT / 'tmp')
+        self.addCleanup(self.scratch.cleanup)
+        self.root = Path(self.scratch.name)
+        (self.root / 'wiki').mkdir()
+        (self.root / 'log').mkdir()
+        for f in ('AGENTS.md', 'SCHEMA.md', 'README.md', '.env.example'):
+            (self.root / f).write_text('sentetik\n', encoding='utf-8')
+        (self.root / '.gitattributes').write_text(
+            '# sentetik\nindex.md filter=git-crypt diff=git-crypt\n' +
+            ''.join(f'{d} filter=git-crypt diff=git-crypt\n'
+                    for d in lint.ENCRYPTED if d.endswith('/')), encoding='utf-8')
+        for attr, value in (('ROOT', self.root),
+                            ('check_index', lambda: None),
+                            ('check_board', lambda: None),
+                            ('_head_payload', mock.Mock(return_value=None)),
+                            ('_head_paths', mock.Mock(return_value=set())),
+                            ('_staged_wiki_paths', mock.Mock(return_value=[])),
+                            ('_staged_payload', mock.Mock(return_value=None))):
+            patcher = mock.patch.object(lint, attr, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.key = seed_active_policy(self.root)
+
+    def run_lint(self):
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            code = lint.main()
+        return code, list(lint.out)
+
+    def mock_policy_git(self, staged_names):
+        """ls-files/check-attr sabit; git diff --cached staged_names döndürür."""
+        real = subprocess.run
+
+        def fake(cmd, **kw):
+            if cmd[:2] == ['git', 'ls-files']:
+                return subprocess.CompletedProcess(cmd, 0, b'')
+            if cmd[:2] == ['git', 'check-attr']:
+                paths = [p for p in kw['input'].split('\0') if p]
+                return subprocess.CompletedProcess(
+                    cmd, 0, ''.join(f'{p}\0filter\0git-crypt\0' for p in paths))
+            if cmd[:3] == ['git', 'diff', '--cached']:
+                return subprocess.CompletedProcess(
+                    cmd, 0, ''.join(f'{p}\0' for p in staged_names).encode('utf-8'))
+            return real(cmd, **kw)
+
+        return mock.patch.object(subprocess, 'run', fake)
+
+    @contextlib.contextmanager
+    def policy_staged(self, snapshot):
+        wiki_paths = sorted(p for p in snapshot if p.startswith('wiki/'))
+        with mock.patch.object(lint, '_staged_wiki_paths',
+                               return_value=wiki_paths), \
+                mock.patch.object(lint, '_staged_payload', side_effect=snapshot.get):
+            yield
+
+    def snapshot_bytes(self, key):
+        _, bundle = policy.approved(self.root)
+        return {f'{policy.SNAPSHOTS}/{key}/{path}':
+                policy.read_bytes(self.root, f'{policy.SNAPSHOTS}/{key}/{path}')
+                for path in bundle['files']}
+
+    def full_staged_snapshot(self, key):
+        """Complete staged activation: state + snapshot copies + staged file paths."""
+        snapshot = {policy.STATE: (self.root / policy.STATE).read_bytes(),
+                    **self.snapshot_bytes(key)}
+        _, bundle = policy.approved(self.root)
+        for path in bundle['files']:
+            snapshot[path] = policy.read_bytes(self.root, f'{policy.SNAPSHOTS}/{key}/{path}')
+        return snapshot
+
+    def activate_changed_proposal(self):
+        path = self.root / 'wiki' / 'agent-read-policy.md'
+        path.write_text(path.read_text(encoding='utf-8') + 'New rule.\n',
+                        encoding='utf-8')
+        key = policy.propose(self.root, 'author-session')
+        policy.record_review(self.root, key, 'independent-session')
+        policy.activate(self.root, key, key)
+        return key
+
+    def test_active_policy_state_keeps_lint_clean(self):
+        with self.mock_policy_git([]):
+            code, out = self.run_lint()
+        self.assertEqual([o for o in out if 'POLICY' in o], [])
+        self.assertEqual(0, code)
+
+    def test_worktree_policy_edit_fires_unapproved_change(self):
+        path = self.root / 'wiki' / 'agent-read-policy.md'
+        path.write_text(path.read_text(encoding='utf-8') + 'UNAPPROVED', encoding='utf-8')
+        with self.mock_policy_git([]):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: wiki/agent-read-policy.md: unapproved worktree change', out)
+        self.assertEqual(1, code)
+
+    def test_control_file_drift_blocks_policy_status(self):
+        (self.root / 'scripts' / 'noma_hermes_context.py').write_text(
+            'BYPASS\n', encoding='utf-8')
+        with self.mock_policy_git([]):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: CONTROL-DRIFT', out)
+        self.assertEqual(1, code)
+
+    def test_state_deletion_fails_closed(self):
+        (self.root / policy.STATE).unlink()
+        with self.mock_policy_git([]):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: UNREADABLE', out)
+        self.assertEqual(1, code)
+
+    def test_staged_activation_requires_matching_snapshot_closure(self):
+        snapshot = self.full_staged_snapshot(self.key)
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertEqual([o for o in out if 'POLICY' in o], [])
+        self.assertEqual(0, code)
+
+    def test_staged_older_activation_fires_staged_activation(self):
+        self.activate_changed_proposal()  # current active is now a newer key
+        state = policy.load_state(self.root)
+        state['active'] = self.key
+        snapshot = {policy.STATE: (json.dumps(state, sort_keys=True, indent=2)
+                                   + '\n').encode('utf-8'),
+                    **self.snapshot_bytes(self.key)}
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: STAGED-ACTIVATION', out)
+        self.assertEqual(1, code)
+
+    def test_staged_snapshot_content_mismatch_fires_snapshot(self):
+        snapshot = self.full_staged_snapshot(self.key)
+        snapshot[f'{policy.SNAPSHOTS}/{self.key}/wiki/agent-read-policy.md'] += b' '
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: SNAPSHOT', out)
+        self.assertEqual(1, code)
+
+    def test_staged_file_differs_from_approved_snapshot_fires_mismatch(self):
+        snapshot = self.full_staged_snapshot(self.key)
+        snapshot['wiki/agent-read-policy.md'] += b'unapproved edit'
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: wiki/agent-read-policy.md: staged approval mismatch', out)
+        self.assertEqual(1, code)
+
+    def test_staged_snapshot_deletion_fires_staged_missing(self):
+        snapshot = self.full_staged_snapshot(self.key)
+        del snapshot[f'{policy.SNAPSHOTS}/{self.key}/wiki/agent-read-policy.md']
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: STAGED-MISSING', out)
         self.assertEqual(1, code)
 
 

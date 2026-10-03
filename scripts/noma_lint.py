@@ -8,6 +8,7 @@ from pathlib import Path
 import noma_lib as lib
 import noma_privacy
 import noma_board
+import noma_policy
 
 ROOT = Path(__file__).resolve().parent.parent
 # B5 drift riski: aşağıdaki sabitler ve parse_fm, noma_lib kopyalarıdır. Birleştirilecek
@@ -499,12 +500,53 @@ def check_board():
         add('ERR', 'BOARD', 'BOARD.md: active runs must not be committed')
 
 
+def check_policy():
+    result = noma_policy.status(ROOT)
+    for rule in result['rules']:
+        add('ERR', 'POLICY', rule)
+    for path in result['paths']:
+        add('ERR', 'POLICY', f'{path}: unapproved worktree change')
+    if result['status'] != 'active':
+        return
+    try:
+        _, bundle = noma_policy.approved(ROOT)
+    except noma_policy.PolicyError as exc:
+        add('ERR', 'POLICY', exc.rule)
+        return
+    changed = subprocess.run(['git', 'diff', '--cached', '--name-only', '-z'],
+                             cwd=ROOT, capture_output=True)
+    if changed.returncode:
+        add('ERR', 'POLICY', 'staged state unreadable')
+        return
+    paths = changed.stdout.decode('utf-8', errors='replace').split('\0')
+    relevant = any(path in bundle['files'] or path == noma_policy.STATE
+                   or path.startswith(noma_policy.SNAPSHOTS + '/') for path in paths)
+    if not relevant:
+        return
+    def staged_reader(root, path):
+        payload = _staged_payload(path)
+        if not isinstance(payload, bytes):
+            raise noma_policy.PolicyError('STAGED-MISSING')
+        return payload
+    try:
+        staged_key, staged_bundle = noma_policy.approved(ROOT, reader=staged_reader)
+        active_key, _ = noma_policy.approved(ROOT)
+        if staged_key != active_key:
+            raise noma_policy.PolicyError('STAGED-ACTIVATION')
+        for path, expected in staged_bundle['files'].items():
+            if noma_policy.digest(staged_reader(ROOT, path)) != expected:
+                add('ERR', 'POLICY', f'{path}: staged approval mismatch')
+    except noma_policy.PolicyError as exc:
+        add('ERR', 'POLICY', exc.rule)
+
+
 def main():
     global err, wrn
     err = wrn = 0
     del out[:]
     check_budgets()
     check_board()
+    check_policy()
     wiki = sorted((ROOT / 'wiki').glob('*.md'))
     graph = check_wiki(wiki)
     check_graph(wiki, *graph[:3])

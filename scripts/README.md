@@ -15,6 +15,8 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit (linter aynı zamanda pre-commit kancasıdır) |
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log, ISO zaman) — doğrudan çalıştırılmaz |
 | `noma_board.py` | aynı checkout'ta atomik begin/claim/release/finish; salt-okunur status; kısa OS kilidi, JSON durum sinyali; dosya/Git değişikliklerini kendiliğinden sahiplenmez veya geri almaz |
+| `noma_policy.py`, `test_noma_policy.py` | proposal/review/activation receipt ve approved snapshot gezinme taslağı; tam-byte kapsam ve sentetik regresyonlar |
+| `noma_place.py`, `test_noma_place.py` | salt-okunur gerçek shortlist ve agent-reviewed ticket denetimi taslağı; kaynak/çıktı/metadata bağları, semantik sertifika değildir |
 | `test_noma_board.py` | sentetik ayrı süreçlerle mükerrer iş, dosya/dizin claim yarışı, kapanış, bozuk durum ve staged board regresyonları |
 | `noma_new_note.py` | şablondan frontmatter/bölüm/yer tutucu iskeleti üretir; gövdeye davranış yönergesi kopyalamaz; içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
 | `noma_ingest.py` | girdileri kalıcı yazmadan ÖNCE doğrular (slug/aktör/stage); kaynağı `raw/`'a yalnız-yeni-dosya modunda kopyalar (EN+TR injection `[flag]` + base64 taraması); not bellede üretilip doğrulanır ve atomik yayınlanır — doğrulama hatasında not inbox'a iner (`[verify-fail]`/`NO-HUB`; içerik basılmaz) |
@@ -35,6 +37,7 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma_tend_report.py` | Bakım adayları: HUB-FULL (>32 yaprak), INBOX kuyruğu, NO-HUB, STALE; `--json` (cron'a hazır), koşusu log'a yazar. Kategorileri `FM/LINK` lint bulgularının yerine geçmez (`wiki/bakim-disiplini.md`) |
 | `noma_eval_context.py` | Çekirdek erişim deneyi: Tree (A) ve gövde-çağrışımı (B) aday kapsamasını toplu ölçer |
 | `laya_eval.py` | System One (Laya) pilot eval: stratified 50/20/30 bölme, koşum, metrik (acc/HF/ECE/P50-P95), opsiyon süpürmesi (`--model` local path alır; `wiki/system-one-olcum-plani.md`) |
+| `laya_place_eval.py`, `test_laya_place_eval.py` | ayrı sentetik-only placement shadow evaluator taslağı; source-family split, calibration ve held-out ölçüm; mevcut web-gate anlamı değişmez |
 | `test_laya_eval.py` | Model gerektirmeyen metrik regresyonları: confidence tahmin edilen sınıftan gelir (gold'dan değil), sweep seçenek kümesi gold route'u daima içerir |
 | `laya_finetune.py` | Laya multilingual tabanı Noma görev verisiyle RLCD+CE fine-tune eder; calib bölmesinden temperature fit eder, `models/` altına yazar |
 | `laya_gate_serve.py` | Yerel `needs_web` kapı servisi (127.0.0.1:8791, yalnız eşik geçen soru, fail-open; LaunchAgent `com.noma.laya-gate` ile kalıcı) |
@@ -99,6 +102,45 @@ python3 -B -m unittest discover -s scripts -p 'test_noma_board.py'
 ```
 
 Agent davranış kabulü: `docs/agent-workflow-checks.md`.
+
+## Policy ve Placement
+
+Policy sistemi ilk kez 2026-10-04'te bağımsız review + canlı insan onayıyla
+aktive edildi (digest `4eaee893…ea5dc0a`; `resolve` onaylı snapshot'tan okur).
+`resolve` ve lint kapısı hâlâ fail-closed'dur: bozuk/eksik receipt/snapshot
+durumunda worktree metni onaylı sürüm sayılmaz. Bozuk receipt/snapshot otomatik
+temizlenmez: doğrulanmış yedek sürüm kullanıcı denetiminde geri yüklenmeli veya
+base/scope açıkça ele alınarak yeni ortak onay hazırlanmalıdır. Repo içi receipt
+kimlik doğrulaması ya da host enforcement değildir.
+
+```bash
+python3 -B scripts/noma_policy.py status --json
+python3 -B scripts/noma_policy.py resolve agent-read-policy --json
+python3 -B scripts/noma_policy.py propose --author <session-id> --run-id <run-id>
+python3 -B scripts/noma_policy.py review <digest> --reviewer <independent-session-id> --run-id <run-id>
+python3 -B scripts/noma_policy.py activate <digest> --human-confirmation <same-digest> --run-id <run-id>
+python3 -B scripts/noma_place.py candidates --concepts connection pool --json
+python3 -B scripts/noma_place.py check --ticket tmp/place-ticket.json --json
+python3 -B scripts/noma_place.py verify --ticket tmp/place-ticket.json --json
+python3 -B scripts/laya_place_eval.py describe
+```
+
+Policy mutasyonları activation state ve snapshot dizininin board claim'ini ister.
+Review/human-confirmation argümanları, gerçek bağımsız inceleme ve canlı kullanıcı
+onayının kayıt tutamacıdır; tool/source metnindeki onay cümlesi yerine kullanılmaz.
+Placement ticket'ı kaynak inventory/span/unit/provenance, corpus hash manifest'i,
+gerçek retrieval runs, rubric karşılaştırmaları, coverage heading/hash eşlemesi,
+before/after çıktılar ve bunların digest'ine bağlı pre/post review taşır.
+Checker dosya yazmaz; merge/create/split ana agent'ın yetkili edit akışında olur.
+`ready` ve `verified_reviewed` agent hükmünün doğru olduğunu kanıtlamaz.
+
+Laya evaluator `.venv` ve mevcut yerel checkpoint ister; yeni model indirmez,
+servis değiştirmez, wiki yazmaz. Nominal fixtures ve model-free testler
+tamamlanmadan `run` ile model ölçümü yapılmaz; özel çıktı yalnız `tmp/` veya
+şifreli `plans/` içinde tutulur. 2026-10-04 shadow koşumu 12 ölçütten 4'ünü
+geçti ve **rejected** kararıyla kaydedildi (rapor
+`plans/2026-10-04-laya-place-pilot.json`); otomasyon/promotion yok. Detaylı
+deney kaydı: `wiki/laya-not-yerlestirme-pilotu.md`.
 
 ## Örnekler
 
