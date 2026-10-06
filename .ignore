@@ -1,0 +1,2 @@
+# Approval objects are addressed by the policy resolver, never by general search.
+.policy/

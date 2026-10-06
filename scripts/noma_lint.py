@@ -20,7 +20,7 @@ SCOPES = 'work personal learning systems creator media common'.split()
 STATUS = 'unverified established stub'.split()
 ORDER = 'title type stage scope status tags created updated locked'.split()
 ISO_DT = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:\d{2}|Z)')
-ENCRYPTED = ['index.md', 'index/', 'raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/']
+ENCRYPTED = ['index.md', 'index/', 'raw/', 'wiki/', 'agent/prompts/', 'agent/sessions/', 'plans/', 'log/', '.policy/']
 BUDGETS = {'AGENTS.md': 100, 'SCHEMA.md': 140}
 KRR_NOTE = 'wiki/insan-karar-defteri.md'
 KRR_ANCHOR = re.compile(r'^### KRR-(\d{2,})$', re.M)
@@ -519,8 +519,9 @@ def check_policy():
         add('ERR', 'POLICY', 'staged state unreadable')
         return
     paths = changed.stdout.decode('utf-8', errors='replace').split('\0')
-    relevant = any(path in bundle['files'] or path == noma_policy.STATE
-                   or path.startswith(noma_policy.SNAPSHOTS + '/') for path in paths)
+    relevant = any(path in bundle['files'] or path in (noma_policy.STATE, noma_policy.LEGACY_STATE)
+                   or path.startswith((noma_policy.OBJECTS + '/', noma_policy.LEGACY_SNAPSHOTS + '/'))
+                   for path in paths)
     if not relevant:
         return
     def staged_reader(root, path):
@@ -533,6 +534,13 @@ def check_policy():
         active_key, _ = noma_policy.approved(ROOT)
         if staged_key != active_key:
             raise noma_policy.PolicyError('STAGED-ACTIVATION')
+        staged_state = noma_policy.load_state(ROOT, reader=staged_reader)
+        if staged_state != noma_policy.load_state(ROOT):
+            raise noma_policy.PolicyError('STAGED-HISTORY')
+        for key, entry in staged_state['proposals'].items():
+            historical = noma_policy.validate_entry(ROOT, key, entry, reader=staged_reader)
+            if entry.get('human') is not None:
+                noma_policy.validate_receipts(key, historical, entry)
         for path, expected in staged_bundle['files'].items():
             if noma_policy.digest(staged_reader(ROOT, path)) != expected:
                 add('ERR', 'POLICY', f'{path}: staged approval mismatch')

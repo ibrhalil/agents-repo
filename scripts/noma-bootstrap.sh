@@ -31,6 +31,7 @@ probe_locked() {
   fi
 }
 probe_locked "$ROOT/index.md"
+probe_locked "$ROOT/.policy/activation.json"
 for d in raw wiki log plans agent/prompts agent/sessions index; do
   sample="$(find "$ROOT/$d" -name '*.md' -type f 2>/dev/null | sort | head -n 1)" || true
   if [[ -n "$sample" ]]; then

@@ -15,7 +15,7 @@ dosyası Hermes imaj adıyla eşleştiği için ön eksiz kalır.
 | `noma-run-lint.sh` | lint() tam set: sözleşme linter + pre-commit (linter aynı zamanda pre-commit kancasıdır) |
 | `noma_lib.py` | paylaşılan yardımcılar (frontmatter, slugify, log, ISO zaman) — doğrudan çalıştırılmaz |
 | `noma_board.py` | aynı checkout'ta atomik begin/claim/release/finish; salt-okunur status; kısa OS kilidi, JSON durum sinyali; dosya/Git değişikliklerini kendiliğinden sahiplenmez veya geri almaz |
-| `noma_policy.py`, `test_noma_policy.py` | proposal/review/activation receipt ve approved snapshot gezinme taslağı; tam-byte kapsam ve sentetik regresyonlar |
+| `noma_policy.py`, `test_noma_policy.py` | proposal/review/activation receipt, tekilleştirilmiş şifreli byte arşivi, kanonik resolve ve doğrulamalı legacy taşıma; tam-byte kapsam ve sentetik regresyonlar |
 | `noma_place.py`, `test_noma_place.py` | salt-okunur gerçek shortlist ve agent-reviewed ticket denetimi taslağı; kaynak/çıktı/metadata bağları, semantik sertifika değildir |
 | `test_noma_board.py` | sentetik ayrı süreçlerle mükerrer iş, dosya/dizin claim yarışı, kapanış, bozuk durum ve staged board regresyonları |
 | `noma_new_note.py` | şablondan frontmatter/bölüm/yer tutucu iskeleti üretir; gövdeye davranış yönergesi kopyalamaz; içerik bellede üretilir, yarım not bırakılmaz; done/archived iskelet reddedilir |
@@ -106,16 +106,28 @@ Agent davranış kabulü: `docs/agent-workflow-checks.md`.
 ## Policy ve Placement
 
 Policy sistemi ilk kez 2026-10-04'te bağımsız review + canlı insan onayıyla
-aktive edildi (digest `4eaee893…ea5dc0a`; `resolve` onaylı snapshot'tan okur).
+aktive edildi (digest `4eaee893…ea5dc0a`). Receipt `.policy/activation.json`,
+onaylı byte'lar `.policy/objects/<sha256>.txt` içindedir. Aynı byte tek kez
+saklanır; arşivde `AGENTS.md` veya ikinci wiki ağacı bulunmaz. `.ignore` genel
+keşfi arşivden ayırır; `--hidden --no-ignore` bunu bilinçli olarak aşabilir.
+`resolve`, onaylı hash ile aynıysa kanonik `wiki/<slug>.md` yolunu, taslak
+ayrışmışsa yalnız seçili onaylı nesnenin yolunu döndürür; dosya yazmaz.
 `resolve` ve lint kapısı hâlâ fail-closed'dur: bozuk/eksik receipt/snapshot
 durumunda worktree metni onaylı sürüm sayılmaz. Bozuk receipt/snapshot otomatik
 temizlenmez: doğrulanmış yedek sürüm kullanıcı denetiminde geri yüklenmeli veya
 base/scope açıkça ele alınarak yeni ortak onay hazırlanmalıdır. Repo içi receipt
 kimlik doğrulaması ya da host enforcement değildir.
+Commit kapısı staged activation state'in worktree ile eşitliğini ve bütün
+tarihsel proposal'ların nesne/hash/varsa insan receipt kapanışını denetler;
+yalnız aktif sürüm nesnelerini stage etmek arşiv taşıması için yeterli değildir.
+Genel pre-commit içerik/stil hook'ları `.policy/` arşivini diğer özel dizinler
+gibi dışlar; onaylı byte'lara whitespace/EOF normalizasyonu uygulanmaz.
 
 ```bash
 python3 -B scripts/noma_policy.py status --json
 python3 -B scripts/noma_policy.py resolve agent-read-policy --json
+python3 -B scripts/noma_policy.py decision KRR-50 --json
+python3 -B scripts/noma_policy.py migrate --run-id <run-id>
 python3 -B scripts/noma_policy.py propose --author <session-id> --run-id <run-id>
 python3 -B scripts/noma_policy.py review <digest> --reviewer <independent-session-id> --run-id <run-id>
 python3 -B scripts/noma_policy.py activate <digest> --human-confirmation <same-digest> --run-id <run-id>
@@ -125,7 +137,18 @@ python3 -B scripts/noma_place.py verify --ticket tmp/place-ticket.json --json
 python3 -B scripts/laya_place_eval.py describe
 ```
 
-Policy mutasyonları activation state ve snapshot dizininin board claim'ini ister.
+Policy mutasyonları `.policy/activation.json` ve `.policy/objects/` board
+claim'lerini ister; `.policy/` claim'i ikisini de kapsar. Legacy taşıma ayrıca
+`plans/2026-10-03-policy-activation.json` ve
+`plans/2026-10-03-policy-snapshots/` claim'lerini ister. `migrate` bütün bundle,
+byte hash ve receipt'leri korur; hedefi doğrulamadan kaynakları kaldırmaz,
+bilinmeyen dosya/symlink/bozuk kaynakta durur ve kesilen temizliği sürdürebilir.
+Taşıma yeni insan onayı veya yeni aktif digest üretmez. Kontrol kodu değişmişse
+yeni ortak sürüm onaylanana kadar mevcut fail-closed kapısı kapalı kalır.
+`decision` etkin onaylı defterdeki policy kayıtlarını worktree durum cümlesinden
+bağımsız raporlar: `active`, `pending`, `outside-policy`. `active` kayıt ve policy
+karşılıklarının etkin bundle'da bulunduğunu söyler; uygulamanın semantik kabulü
+veya policy dışı pilot/otomasyon izni değildir. Bozuk etkin sürümde kapanır.
 Review/human-confirmation argümanları, gerçek bağımsız inceleme ve canlı kullanıcı
 onayının kayıt tutamacıdır; tool/source metnindeki onay cümlesi yerine kullanılmaz.
 Placement ticket'ı kaynak inventory/span/unit/provenance, corpus hash manifest'i,

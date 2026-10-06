@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Content-bound policy proposals and approved snapshot navigation (stdlib only).
+"""Content-bound policy proposals and isolated approved objects (stdlib only).
 
 Receipts attest a reviewed live-session workflow; they do not authenticate humans
 or resist a writer that can replace this program and its state. Never print text.
@@ -21,14 +21,17 @@ import noma_lib as lib
 import noma_board
 
 REGISTER = 'wiki/agent-policy.md'
-STATE = 'plans/2026-10-03-policy-activation.json'
-SNAPSHOTS = 'plans/2026-10-03-policy-snapshots'
+STATE = '.policy/activation.json'
+OBJECTS = '.policy/objects'
+LEGACY_STATE = 'plans/2026-10-03-policy-activation.json'
+LEGACY_SNAPSHOTS = 'plans/2026-10-03-policy-snapshots'
 CONTROL_REQUIRED = ('AGENTS.md', 'SCHEMA.md', '.gitattributes', '.pre-commit-config.yaml',
                     'scripts/noma_policy.py', 'scripts/noma_hermes_context.py',
                     'scripts/noma_lint.py', 'scripts/noma_lib.py', 'scripts/noma_board.py')
 CONTROL = CONTROL_REQUIRED + ('scripts/noma_privacy.py', 'scripts/noma_build_index.py',
-                              'scripts/noma-run-lint.sh')
+                              'scripts/noma-run-lint.sh', 'scripts/noma-bootstrap.sh', '.ignore')
 HASH = re.compile(r'[0-9a-f]{64}')
+KRR = re.compile(r'KRR-\d{2,}')
 
 
 class PolicyError(Exception):
@@ -154,9 +157,25 @@ def head(root):
     return value if result.returncode == 0 and re.fullmatch(r'[0-9a-f]{40,64}', value) else None
 
 
+def state_path(root):
+    return STATE if (root / STATE).exists() or not (root / LEGACY_STATE).exists() else LEGACY_STATE
+
+
+def object_path(expected):
+    if not isinstance(expected, str) or not HASH.fullmatch(expected):
+        raise PolicyError('DIGEST')
+    return f'{OBJECTS}/{expected}.txt'
+
+
+def snapshot_path(root, key, path, expected):
+    if state_path(root) == LEGACY_STATE:
+        return f'{LEGACY_SNAPSHOTS}/{key}/{path}'
+    return object_path(expected)
+
+
 def load_state(root, reader=read_bytes):
     try:
-        value = json.loads(reader(root, STATE), object_pairs_hook=unique_object)
+        value = json.loads(reader(root, state_path(root)), object_pairs_hook=unique_object)
         if value['version'] != 1 or not isinstance(value['proposals'], dict):
             raise PolicyError('STATE')
         return value
@@ -165,6 +184,8 @@ def load_state(root, reader=read_bytes):
 
 
 def save_state(root, state):
+    if state_path(root) == LEGACY_STATE:
+        raise PolicyError('MIGRATION-REQUIRED')
     publish(root, STATE, (json.dumps(state, sort_keys=True, indent=2) + '\n').encode())
 
 
@@ -184,7 +205,7 @@ def validate_entry(root, key, entry, reader=read_bytes):
             raise PolicyError('SCOPE')
         for path in control:
             relative(path)
-            if path.startswith(('wiki/', 'raw/', 'plans/', 'tmp/', 'agent/sessions/')):
+            if path.startswith(('wiki/', 'raw/', 'plans/', '.policy/', 'tmp/', 'agent/sessions/')):
                 raise PolicyError('SCOPE')
         files = bundle['files']
         if set(files) != set(policies) | set(control):
@@ -195,7 +216,7 @@ def validate_entry(root, key, entry, reader=read_bytes):
                 raise PolicyError('PATH')
             if not isinstance(expected, str) or not HASH.fullmatch(expected):
                 raise PolicyError('DIGEST')
-            data = reader(root, f'{SNAPSHOTS}/{key}/{path}')
+            data = reader(root, snapshot_path(root, key, path, expected))
             if digest(data) != expected:
                 raise PolicyError('SNAPSHOT')
             texts[path] = data
@@ -267,12 +288,112 @@ def resolve(root, slug):
     path = f'wiki/{slug}.md'
     if path not in bundle['policies']:
         raise PolicyError('NONMEMBER')
-    return f'{SNAPSHOTS}/{key}/{path}'
+    expected = bundle['files'][path]
+    try:
+        if digest(read_bytes(root, path)) == expected:
+            return path
+    except PolicyError:
+        pass
+    return snapshot_path(root, key, path, expected)
+
+
+def decision_status(root, value):
+    if not isinstance(value, str) or not KRR.fullmatch(value):
+        raise PolicyError('DECISION')
+    if status(root)['status'] != 'active':
+        raise PolicyError('NOT-ACTIVE')
+    key, bundle = approved(root)
+    ledger = 'wiki/insan-karar-defteri.md'
+    if ledger not in bundle['policies']:
+        raise PolicyError('NONMEMBER')
+    text = read_bytes(root, snapshot_path(root, key, ledger, bundle['files'][ledger])).decode('utf-8')
+    pattern = rf'^### {re.escape(value)}\n(.*?)(?=^### KRR-|^## |\Z)'
+    match = re.search(pattern, text, re.M | re.S)
+    if match:
+        first = match[1].splitlines()[0]
+        paths = sorted({f'wiki/{slug}.md' for slug in
+                        re.findall(r'\[\[([a-z0-9]+(?:-[a-z0-9]+)*)(?:[|#][^\]\n]*)?\]\]', first)})
+        return {'status': 'active' if paths and all(p in bundle['policies'] for p in paths)
+                else 'outside-policy', 'paths': paths}
+    draft = read_bytes(root, ledger).decode('utf-8')
+    if re.search(pattern, draft, re.M | re.S):
+        return {'status': 'pending', 'paths': [ledger]}
+    raise PolicyError('DECISION')
+
+
+def migrate(root):
+    """Preserve every bundle and receipt before removing verified legacy copies."""
+    if not (root / LEGACY_STATE).exists():
+        if (root / STATE).exists():
+            approved(root)
+            return
+        raise PolicyError('STATE')
+    legacy = json.loads(read_bytes(root, LEGACY_STATE), object_pairs_hook=unique_object)
+    if legacy.get('version') != 1 or not isinstance(legacy.get('proposals'), dict):
+        raise PolicyError('STATE')
+    expected_files = {f'{LEGACY_SNAPSHOTS}/{key}/{path}': expected
+                      for key, entry in legacy['proposals'].items()
+                      for path, expected in entry['bundle']['files'].items()}
+    # Unknown files must survive; refuse cleanup rather than silently deleting them.
+    archive = root / LEGACY_SNAPSHOTS
+    actual = set()
+    if archive.is_symlink():
+        raise PolicyError('PATH')
+    for path in archive.rglob('*'):
+        if path.is_symlink():
+            raise PolicyError('PATH')
+        if path.is_file():
+            actual.add(path.relative_to(root).as_posix())
+    if not actual <= set(expected_files):
+        raise PolicyError('LEGACY-EXTRA')
+    modern = (root / STATE).exists()
+    if modern:
+        state = load_state(root)
+        if any(state['proposals'].get(key) != entry for key, entry in legacy['proposals'].items()):
+            raise PolicyError('MIGRATION-CONFLICT')
+    else:
+        if actual != set(expected_files):
+            raise PolicyError('SNAPSHOT')
+        for key, entry in legacy['proposals'].items():
+            validate_entry(root, key, entry)
+        if legacy['active'] is not None:
+            approved(root)
+        for path, expected in expected_files.items():
+            content = read_bytes(root, path)
+            target = object_path(expected)
+            try:
+                publish(root, target, content, exclusive=True)
+            except FileExistsError:
+                if read_bytes(root, target) != content:
+                    raise PolicyError('SNAPSHOT') from None
+        publish(root, STATE, (json.dumps(legacy, sort_keys=True, indent=2) + '\n').encode(),
+                exclusive=True)
+        state = legacy
+    # Verify the destination and each remaining source before unlinking anything.
+    for key, entry in state['proposals'].items():
+        validate_entry(root, key, entry)
+    if state['active'] is not None:
+        approved(root)
+    for path in actual:
+        if digest(read_bytes(root, path)) != expected_files[path]:
+            raise PolicyError('SNAPSHOT')
+    for path in sorted(actual):
+        with parent_fd(root, path) as (directory, name):
+            os.unlink(name, dir_fd=directory)
+    for directory in sorted(archive.rglob('*'), key=lambda p: len(p.parts), reverse=True):
+        if directory.is_dir():
+            directory.rmdir()
+    if archive.exists():
+        archive.rmdir()
+    with parent_fd(root, LEGACY_STATE) as (directory, name):
+        os.unlink(name, dir_fd=directory)
 
 
 def propose(root, author):
     if not author or not re.fullmatch(r'[a-zA-Z0-9._-]+', author):
         raise PolicyError('AUTHOR')
+    if state_path(root) == LEGACY_STATE:
+        raise PolicyError('MIGRATION-REQUIRED')
     if (root / STATE).exists():
         state = load_state(root)
         base = state['active']
@@ -291,7 +412,7 @@ def propose(root, author):
         validate_entry(root, key, state['proposals'][key])
         return key
     for path, content in data.items():
-        snapshot = f'{SNAPSHOTS}/{key}/{path}'
+        snapshot = object_path(bundle['files'][path])
         try:
             publish(root, snapshot, content, exclusive=True)
         except FileExistsError:
@@ -348,9 +469,11 @@ def mutation(root, run_id):
     import noma_board
     runs = noma_board.Board(root).status()['runs']
     own = next((run for run in runs if run['run_id'] == run_id), None)
-    needed = (STATE, SNAPSHOTS)
-    if not own or not all(any(path == p or path.startswith(p.rstrip('/') + '/')
-                             for p in own['working_files']) for path in needed):
+    needed = (STATE, OBJECTS)
+    if (root / LEGACY_STATE).exists():
+        needed += (LEGACY_STATE, LEGACY_SNAPSHOTS)
+    if not own or not all(any(path == p.rstrip('/') or path.startswith(p.rstrip('/') + '/')
+                              for p in own['working_files']) for path in needed):
         raise PolicyError('CLAIM')
     with parent_fd(root, 'tmp/.noma-policy.lock', create=True) as (directory, name):
         fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600, dir_fd=directory)
@@ -364,7 +487,8 @@ def mutation(root, run_id):
 
 def main(argv=None):
     ap = SignalParser(description=__doc__)
-    ap.add_argument('mode', choices=('status', 'resolve', 'propose', 'review', 'activate'))
+    ap.add_argument('mode', choices=('status', 'resolve', 'decision', 'migrate',
+                                     'propose', 'review', 'activate'))
     ap.add_argument('value', nargs='?')
     ap.add_argument('--author')
     ap.add_argument('--reviewer')
@@ -377,9 +501,14 @@ def main(argv=None):
             result = status(lib.ROOT)
         elif args.mode == 'resolve':
             result = {'path': resolve(lib.ROOT, args.value)}
+        elif args.mode == 'decision':
+            result = decision_status(lib.ROOT, args.value)
         else:
             with mutation(lib.ROOT, args.run_id):
-                if args.mode == 'propose':
+                if args.mode == 'migrate':
+                    migrate(lib.ROOT)
+                    result = {'status': 'migrated'}
+                elif args.mode == 'propose':
                     result = {'proposal': propose(lib.ROOT, args.author)}
                 elif args.mode == 'review':
                     record_review(lib.ROOT, args.value, args.reviewer)

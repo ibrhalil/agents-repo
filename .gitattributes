@@ -11,6 +11,7 @@ agent/prompts/**     filter=git-crypt diff=git-crypt -text
 agent/sessions/**    filter=git-crypt diff=git-crypt -text
 plans/**             filter=git-crypt diff=git-crypt -text
 log/**               filter=git-crypt diff=git-crypt -text
+.policy/**           filter=git-crypt diff=git-crypt -text
 
 # Yer tutucular plaintext kalsın (unlock öncesi dizin yapısı görünebilsin)
 *.gitkeep !filter !diff

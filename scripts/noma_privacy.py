@@ -11,7 +11,7 @@ import noma_lib as lib
 
 
 PRIVATE = ('index.md', 'index/', 'raw/', 'wiki/', 'agent/prompts/',
-           'agent/sessions/', 'plans/', 'log/')
+           'agent/sessions/', 'plans/', 'log/', '.policy/')
 EXCLUDED = ('tmp/', '.git/', '.env')
 BINARY_SUFFIXES = {'.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico',
                    '.zip', '.gz', '.sqlite', '.db', '.pyc', '.woff', '.woff2',

@@ -15,6 +15,10 @@ git-crypt unlock /guvenli/yer/noma.key
 taşır; gezinmeye kilit açıldıktan sonra `index.md` kökünden başlayın. Kilitli
 bir klonda içerik okunmaz.
 
+Onaylı policy byte arşivi ve activation receipt `.policy/` içinde şifrelidir;
+genel aramadan dışlanır. Policy erişimi `scripts/noma_policy.py resolve` ile
+yapılır; kanonik dosya onaylı byte'larla aynıysa doğrudan `wiki/` yolu döner.
+
 Anahtar yedeğini GitHub dışında, şifreli ve birbirinden bağımsız iki çevrimdışı
 konumda saklayın. Yedeklerden birini yılda bir ayrı bir klonda `git-crypt unlock`
 ile sınayın; anahtarı veya çıktısını repoya eklemeyin.

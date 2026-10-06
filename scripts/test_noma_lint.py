@@ -604,18 +604,19 @@ class PolicyLintTests(unittest.TestCase):
             yield
 
     def snapshot_bytes(self, key):
-        _, bundle = policy.approved(self.root)
-        return {f'{policy.SNAPSHOTS}/{key}/{path}':
-                policy.read_bytes(self.root, f'{policy.SNAPSHOTS}/{key}/{path}')
-                for path in bundle['files']}
+        bundle = policy.load_state(self.root)['proposals'][key]['bundle']
+        return {policy.object_path(expected):
+                policy.read_bytes(self.root, policy.object_path(expected))
+                for expected in bundle['files'].values()}
 
     def full_staged_snapshot(self, key):
-        """Complete staged activation: state + snapshot copies + staged file paths."""
-        snapshot = {policy.STATE: (self.root / policy.STATE).read_bytes(),
-                    **self.snapshot_bytes(key)}
+        """Complete staged activation: state + deduplicated objects + staged paths."""
+        snapshot = {policy.STATE: (self.root / policy.STATE).read_bytes()}
+        for historical_key in policy.load_state(self.root)['proposals']:
+            snapshot.update(self.snapshot_bytes(historical_key))
         _, bundle = policy.approved(self.root)
-        for path in bundle['files']:
-            snapshot[path] = policy.read_bytes(self.root, f'{policy.SNAPSHOTS}/{key}/{path}')
+        for path, expected in bundle['files'].items():
+            snapshot[path] = policy.read_bytes(self.root, policy.object_path(expected))
         return snapshot
 
     def activate_changed_proposal(self):
@@ -677,7 +678,8 @@ class PolicyLintTests(unittest.TestCase):
 
     def test_staged_snapshot_content_mismatch_fires_snapshot(self):
         snapshot = self.full_staged_snapshot(self.key)
-        snapshot[f'{policy.SNAPSHOTS}/{self.key}/wiki/agent-read-policy.md'] += b' '
+        _, bundle = policy.approved(self.root)
+        snapshot[policy.object_path(bundle['files']['wiki/agent-read-policy.md'])] += b' '
         with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
             code, out = self.run_lint()
         self.assertIn('ERR POLICY: SNAPSHOT', out)
@@ -693,10 +695,47 @@ class PolicyLintTests(unittest.TestCase):
 
     def test_staged_snapshot_deletion_fires_staged_missing(self):
         snapshot = self.full_staged_snapshot(self.key)
-        del snapshot[f'{policy.SNAPSHOTS}/{self.key}/wiki/agent-read-policy.md']
+        _, bundle = policy.approved(self.root)
+        del snapshot[policy.object_path(bundle['files']['wiki/agent-read-policy.md'])]
         with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
             code, out = self.run_lint()
         self.assertIn('ERR POLICY: STAGED-MISSING', out)
+        self.assertEqual(1, code)
+
+    def test_staged_activation_preserves_complete_historical_archive(self):
+        key = self.activate_changed_proposal()
+        snapshot = self.full_staged_snapshot(key)
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertEqual([], [o for o in out if 'POLICY' in o])
+        self.assertEqual(0, code)
+
+    def test_missing_or_corrupt_historical_object_blocks_staged_activation(self):
+        key = self.activate_changed_proposal()
+        old = policy.load_state(self.root)['proposals'][self.key]['bundle']
+        historical_path = policy.object_path(old['files']['wiki/agent-read-policy.md'])
+        for corrupt in (False, True):
+            with self.subTest(corrupt=corrupt):
+                snapshot = self.full_staged_snapshot(key)
+                if corrupt:
+                    snapshot[historical_path] += b'tampered'
+                else:
+                    del snapshot[historical_path]
+                with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+                    code, out = self.run_lint()
+                rule = 'SNAPSHOT' if corrupt else 'STAGED-MISSING'
+                self.assertIn(f'ERR POLICY: {rule}', out)
+                self.assertEqual(1, code)
+
+    def test_removing_historical_proposal_from_staged_state_is_rejected(self):
+        key = self.activate_changed_proposal()
+        snapshot = self.full_staged_snapshot(key)
+        state = policy.load_state(self.root)
+        del state['proposals'][self.key]
+        snapshot[policy.STATE] = (json.dumps(state) + '\n').encode('utf-8')
+        with self.mock_policy_git(list(snapshot)), self.policy_staged(snapshot):
+            code, out = self.run_lint()
+        self.assertIn('ERR POLICY: STAGED-HISTORY', out)
         self.assertEqual(1, code)
 
 
