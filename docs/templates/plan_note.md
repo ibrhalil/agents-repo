@@ -25,4 +25,5 @@ Bağ: [[index]] · `{{ilgili wiki notu/plan yolu — yoksa sil}}`
 ## Devir Notu
 `{{oturum kapanışında: şu ana kadar ne yapıldı, hangi bağlam/belirsizlik açık,
 dikkat edilecekler, doğrulama komutları}}`
+
 ---
